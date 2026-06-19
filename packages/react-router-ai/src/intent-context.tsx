@@ -6,6 +6,7 @@ import {
   useState,
   type PropsWithChildren,
 } from "react";
+import { matchIntentsWithBuiltInLlm } from "./llm-fallback";
 import { matchIntent } from "./matcher";
 import type {
   IntentContextValue,
@@ -25,11 +26,14 @@ export function IntentProvider({
   intents,
   onNavigate,
   threshold = 0.45,
+  llmFallback,
   children,
 }: PropsWithChildren<IntentProviderProps>) {
   const [query, setQuery] = useState("");
   const [isListening, setIsListening] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastMatch, setLastMatch] = useState<IntentMatch | null>(null);
+  const [candidates, setCandidates] = useState<IntentMatch[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
@@ -66,33 +70,81 @@ export function IntentProvider({
     const trimmed = (nextQuery ?? query).trim();
     if (!trimmed) {
       setLastMatch(null);
+      setCandidates(null);
       return null;
     }
 
-    const match = matchIntent(trimmed, intents, threshold);
-    setLastMatch(match);
+    setIsSubmitting(true);
+    setCandidates(null);
+    setError(null);
 
-    if (!match) {
+    const match = matchIntent(trimmed, intents, threshold);
+
+    if (match) {
+      setLastMatch(match);
+      setIsSubmitting(false);
+      await onNavigate(match);
+      return match;
+    }
+
+    const llmMatches = await matchIntentsWithBuiltInLlm(trimmed, intents, llmFallback);
+    setIsSubmitting(false);
+
+    if (llmMatches.length === 0) {
+      setLastMatch(null);
       setError(`No navigation match found for "${trimmed}".`);
       return null;
     }
 
+    const topMatch = llmMatches[0];
+    if (topMatch.confidence > 0.9) {
+      setLastMatch(topMatch);
+      setCandidates(null);
+      setError(null);
+      await onNavigate(topMatch);
+      return topMatch;
+    }
+
+    if (llmMatches.length === 1) {
+      setLastMatch(topMatch);
+      setCandidates(null);
+      setError(null);
+      await onNavigate(topMatch);
+      return topMatch;
+    }
+
+    setCandidates(llmMatches);
+    setLastMatch(null);
     setError(null);
-    await onNavigate(match);
-    return match;
+    return null;
+  }
+
+  function selectMatch(match: IntentMatch) {
+    setLastMatch(match);
+    setCandidates(null);
+    setError(null);
+    void onNavigate(match);
+  }
+
+  function clearCandidates() {
+    setCandidates(null);
   }
 
   const value: IntentContextValue = {
     intents,
     query,
     isListening,
+    isSubmitting,
     lastMatch,
+    candidates,
     error,
     setQuery(value) {
       setError(null);
       setQuery(value);
     },
     submitQuery: submitQueryInternal,
+    selectMatch,
+    clearCandidates,
     startListening() {
       const recognition = recognitionRef.current;
       if (!recognition) {

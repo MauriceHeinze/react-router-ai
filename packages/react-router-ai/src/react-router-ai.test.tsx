@@ -1,10 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { defineIntents } from "./define-intents";
 import { IntentCommandPalette } from "./intent-command-palette";
 import { IntentProvider } from "./intent-context";
 import { matchIntent } from "./matcher";
+import type { LanguageModelSession } from "./types";
 
 const intents = defineIntents([
   {
@@ -25,6 +26,11 @@ const intents = defineIntents([
     to: "/settings/billing",
   },
 ]);
+
+afterEach(() => {
+  cleanup();
+  delete window.LanguageModel;
+});
 
 describe("defineIntents", () => {
   it("rejects duplicate ids", () => {
@@ -66,5 +72,40 @@ describe("IntentProvider", () => {
     expect(onNavigate).toHaveBeenCalledTimes(1);
     expect(onNavigate.mock.calls[0][0].intent.id).toBe("settings.billing");
     expect(screen.getByText(/Billing settings/)).toBeTruthy();
+  });
+
+  it("falls back to the built-in LLM when fuzzy matching misses", async () => {
+    const user = userEvent.setup();
+    const onNavigate = vi.fn();
+    const prompt = vi.fn<LanguageModelSession["prompt"]>().mockResolvedValue(
+      JSON.stringify({
+        intentId: "settings.security.password",
+        confidence: 0.62,
+        reason: "password reset request",
+      }),
+    );
+
+    window.LanguageModel = {
+      availability: vi.fn().mockResolvedValue("available"),
+      create: vi.fn().mockResolvedValue({
+        prompt,
+        destroy: vi.fn(),
+      }),
+    };
+
+    render(
+      <IntentProvider intents={intents} onNavigate={onNavigate} llmFallback={{ enabled: true }}>
+        <IntentCommandPalette />
+      </IntentProvider>,
+    );
+
+    await user.type(screen.getByLabelText("Intent query"), "i can't sign in anymore");
+    await user.click(screen.getByRole("button", { name: "Go" }));
+
+    expect(window.LanguageModel.availability).toHaveBeenCalledTimes(1);
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+    expect(onNavigate.mock.calls[0][0].intent.id).toBe("settings.security.password");
+    expect(onNavigate.mock.calls[0][0].source).toBe("llm");
+    expect(screen.getByText(/llm/)).toBeTruthy();
   });
 });

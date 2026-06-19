@@ -29,7 +29,11 @@ const intents = defineIntents([
 
 function AppShell() {
   return (
-    <IntentProvider intents={intents} onNavigate={(match) => navigate(match.intent.to)}>
+    <IntentProvider
+      intents={intents}
+      onNavigate={(match) => navigate(match.intent.to)}
+      llmFallback={{ enabled: true }}
+    >
       <IntentCommandPalette />
       <IntentVoiceButton />
       <App />
@@ -37,6 +41,8 @@ function AppShell() {
   );
 }
 ```
+
+When `llmFallback` is enabled, the library keeps fuzzy matching as the first pass and only tries the browser's built-in `LanguageModel` API if no fuzzy match clears the threshold. This uses the on-device Prompt API when the browser supports it.
 
 ## Development
 

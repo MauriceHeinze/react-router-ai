@@ -34,7 +34,8 @@ export function IntentCommandPalette({
       </div>
       {lastMatch ? (
         <p style={{ marginTop: 8 }}>
-          Match: <strong>{lastMatch.intent.title}</strong> ({Math.round(lastMatch.confidence * 100)}%)
+          Match: <strong>{lastMatch.intent.title}</strong> ({Math.round(lastMatch.confidence * 100)}%,{" "}
+          {lastMatch.source})
         </p>
       ) : null}
       {error ? <p style={{ marginTop: 8, color: "#b42318" }}>{error}</p> : null}

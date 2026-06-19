@@ -14,13 +14,19 @@ export type IntentMatch = {
   intent: NavigationIntent;
   query: string;
   confidence: number;
-  source: "fuzzy";
+  source: "fuzzy" | "llm";
+};
+
+export type BuiltInLlmFallbackOptions = {
+  enabled?: boolean;
+  promptPrefix?: string;
 };
 
 export type IntentProviderProps = {
   intents: NavigationIntent[];
   onNavigate: (match: IntentMatch) => void | Promise<void>;
   threshold?: number;
+  llmFallback?: BuiltInLlmFallbackOptions;
   children: ReactNode;
 };
 
@@ -28,10 +34,14 @@ export type IntentContextValue = {
   intents: NavigationIntent[];
   query: string;
   isListening: boolean;
+  isSubmitting: boolean;
   lastMatch: IntentMatch | null;
+  candidates: IntentMatch[] | null;
   error: string | null;
   setQuery: (value: string) => void;
   submitQuery: (value?: string) => Promise<IntentMatch | null>;
+  selectMatch: (match: IntentMatch) => void;
+  clearCandidates: () => void;
   startListening: () => void;
   stopListening: () => void;
 };
@@ -40,6 +50,7 @@ declare global {
   interface Window {
     SpeechRecognition?: SpeechRecognitionConstructor;
     webkitSpeechRecognition?: SpeechRecognitionConstructor;
+    LanguageModel?: LanguageModelConstructor;
   }
 }
 
@@ -74,4 +85,29 @@ export interface SpeechRecognitionInstance extends EventTarget {
 
 export interface SpeechRecognitionConstructor {
   new (): SpeechRecognitionInstance;
+}
+
+export type LanguageModelAvailability =
+  | "available"
+  | "downloadable"
+  | "downloading"
+  | "unavailable";
+
+export interface LanguageModelCreateMonitor {
+  addEventListener(
+    type: "downloadprogress",
+    listener: (event: { loaded: number }) => void,
+  ): void;
+}
+
+export interface LanguageModelSession {
+  prompt: (input: string) => Promise<string>;
+  destroy?: () => void;
+}
+
+export interface LanguageModelConstructor {
+  availability: () => Promise<LanguageModelAvailability>;
+  create: (options?: {
+    monitor?: (monitor: LanguageModelCreateMonitor) => void;
+  }) => Promise<LanguageModelSession>;
 }

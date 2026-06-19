@@ -1,0 +1,267 @@
+.settings-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 100vh;
+  background: #f8f9fb;
+  color: #111827;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.settings-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: #f3f4f6;
+  border-right: 1px solid #e5e7eb;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 12px;
+}
+
+.sidebar-back {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.sidebar-back:hover {
+  background: #e5e7eb;
+}
+
+.sidebar-back-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.sidebar-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.sidebar-search {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.sidebar-search input {
+  width: 100%;
+  padding: 9px 10px 9px 34px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  color: #111827;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.sidebar-search input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.sidebar-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-group-title,
+.sidebar-group-toggle {
+  padding: 0 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+.sidebar-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.sidebar-group-chevron {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.15s ease;
+}
+
+.sidebar-group-chevron.expanded {
+  transform: rotate(180deg);
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: #374151;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.sidebar-link:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.sidebar-link.active {
+  background: #fff;
+  color: #111827;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.sidebar-link-icon {
+  width: 18px;
+  height: 18px;
+  color: #6b7280;
+}
+
+.sidebar-link.active .sidebar-link-icon {
+  color: #111827;
+}
+
+.settings-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.settings-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  padding: 0 28px;
+  background: rgba(248, 249, 251, 0.92);
+  border-bottom: 1px solid #e5e7eb;
+  backdrop-filter: blur(8px);
+}
+
+.topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.topbar-icon {
+  width: 20px;
+  height: 20px;
+  color: #6b7280;
+}
+
+.topbar-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.topbar-help:hover {
+  background: #e5e7eb;
+}
+
+.topbar-help-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.settings-content {
+  flex: 1;
+  padding: 32px 40px 48px;
+  overflow-y: auto;
+}
+
+.floating-command-button {
+  position: fixed;
+  right: 24px;
+  top: 24px;
+  z-index: 50;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #111827;
+  color: #fff;
+  box-shadow: 0 10px 25px rgba(17, 24, 39, 0.25);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.floating-command-button:hover {
+  transform: scale(1.05);
+  background: #1f2937;
+}
+
+.floating-command-icon {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 860px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-sidebar {
+    display: none;
+  }
+
+  .settings-content {
+    padding: 24px;
+  }
+}
