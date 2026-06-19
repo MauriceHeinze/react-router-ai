@@ -1,0 +1,126 @@
+.app-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 32px auto;
+  display: grid;
+  gap: 24px;
+}
+
+.hero {
+  display: grid;
+  gap: 20px;
+  padding: 28px;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 230, 183, 0.9), transparent 35%),
+    linear-gradient(135deg, #16324f, #22577a 55%, #87cbb9);
+  color: #fffaf0;
+  box-shadow: 0 24px 50px rgba(17, 24, 39, 0.18);
+}
+
+.hero h1 {
+  margin: 8px 0 12px;
+  font-size: clamp(2rem, 4vw, 3.8rem);
+  line-height: 0.95;
+  max-width: 12ch;
+}
+
+.hero-copy {
+  max-width: 62ch;
+  color: rgba(255, 250, 240, 0.86);
+}
+
+.hero-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.hero-actions button {
+  width: fit-content;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: #fffaf0;
+  color: #16324f;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.sidebar,
+.content {
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(22, 50, 79, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(17, 24, 39, 0.06);
+}
+
+.sidebar {
+  padding: 20px;
+  align-self: start;
+}
+
+.sidebar-title,
+.eyebrow,
+.breadcrumbs {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.sidebar nav {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.nav-link {
+  display: block;
+  padding: 10px 12px;
+  color: #16324f;
+  text-decoration: none;
+  border-radius: 10px;
+}
+
+.nav-link.active {
+  background: #16324f;
+  color: #fffaf0;
+}
+
+.content {
+  padding: 24px;
+}
+
+.page h2 {
+  margin: 12px 0;
+  font-size: clamp(1.8rem, 3vw, 3rem);
+  color: #16324f;
+}
+
+.description {
+  max-width: 55ch;
+  color: #355070;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 820px) {
+  .app-shell {
+    width: min(100% - 24px, 720px);
+    margin: 20px auto 32px;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .hero,
+  .content,
+  .sidebar {
+    padding: 18px;
+  }
+}
