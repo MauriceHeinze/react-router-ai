@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { IntentVoiceButton, useIntentMatch } from 'react-router-ai'
-import type { IntentMatch } from 'react-router-ai'
-import { CloseIcon, SearchIcon } from './Icons.tsx'
+import { VoiceButton, useVoiceController } from 'react-router-ai'
+import type { VoiceCommandMatch } from 'react-router-ai'
+import { CloseIcon, SearchIcon } from '../../shared/ui/Icons.tsx'
 import './CommandDialog.css'
 
 type CommandDialogProps = {
@@ -11,7 +11,7 @@ type CommandDialogProps = {
 }
 
 export default function CommandDialog({ open, onOpen, onClose }: CommandDialogProps) {
-  const { query, setQuery, submitQuery, selectMatch, clearCandidates, isSubmitting, error, lastMatch, candidates } = useIntentMatch()
+  const { query, setQuery, submitQuery, selectMatch, clearCandidates, isSubmitting, error, lastMatch, candidates } = useVoiceController()
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -53,8 +53,8 @@ export default function CommandDialog({ open, onOpen, onClose }: CommandDialogPr
     }
   }
 
-  function handleCandidateClick(match: IntentMatch) {
-    selectMatch(match)
+  function handleCandidateClick(match: VoiceCommandMatch) {
+    void selectMatch(match)
     onClose()
   }
 
@@ -77,7 +77,7 @@ export default function CommandDialog({ open, onOpen, onClose }: CommandDialogPr
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search settings or ask to navigate..."
+              placeholder="Search settings or ask to do something..."
               className="command-dialog-input"
               disabled={isSubmitting}
             />
@@ -99,14 +99,14 @@ export default function CommandDialog({ open, onOpen, onClose }: CommandDialogPr
             <div className="command-dialog-candidates">
               {candidates.map((match) => (
                 <button
-                  key={match.intent.id}
+                  key={match.command.id}
                   type="button"
                   className="command-dialog-candidate"
                   onClick={() => handleCandidateClick(match)}
                 >
-                  <span className="candidate-title">{match.intent.title}</span>
-                  {match.intent.description ? (
-                    <span className="candidate-description">{match.intent.description}</span>
+                  <span className="candidate-title">{match.command.title}</span>
+                  {match.command.description ? (
+                    <span className="candidate-description">{match.command.description}</span>
                   ) : null}
                   <span className="candidate-confidence">
                     {Math.round(match.confidence * 100)}% match
@@ -119,7 +119,7 @@ export default function CommandDialog({ open, onOpen, onClose }: CommandDialogPr
           {lastMatch && !candidates ? (
             <div className="command-dialog-match">
               <span className="command-dialog-match-label">Best match</span>
-              <span className="command-dialog-match-title">{lastMatch.intent.title}</span>
+              <span className="command-dialog-match-title">{lastMatch.command.title}</span>
               <span className="command-dialog-match-meta">
                 {Math.round(lastMatch.confidence * 100)}% · {lastMatch.source}
               </span>
@@ -129,8 +129,8 @@ export default function CommandDialog({ open, onOpen, onClose }: CommandDialogPr
           {error ? <p className="command-dialog-error">{error}</p> : null}
 
           <div className="command-dialog-actions">
-            <IntentVoiceButton idleLabel="Use voice" listeningLabel="Listening..." />
-            <span className="command-dialog-hint">Press Enter to navigate</span>
+            <VoiceButton idleLabel="Use voice" listeningLabel="Listening..." />
+            <span className="command-dialog-hint">Press Enter to run the command</span>
           </div>
         </div>
       </div>

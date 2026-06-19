@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { iconMap, SearchIcon, ChevronLeftIcon, ChevronDownIcon, HelpIcon } from './Icons.tsx'
+import { iconMap, SearchIcon, ChevronLeftIcon, ChevronDownIcon, HelpIcon } from '../../shared/ui/Icons.tsx'
 import CallRecorderPage from './CallRecorderPage.tsx'
 import SettingsPage from './SettingsPage.tsx'
-import { routes, sectionLabels, type RouteSection } from './routes.ts'
+import { routes, sectionLabels, type RouteSection } from './settings-routes.ts'
 import './SettingsLayout.css'
 
 function getNestedSettingsPath(path: string) {

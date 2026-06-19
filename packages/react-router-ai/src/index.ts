@@ -1,4 +1,5 @@
 export * from "./types";
+export * from "./define-fields";
 export * from "./define-intents";
 export * from "./matcher";
 export * from "./llm-fallback";

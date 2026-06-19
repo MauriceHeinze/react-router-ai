@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import type { ReactNode } from 'react'
 import './CallRecorderPage.css'
-
-type StyleOption = 'default' | 'workspace' | 'minimal' | 'none'
+import { recorderStyleOptions } from './settings-metadata.ts'
+import { settingsActions, useAppDispatch, useAppSelector, type RecorderStyle } from './settings-store.ts'
 
 function DefaultIcon({ className = '' }: { className?: string }) {
   return (
@@ -56,7 +56,7 @@ function Radio({ checked }: { checked: boolean }) {
   )
 }
 
-function PreviewCard({ name, style }: { name: string; style: StyleOption }) {
+function PreviewCard({ name, style }: { name: string; style: RecorderStyle }) {
   if (style === 'none') {
     return (
       <div className="preview-wrapper">
@@ -102,35 +102,16 @@ function PreviewCard({ name, style }: { name: string; style: StyleOption }) {
 }
 
 export default function CallRecorderPage() {
-  const [recorderName, setRecorderName] = useState('Notetaker')
-  const [style, setStyle] = useState<StyleOption>('default')
+  const dispatch = useAppDispatch()
+  const recorderName = useAppSelector((state) => state.settings.recorderName)
+  const style = useAppSelector((state) => state.settings.recorderStyle)
 
-  const options = [
-    {
-      id: 'default' as StyleOption,
-      icon: <DefaultIcon className="style-option-icon style-option-icon-dark" />,
-      title: 'Default',
-      description: 'Branded recorder',
-    },
-    {
-      id: 'workspace' as StyleOption,
-      icon: <WorkspaceIcon className="style-option-icon style-option-icon-dark" />,
-      title: 'Workspace',
-      description: 'Workspace branded recorder',
-    },
-    {
-      id: 'minimal' as StyleOption,
-      icon: <MinimalIcon className="style-option-icon style-option-icon-dark" />,
-      title: 'Minimal',
-      description: 'No logo',
-    },
-    {
-      id: 'none' as StyleOption,
-      icon: <NoneIcon className="style-option-icon" />,
-      title: 'None',
-      description: 'No image',
-    },
-  ]
+  const iconByStyle: Record<RecorderStyle, ReactNode> = {
+    default: <DefaultIcon className="style-option-icon style-option-icon-dark" />,
+    workspace: <WorkspaceIcon className="style-option-icon style-option-icon-dark" />,
+    minimal: <MinimalIcon className="style-option-icon style-option-icon-dark" />,
+    none: <NoneIcon className="style-option-icon" />,
+  }
 
   return (
     <section className="call-recorder-page">
@@ -150,7 +131,7 @@ export default function CallRecorderPage() {
           <input
             type="text"
             value={recorderName}
-            onChange={(e) => setRecorderName(e.target.value)}
+            onChange={(e) => dispatch(settingsActions.setRecorderName(e.target.value))}
             className="recorder-input"
           />
         </label>
@@ -159,22 +140,22 @@ export default function CallRecorderPage() {
           <span className="recorder-label">Style</span>
           <div className="style-layout">
             <div className="style-options" role="radiogroup" aria-label="Recorder style">
-              {options.map((option) => {
-                const checked = style === option.id
+              {recorderStyleOptions.map((option) => {
+                const checked = style === option.value
                 return (
                   <label
-                    key={option.id}
+                    key={option.value}
                     className={`style-option ${checked ? 'selected' : ''}`}
                   >
                     <input
                       type="radio"
                       name="recorder-style"
-                      value={option.id}
+                      value={option.value}
                       checked={checked}
-                      onChange={() => setStyle(option.id)}
+                      onChange={() => dispatch(settingsActions.setRecorderStyle(option.value))}
                       className="visually-hidden"
                     />
-                    {option.icon}
+                    {iconByStyle[option.value]}
                     <span className="style-option-text">
                       <span className="style-option-title">{option.title}</span>
                       <span className="style-option-description">{option.description}</span>

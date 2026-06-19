@@ -1,7 +1,7 @@
 {
   "name": "react-router-ai",
   "version": "0.1.0",
-  "description": "Map free-form text or speech to navigation intents in React apps.",
+  "description": "Map free-form text or speech to typed app commands in React apps.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

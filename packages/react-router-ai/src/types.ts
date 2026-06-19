@@ -1,20 +1,62 @@
 import type { ReactNode } from "react";
 
-export type NavigationIntent = {
+export type VoiceCommandParameterType = "string" | "number" | "boolean";
+
+export type VoiceCommandParameterDefinition = {
+  label: string;
+  description?: string;
+  options?: readonly string[];
+  type?: VoiceCommandParameterType;
+};
+
+export type VoiceCommandParameters = Record<string, VoiceCommandParameterDefinition>;
+
+export type VoiceCommandExecutionContext<TArgs extends Record<string, unknown> = Record<string, unknown>> = {
+  command: VoiceCommand<TArgs>;
+  match: VoiceCommandMatch<TArgs>;
+  query: string;
+  readCurrentValue: () => unknown;
+};
+
+export type VoiceCommand<TArgs extends Record<string, unknown> = Record<string, unknown>> = {
   id: string;
-  type: "navigation";
   title: string;
   description?: string;
   phrases?: string[];
   keywords?: string[];
-  to: string;
+  parameters?: VoiceCommandParameters;
+  confirmation?: boolean | string;
+  read?: () => unknown;
+  run: (args: TArgs, context: VoiceCommandExecutionContext<TArgs>) => void | Promise<void>;
 };
 
-export type IntentMatch = {
-  intent: NavigationIntent;
+export type VoiceCommandMatch<TArgs extends Record<string, unknown> = Record<string, unknown>> = {
+  command: VoiceCommand<TArgs>;
   query: string;
   confidence: number;
   source: "fuzzy" | "llm";
+  parameters: TArgs;
+  missingParameters: string[];
+};
+
+export type VoiceFieldType = "boolean" | "enum" | "string" | "number";
+
+export type VoiceField<TValue = unknown> = {
+  id: string;
+  label: string;
+  description?: string;
+  type: VoiceFieldType;
+  options?: readonly string[];
+  phrases?: string[];
+  keywords?: string[];
+  route?: string;
+  read?: () => TValue;
+  write: (value: TValue) => void | Promise<void>;
+  confirmation?: boolean | string;
+};
+
+export type VoiceFieldCommandOptions = {
+  navigate?: (to: string) => void;
 };
 
 export type BuiltInLlmFallbackOptions = {
@@ -22,16 +64,72 @@ export type BuiltInLlmFallbackOptions = {
   promptPrefix?: string;
 };
 
+export type VoiceProviderProps = {
+  commands: VoiceCommand[];
+  threshold?: number;
+  ambiguityThreshold?: number;
+  llmFallback?: BuiltInLlmFallbackOptions;
+  children: ReactNode;
+};
+
+export type VoiceContextValue = {
+  commands: VoiceCommand[];
+  query: string;
+  isListening: boolean;
+  isSubmitting: boolean;
+  lastMatch: VoiceCommandMatch | null;
+  candidates: VoiceCommandMatch[] | null;
+  pendingConfirmation: VoiceCommandMatch | null;
+  error: string | null;
+  setQuery: (value: string) => void;
+  submitQuery: (value?: string) => Promise<VoiceCommandMatch | null>;
+  selectMatch: (match: VoiceCommandMatch) => Promise<void>;
+  clearCandidates: () => void;
+  confirmPending: () => Promise<void>;
+  cancelPending: () => void;
+  startListening: () => void;
+  stopListening: () => void;
+  registerCommand: (command: VoiceCommand) => () => void;
+};
+
+export type BaseIntent = {
+  id: string;
+  title: string;
+  description?: string;
+  phrases?: string[];
+  keywords?: string[];
+};
+
+export type NavigationIntent = BaseIntent & {
+  type: "navigation";
+  to: string;
+};
+
+export type ActionIntent = BaseIntent & {
+  type: "action";
+  action: string;
+  payload?: Record<string, unknown>;
+};
+
+export type Intent = NavigationIntent | ActionIntent;
+
+export type IntentMatch = {
+  intent: Intent;
+  query: string;
+  confidence: number;
+  source: "fuzzy" | "llm";
+};
+
 export type IntentProviderProps = {
-  intents: NavigationIntent[];
-  onNavigate: (match: IntentMatch) => void | Promise<void>;
+  intents: Intent[];
+  onMatch: (match: IntentMatch) => void | Promise<void>;
   threshold?: number;
   llmFallback?: BuiltInLlmFallbackOptions;
   children: ReactNode;
 };
 
 export type IntentContextValue = {
-  intents: NavigationIntent[];
+  intents: Intent[];
   query: string;
   isListening: boolean;
   isSubmitting: boolean;
@@ -40,7 +138,7 @@ export type IntentContextValue = {
   error: string | null;
   setQuery: (value: string) => void;
   submitQuery: (value?: string) => Promise<IntentMatch | null>;
-  selectMatch: (match: IntentMatch) => void;
+  selectMatch: (match: IntentMatch) => Promise<void>;
   clearCandidates: () => void;
   startListening: () => void;
   stopListening: () => void;

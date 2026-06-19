@@ -1,15 +1,15 @@
-import { useIntentMatch } from "./intent-context";
+import { useVoiceController } from "./intent-context";
 
-type IntentVoiceButtonProps = {
+type VoiceButtonProps = {
   idleLabel?: string;
   listeningLabel?: string;
 };
 
-export function IntentVoiceButton({
+export function VoiceButton({
   idleLabel = "Use voice",
   listeningLabel = "Listening...",
-}: IntentVoiceButtonProps) {
-  const { isListening, startListening, stopListening } = useIntentMatch();
+}: VoiceButtonProps) {
+  const { isListening, startListening, stopListening } = useVoiceController();
 
   return (
     <button type="button" onClick={isListening ? stopListening : startListening}>
@@ -17,3 +17,5 @@ export function IntentVoiceButton({
     </button>
   );
 }
+
+export const IntentVoiceButton = VoiceButton;

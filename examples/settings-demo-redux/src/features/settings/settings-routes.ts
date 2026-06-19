@@ -1,5 +1,3 @@
-import type { NavigationIntent } from 'react-router-ai'
-
 export type RouteSection = 'personal' | 'workspace' | 'data'
 
 export type SettingsRoute = {
@@ -13,7 +11,7 @@ export type SettingsRoute = {
   phrases?: string[]
 }
 
-export const routes: SettingsRoute[] = [
+export const personalRoutes: SettingsRoute[] = [
   {
     id: 'settings.profile',
     section: 'personal',
@@ -94,7 +92,9 @@ export const routes: SettingsRoute[] = [
     description: 'Review active sessions and sign out of devices remotely.',
     phrases: ['active sessions', 'sign out devices', 'session settings'],
   },
+]
 
+export const workspaceRoutes: SettingsRoute[] = [
   {
     id: 'settings.general',
     section: 'workspace',
@@ -195,7 +195,9 @@ export const routes: SettingsRoute[] = [
     description: 'Import contacts, companies, and deals from another CRM.',
     phrases: ['migrate crm', 'import data', 'crm migration'],
   },
+]
 
+export const dataRoutes: SettingsRoute[] = [
   {
     id: 'settings.objects',
     section: 'data',
@@ -208,33 +210,10 @@ export const routes: SettingsRoute[] = [
   },
 ]
 
+export const routes: SettingsRoute[] = [...personalRoutes, ...workspaceRoutes, ...dataRoutes]
+
 export const sectionLabels: Record<RouteSection, string> = {
   personal: 'Personal',
   workspace: 'Workspace',
   data: 'Data',
-}
-
-export function defineSettingsIntents(routes: SettingsRoute[]): NavigationIntent[] {
-  const routeIntents = routes.map((route) => ({
-    id: route.id,
-    type: 'navigation' as const,
-    title: route.title,
-    description: route.description,
-    phrases: route.phrases ?? [route.label.toLowerCase()],
-    keywords: route.label.toLowerCase().split(' '),
-    to: route.path,
-  }))
-
-  return [
-    {
-      id: 'home',
-      type: 'navigation',
-      title: 'Home',
-      description: 'Go back to the landing page.',
-      phrases: ['go home', 'home page', 'landing page', 'back to home'],
-      keywords: ['home', 'landing', 'start'],
-      to: '/',
-    },
-    ...routeIntents,
-  ]
 }

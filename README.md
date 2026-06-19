@@ -1,48 +1,69 @@
 # react-router-ai
 
-`react-router-ai` is a React library for mapping free-form text or speech to app navigation intents.
+`react-router-ai` is a React library for mapping free-form text or speech to typed app commands.
 
 This repo currently ships:
 
 - a publishable `react-router-ai` package
 - a settings demo showing how to route users to buried settings pages
 
+See [Voice Control API Design](./docs/voice-control-api.md) for the command-oriented API direction and integration guidance.
+
 ## Quick example
 
 ```tsx
 import {
-  IntentProvider,
-  IntentCommandPalette,
-  IntentVoiceButton,
-  defineIntents,
+  VoiceProvider,
+  VoiceCommandPalette,
+  VoiceButton,
+  defineVoiceFieldCommands,
+  defineVoiceCommands,
 } from "react-router-ai";
 
-const intents = defineIntents([
+const themeOptions = ["light", "dark", "system"] as const;
+
+const commands = defineVoiceCommands([
   {
-    id: "settings.security.password",
-    type: "navigation",
-    title: "Change password",
-    phrases: ["change my password", "reset password"],
-    to: "/settings/security/password",
+    id: "theme.set",
+    title: "Set theme",
+    phrases: ["switch theme", "use dark mode", "use light mode"],
+    parameters: {
+      value: {
+        label: "Theme",
+        options: themeOptions,
+      },
+    },
+    run: ({ value }) => setTheme(value),
+  },
+  {
+    id: "settings.billing.open",
+    title: "Open billing",
+    phrases: ["open billing", "manage my subscription"],
+    run: () => navigate("/settings/billing"),
   },
 ]);
 
 function AppShell() {
   return (
-    <IntentProvider
-      intents={intents}
-      onNavigate={(match) => navigate(match.intent.to)}
-      llmFallback={{ enabled: true }}
-    >
-      <IntentCommandPalette />
-      <IntentVoiceButton />
+    <VoiceProvider commands={commands} llmFallback={{ enabled: true }}>
+      <VoiceCommandPalette />
+      <VoiceButton />
       <App />
-    </IntentProvider>
+    </VoiceProvider>
   );
 }
 ```
 
-When `llmFallback` is enabled, the library keeps fuzzy matching as the first pass and only tries the browser's built-in `LanguageModel` API if no fuzzy match clears the threshold. This uses the on-device Prompt API when the browser supports it.
+The core model is command-first:
+
+- `run` stays app-owned, so commands can call `setState`, `dispatch`, `navigate`, or service functions directly.
+- `parameters` support option-derived extraction for values like `light`, `dark`, `system`, or numeric quantities.
+- `confirmation` pauses risky commands until the user confirms.
+- `useVoiceCommand(command)` lets mounted components register page-local commands when needed.
+
+For settings-heavy apps, `defineVoiceFieldCommands(...)` can derive normal commands from explicit field metadata while keeping reads, writes, and navigation app-owned.
+
+When `llmFallback` is enabled, the library keeps fuzzy matching as the first pass and only tries the browser's built-in `LanguageModel` API if no fuzzy match clears the threshold.
 
 ## Development
 
