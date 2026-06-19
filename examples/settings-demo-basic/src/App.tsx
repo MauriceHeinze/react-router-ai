@@ -4,6 +4,7 @@ import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import CommandDialog from './CommandDialog.tsx'
 import { SearchIcon } from './Icons.tsx'
 import LandingPage from './LandingPage.tsx'
+import { createOpenAiCommandMatcher } from './openai-command-matcher.ts'
 import SettingsLayout from './SettingsLayout.tsx'
 import { defineSettingsCommands, routes } from './routes.ts'
 import './App.css'
@@ -22,6 +23,7 @@ function AppShell() {
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [pushNotifications, setPushNotifications] = useState(false)
   const [defaultLanguage, setDefaultLanguage] = useState<AppLanguage>('en')
+  const openAiCommandMatcher = useMemo(() => createOpenAiCommandMatcher(), [])
   const commands = useMemo(
     () =>
       defineVoiceCommands(
@@ -44,7 +46,7 @@ function AppShell() {
 
   return (
     <div className={`app-shell theme-${effectiveTheme}`}>
-      <VoiceProvider commands={commands} llmFallback={{ enabled: true }}>
+      <VoiceProvider commands={commands} llmFallback={{ enabled: true, match: openAiCommandMatcher }}>
         <Routes>
           <Route path="/" element={<LandingPage onOpenCommand={() => setDialogOpen(true)} />} />
           <Route

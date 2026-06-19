@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { VoiceProvider, defineVoiceCommands } from 'react-router-ai'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import CommandDialog from '../features/commands/CommandDialog.tsx'
+import { createOpenAiCommandMatcher } from './openai-command-matcher.ts'
 import SettingsLayout from '../features/settings/SettingsLayout.tsx'
 import { defineSettingsCommands, routes } from '../features/settings/index.ts'
 import { useAppDispatch, useAppSelector } from '../features/settings/settings-store.ts'
@@ -14,6 +15,7 @@ function AppShell() {
   const dispatch = useAppDispatch()
   const [dialogOpen, setDialogOpen] = useState(false)
   const theme = useAppSelector((state) => state.settings.theme)
+  const openAiCommandMatcher = useMemo(() => createOpenAiCommandMatcher(), [])
   const commands = useMemo(
     () =>
       defineVoiceCommands(
@@ -34,7 +36,7 @@ function AppShell() {
 
   return (
     <div className={`app-shell theme-${effectiveTheme}`}>
-      <VoiceProvider commands={commands} llmFallback={{ enabled: true }}>
+      <VoiceProvider commands={commands} llmFallback={{ enabled: true, match: openAiCommandMatcher }}>
         <Routes>
           <Route path="/" element={<LandingPage onOpenCommand={() => setDialogOpen(true)} />} />
           <Route path="/settings/*" element={<SettingsLayout onOpenCommand={() => setDialogOpen(true)} />} />

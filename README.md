@@ -65,6 +65,8 @@ For settings-heavy apps, `defineVoiceFieldCommands(...)` can derive normal comma
 
 When `llmFallback` is enabled, the library keeps fuzzy matching as the first pass and only tries the browser's built-in `LanguageModel` API if no fuzzy match clears the threshold.
 
+If you want app-owned model routing instead, pass `llmFallback.match(query, commands)`. That callback can send the serialized command catalog to a remote model such as OpenAI `gpt-realtime-mini` and return one or more `{ commandId, confidence, parameters }` candidates.
+
 ## Development
 
 ```bash

@@ -299,6 +299,36 @@ describe("VoiceProvider", () => {
     expect(await screen.findByText(/llm/)).toBeTruthy();
   });
 
+  it("supports a custom LLM matcher", async () => {
+    const user = userEvent.setup();
+    const run = vi.fn();
+    const match = vi.fn().mockResolvedValue({
+      commandId: "settings.billing.open",
+      confidence: 0.91,
+    });
+
+    render(
+      <VoiceProvider
+        commands={[
+          {
+            ...commands[0],
+            run,
+          },
+        ]}
+        llmFallback={{ enabled: true, match }}
+      >
+        <VoiceCommandPalette />
+      </VoiceProvider>,
+    );
+
+    await user.type(screen.getByLabelText("Voice command query"), "take me to invoices");
+    await user.click(screen.getByRole("button", { name: "Run" }));
+
+    await waitFor(() => expect(match).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(run).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText(/llm/)).toBeTruthy();
+  });
+
   it("supports page-local command registration", async () => {
     const user = userEvent.setup();
     const run = vi.fn();

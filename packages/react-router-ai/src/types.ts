@@ -59,9 +59,19 @@ export type VoiceFieldCommandOptions = {
   navigate?: (to: string) => void;
 };
 
+export type VoiceCommandLlmCandidate = {
+  commandId: string | null;
+  confidence?: number;
+  parameters?: Record<string, unknown>;
+};
+
 export type BuiltInLlmFallbackOptions = {
   enabled?: boolean;
   promptPrefix?: string;
+  match?: (
+    query: string,
+    commands: VoiceCommand[],
+  ) => Promise<VoiceCommandLlmCandidate | VoiceCommandLlmCandidate[] | null>;
 };
 
 export type VoiceProviderProps = {

@@ -5,8 +5,10 @@ import type {
   LanguageModelAvailability,
   LanguageModelSession,
   VoiceCommand,
+  VoiceCommandLlmCandidate,
   VoiceCommandMatch,
 } from "./types";
+import { resolveCommandParameters } from "./matcher";
 
 const DEFAULT_PROMPT_PREFIX =
   "You map user requests to one voice command id from the provided catalog.";
@@ -90,8 +92,17 @@ async function createSession() {
 function toCommandMatch(
   query: string,
   command: VoiceCommand,
-  parsed: { confidence?: number; parameters?: Record<string, unknown> },
+  parsed: VoiceCommandLlmCandidate,
 ): VoiceCommandMatch {
+  const inferred = resolveCommandParameters(query, command);
+  const parameters = {
+    ...inferred.values,
+    ...(parsed.parameters ?? {}),
+  };
+  const missingParameters = Object.keys(command.parameters ?? {}).filter(
+    (key) => parameters[key] === undefined,
+  );
+
   return {
     command,
     query,
@@ -100,9 +111,28 @@ function toCommandMatch(
         ? Math.max(0, Math.min(parsed.confidence, 1))
         : 0.5,
     source: "llm",
-    parameters: parsed.parameters ?? {},
-    missingParameters: [],
+    parameters,
+    missingParameters,
   };
+}
+
+async function matchVoiceCommandsWithCustomLlm(
+  query: string,
+  commands: VoiceCommand[],
+  match: NonNullable<BuiltInLlmFallbackOptions["match"]>,
+): Promise<VoiceCommandMatch[]> {
+  const resolved = await match(query, commands);
+  const candidates = resolved ? (Array.isArray(resolved) ? resolved : [resolved]) : [];
+  const matches: VoiceCommandMatch[] = [];
+
+  for (const candidate of candidates) {
+    if (!candidate.commandId) continue;
+    const command = commands.find((item) => item.id === candidate.commandId);
+    if (!command) continue;
+    matches.push(toCommandMatch(query, command, candidate));
+  }
+
+  return matches.sort((a, b) => b.confidence - a.confidence);
 }
 
 export async function matchVoiceCommandWithBuiltInLlm(
@@ -111,6 +141,15 @@ export async function matchVoiceCommandWithBuiltInLlm(
   options?: BuiltInLlmFallbackOptions,
 ): Promise<VoiceCommandMatch | null> {
   if (options?.enabled === false) return null;
+
+  if (options?.match) {
+    try {
+      const matches = await matchVoiceCommandsWithCustomLlm(query, commands, options.match);
+      return matches[0] ?? null;
+    } catch {
+      return null;
+    }
+  }
 
   const session: LanguageModelSession | null = await createSession();
   if (!session) return null;
@@ -124,7 +163,11 @@ export async function matchVoiceCommandWithBuiltInLlm(
     const command = commands.find((candidate) => candidate.id === parsed.commandId);
     if (!command) return null;
 
-    return toCommandMatch(query, command, parsed);
+    return toCommandMatch(query, command, {
+      commandId: parsed.commandId,
+      confidence: parsed.confidence,
+      parameters: parsed.parameters,
+    });
   } catch {
     return null;
   } finally {
@@ -139,6 +182,14 @@ export async function matchVoiceCommandsWithBuiltInLlm(
 ): Promise<VoiceCommandMatch[]> {
   if (options?.enabled === false) return [];
 
+  if (options?.match) {
+    try {
+      return await matchVoiceCommandsWithCustomLlm(query, commands, options.match);
+    } catch {
+      return [];
+    }
+  }
+
   const session: LanguageModelSession | null = await createSession();
   if (!session) return [];
 
@@ -151,7 +202,13 @@ export async function matchVoiceCommandsWithBuiltInLlm(
       if (!item.commandId) continue;
       const command = commands.find((candidate) => candidate.id === item.commandId);
       if (!command) continue;
-      matches.push(toCommandMatch(query, command, item));
+      matches.push(
+        toCommandMatch(query, command, {
+          commandId: item.commandId,
+          confidence: item.confidence,
+          parameters: item.parameters,
+        }),
+      );
     }
 
     return matches.sort((a, b) => b.confidence - a.confidence);

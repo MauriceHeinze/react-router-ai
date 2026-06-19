@@ -41,6 +41,8 @@ Defines settings-style field controls and compiles them into explicit app comman
 
 Provides matching, execution, voice input, and local command registration.
 
+`llmFallback.match(query, commands)` can replace the built-in browser `LanguageModel` fallback with an app-owned remote matcher.
+
 ```ts
 useVoiceCommand(command)
 ```
@@ -113,6 +115,7 @@ const commands = defineVoiceCommands([
 - Number and boolean parameters can be inferred from the query text.
 - When multiple commands are close, the provider returns candidates instead of guessing.
 - If fuzzy matching misses, the optional built-in `LanguageModel` fallback can return a command id and parameter object.
+- Apps can override the fallback with `llmFallback.match(...)` and call their own LLM provider.
 
 ## Design Constraints
 
