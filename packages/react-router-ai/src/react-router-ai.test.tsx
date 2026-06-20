@@ -1037,6 +1037,7 @@ describe("createOpenAICommandMatcher", () => {
       apiKey: "test-key",
       endpoint: "https://example.com/v1/chat/completions",
       model: "gpt-5-nano",
+      pageContext: "Settings > Billing (/settings/billing)",
     });
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -1070,8 +1071,11 @@ describe("createOpenAICommandMatcher", () => {
     const body = init?.body ? JSON.parse(String(init.body)) : null;
     expect(body?.model).toBe("gpt-5-nano");
     expect(body?.reasoning_effort).toBe("minimal");
+    expect(body?.messages?.[0]?.content).not.toContain("Current page:");
     expect(body?.messages?.[1]?.content).toContain("Available commands:");
-    expect(body?.messages?.[2]?.content).toBe("query: go to billing");
+    expect(body?.messages?.[2]?.content).toBe(
+      "current_page: Settings > Billing (/settings/billing)\nquery: go to billing",
+    );
   });
 
   it("returns null when the API response has no tool call", async () => {

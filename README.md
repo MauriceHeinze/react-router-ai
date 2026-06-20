@@ -70,7 +70,7 @@ If you want app-owned model routing instead, pass `llmFallback.match(query, comm
 
 If you want the model to know where the user is, pass `llmFallback.pageContext` or `pageContext` to your own matcher with a string like `Settings > Billing (/settings/billing)`.
 
-The package also exports `createOpenAiVoiceCommandMatcher(...)` for a first-party OpenAI Chat Completions matcher. It uses a minimal request shape and defaults to `reasoning_effort: "minimal"` for reasoning-capable GPT-5 models.
+The package also exports `createOpenAICommandMatcher(...)` for a first-party OpenAI Chat Completions matcher. It defaults to `gpt-5-nano` with `reasoning_effort: "minimal"` and sends stable command-catalog input before dynamic page/query context to improve prompt-cache reuse.
 
 The lower-level `AICommand.Root` also accepts `maxVisibleItems` when you want to cap the number of rendered command results without breaking keyboard navigation.
 

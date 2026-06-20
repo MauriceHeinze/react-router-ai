@@ -188,6 +188,14 @@ export const MicrophoneIcon = createIcon(
   </>
 )
 
+export function MicOrbIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M12 5.5c1.2 1.4 3.1 3.8 3.1 6.5s-1.9 5.1-3.1 6.5c-1.2-1.4-3.1-3.8-3.1-6.5s1.9-5.1 3.1-6.5z" />
+    </svg>
+  )
+}
+
 export const CloseIcon = createIcon(
   <>
     <path d="M18 6 6 18M6 6l12 12" />

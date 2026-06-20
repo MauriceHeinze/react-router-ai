@@ -6,7 +6,7 @@ export function createOpenAiCommandMatcher(
   return createOpenAICommandMatcher({
     apiKey: import.meta.env.VITE_OPENAI_API_KEY as string,
     model: 'gpt-5-nano',
-    serviceTier: 'priority',
+    reasoningEffort: 'minimal',
     ...options,
   })
 }

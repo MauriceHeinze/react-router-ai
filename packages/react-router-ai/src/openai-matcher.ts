@@ -27,8 +27,17 @@ function serializeItem(item: AICommandItem) {
     id: item.id,
     value: item.value,
     ...(item.description ? { description: item.description } : {}),
-    keywords: item.keywords ?? [],
+    keywords: [...(item.keywords ?? [])].sort(),
   };
+}
+
+function createDynamicRequestContext(query: string, pageContext?: string) {
+  const parts = [];
+  if (pageContext) {
+    parts.push(`current_page: ${pageContext}`);
+  }
+  parts.push(`query: ${query}`);
+  return parts.join("\n");
 }
 
 export function createOpenAICommandMatcher(
@@ -64,7 +73,6 @@ export function createOpenAICommandMatcher(
             content: [
               "Select exactly one app command for the user query.",
               "Return the id of the command that best matches the user's intent.",
-              ...(pageContext ? [`Current page: ${pageContext}`] : []),
             ].join("\n"),
           },
           {
@@ -73,7 +81,7 @@ export function createOpenAICommandMatcher(
           },
           {
             role: "user",
-            content: `query: ${query}`,
+            content: createDynamicRequestContext(query, pageContext),
           },
         ],
         tools: [
