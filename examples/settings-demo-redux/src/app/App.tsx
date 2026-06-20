@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
-import { VoiceProvider, VoiceWidget, defineVoiceCommands } from 'react-router-ai'
+import { useMemo, useState } from 'react'
+import { AICommand } from 'react-router-ai'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { createOpenAiCommandMatcher } from './openai-command-matcher.ts'
+import CommandDialog from './CommandDialog.tsx'
 import SettingsLayout from '../features/settings/SettingsLayout.tsx'
 import { defineSettingsCommands, routes } from '../features/settings/index.ts'
 import { useAppDispatch, useAppSelector } from '../features/settings/settings-store.ts'
@@ -30,56 +31,37 @@ function AppShell() {
     [pageContext],
   )
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault()
-        setWidgetOpen((open) => !open)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
-
   const commands = useMemo(
     () =>
-      defineVoiceCommands(
-        defineSettingsCommands(
-          routes,
-          {
-            dispatch,
-            navigate: (to) => {
-              navigate(to)
-              setWidgetOpen(false)
-            },
-          },
-        ),
-      ),
-    [dispatch, navigate],
+      defineSettingsCommands(routes, {
+        dispatch,
+        navigate: (to) => {
+          navigate(to)
+          setWidgetOpen(false)
+        },
+      }),
+    [dispatch, navigate]
   )
   const effectiveTheme = theme === 'system' ? 'light' : theme
 
   return (
     <div className={`app-shell theme-${effectiveTheme}`}>
-      <VoiceProvider commands={commands} fuzzyMatching={false} llmFallback={{ enabled: true, match: openAiCommandMatcher }}>
-        <>
-          <Routes>
-            <Route path="/" element={<LandingPage onOpenCommand={() => setWidgetOpen(true)} />} />
-            <Route
-              path="/settings/*"
-              element={
-                <SettingsLayout
-                  onOpenCommand={() => setWidgetOpen(true)}
-                />
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+      <AICommand.Root matcher={openAiCommandMatcher} maxVisibleItems={8}>
+        <Routes>
+          <Route path="/" element={<LandingPage onOpenCommand={() => setWidgetOpen(true)} />} />
+          <Route
+            path="/settings/*"
+            element={
+              <SettingsLayout
+                onOpenCommand={() => setWidgetOpen(true)}
+              />
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
 
-          <VoiceWidget open={widgetOpen} onOpenChange={setWidgetOpen} />
-        </>
-      </VoiceProvider>
+        <CommandDialog open={widgetOpen} onOpenChange={setWidgetOpen} items={commands} />
+      </AICommand.Root>
     </div>
   )
 }

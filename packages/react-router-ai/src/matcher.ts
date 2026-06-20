@@ -22,14 +22,20 @@ export async function matchItems(
   if (!trimmed) return null;
 
   const ranked = rankCommandItems(trimmed, items);
+  const matcherCandidates =
+    ranked.length > 0
+      ? ranked.slice(0, maxMatcherCandidates)
+      : items.filter((item) => !item.disabled).slice(0, maxMatcherCandidates);
 
   if (matcher) {
-    const candidates = ranked.slice(0, maxMatcherCandidates);
     try {
-      const matched = await matcher(trimmed, candidates);
-      if (matched) {
+      const matched = await matcher(trimmed, matcherCandidates);
+      const resolvedMatch = matched
+        ? matcherCandidates.find((candidate) => candidate.id === matched.id) ?? null
+        : null;
+      if (resolvedMatch) {
         return {
-          item: matched,
+          item: resolvedMatch,
           query: trimmed,
           confidence: 1,
           source: "matcher",

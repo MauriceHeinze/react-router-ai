@@ -1,0 +1,313 @@
+.command-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(8px);
+}
+
+.command-dialog {
+  width: min(640px, 100%);
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+}
+
+.command-dialog[data-mic-mode='true'] {
+  border-color: rgba(56, 189, 248, 0.42);
+  box-shadow: 0 30px 90px rgba(14, 165, 233, 0.16);
+}
+
+.theme-dark .command-dialog {
+  border-color: rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.96);
+  box-shadow: 0 36px 90px rgba(2, 6, 23, 0.5);
+}
+
+.theme-dark .command-dialog[data-mic-mode='true'] {
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 38px 100px rgba(14, 165, 233, 0.12);
+}
+
+.command-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.command-dialog-search-icon,
+.command-dialog-close-icon,
+.command-dialog-voice-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.command-dialog-search-icon {
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.theme-dark .command-dialog-search-icon {
+  color: #94a3b8;
+}
+
+.command-dialog-input {
+  flex: 1;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+  font-size: 1rem;
+}
+
+.command-dialog-input::placeholder {
+  color: #94a3b8;
+}
+
+.command-dialog-close,
+.command-dialog-voice-button {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 10px;
+  background: rgba(248, 250, 252, 0.9);
+  color: #334155;
+  cursor: pointer;
+}
+
+.command-dialog-close {
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.command-dialog-voice-button {
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.command-dialog-voice-button[aria-pressed='true'] {
+  border-color: rgba(56, 189, 248, 0.38);
+  background: rgba(224, 242, 254, 0.94);
+  color: #0f172a;
+}
+
+.theme-dark .command-dialog-close,
+.theme-dark .command-dialog-voice-button {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+}
+
+.theme-dark .command-dialog-voice-button[aria-pressed='true'] {
+  border-color: rgba(56, 189, 248, 0.34);
+  background: rgba(8, 47, 73, 0.88);
+  color: #e0f2fe;
+}
+
+.command-dialog-voice-button svg {
+  transition: transform 0.18s ease;
+}
+
+.command-dialog-voice-button[aria-pressed='true'] svg {
+  transform: scale(1.08);
+}
+
+.command-dialog-body {
+  padding: 14px 18px 18px;
+}
+
+.command-dialog-loader,
+.command-dialog-error,
+.command-dialog-confirmation,
+.command-dialog-empty {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+.command-dialog-loader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(239, 246, 255, 0.9);
+  color: #1d4ed8;
+}
+
+.theme-dark .command-dialog-loader {
+  background: rgba(30, 41, 59, 0.92);
+  color: #93c5fd;
+}
+
+.command-dialog-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(148, 163, 184, 0.35);
+  border-top-color: currentColor;
+  border-radius: 999px;
+  animation: command-dialog-spin 0.75s linear infinite;
+}
+
+@keyframes command-dialog-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.command-dialog-error {
+  background: rgba(254, 226, 226, 0.9);
+  color: #b91c1c;
+}
+
+.theme-dark .command-dialog-error {
+  background: rgba(127, 29, 29, 0.35);
+  color: #fecaca;
+}
+
+.command-dialog-confirmation {
+  background: rgba(254, 249, 195, 0.92);
+  color: #854d0e;
+}
+
+.theme-dark .command-dialog-confirmation {
+  background: rgba(113, 63, 18, 0.42);
+  color: #fde68a;
+}
+
+.command-dialog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.command-dialog-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+}
+
+.command-dialog-item[aria-selected='true'] {
+  border-color: rgba(59, 130, 246, 0.48);
+  background: rgba(239, 246, 255, 0.94);
+}
+
+.theme-dark .command-dialog-item {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+.theme-dark .command-dialog-item[aria-selected='true'] {
+  background: rgba(30, 41, 59, 0.94);
+  border-color: rgba(96, 165, 250, 0.5);
+}
+
+.command-dialog-item-value {
+  font-weight: 600;
+}
+
+.command-dialog-item-description,
+.command-dialog-empty,
+.command-dialog-hint {
+  color: #64748b;
+}
+
+.theme-dark .command-dialog-item-description,
+.theme-dark .command-dialog-empty,
+.theme-dark .command-dialog-hint {
+  color: #94a3b8;
+}
+
+.command-dialog-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.command-dialog-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.command-dialog-shortcut {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.76rem;
+}
+
+.theme-dark .command-dialog-shortcut {
+  color: #94a3b8;
+}
+
+.command-dialog-keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 7px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.9);
+  color: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.theme-dark .command-dialog-keycap {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(30, 41, 59, 0.92);
+}
+
+.command-dialog-hint {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .command-dialog-header {
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .command-dialog-body {
+    padding: 12px 16px 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .command-dialog-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .command-dialog-shortcuts {
+    justify-content: flex-start;
+  }
+}

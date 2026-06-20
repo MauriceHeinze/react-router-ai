@@ -72,6 +72,7 @@ export function AICommandInput({
   value: controlledValue,
   onValueChange,
   onKeyDown,
+  voiceShortcut,
   onFocus,
   onBlur,
   autoFocus,
@@ -117,6 +118,20 @@ export function AICommandInput({
     } else if (event.key === "Escape") {
       event.preventDefault();
       ctx.closeDialog();
+    } else if (
+      voiceShortcut === "tab" &&
+      event.key === "Tab" &&
+      !event.shiftKey &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.altKey
+    ) {
+      event.preventDefault();
+      if (ctx.isListening) {
+        ctx.stopListening();
+      } else {
+        ctx.startListening();
+      }
     }
     onKeyDown?.(event);
   }
@@ -222,6 +237,7 @@ export function AICommandError({ children, className, style }: AICommandErrorPro
 export function AICommandVoiceButton({
   children,
   onClick,
+  title,
   className,
   style,
 }: PropsWithChildren<AICommandVoiceButtonProps>) {
@@ -231,6 +247,7 @@ export function AICommandVoiceButton({
     <button
       type="button"
       aria-pressed={ctx.isListening}
+      title={title}
       onClick={(event) => {
         onClick?.(event);
         if (ctx.isListening) {

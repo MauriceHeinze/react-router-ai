@@ -27,6 +27,7 @@ export type AICommandRootProps = {
   matcher?: AICommandMatcher;
   threshold?: number;
   maxMatcherCandidates?: number;
+  maxVisibleItems?: number;
 };
 
 export type AICommandDialogProps = {
@@ -40,6 +41,7 @@ export type AICommandInputProps = {
   value?: string;
   onValueChange?: (value: string) => void;
   onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  voiceShortcut?: "tab";
   onFocus?: (event: React.FocusEvent<HTMLInputElement>) => void;
   onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
   autoFocus?: boolean;
@@ -87,6 +89,7 @@ export type AICommandVoiceButtonProps = {
   className?: string;
   style?: React.CSSProperties;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  title?: string;
 };
 
 export type AICommandRegistryEntry = {

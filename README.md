@@ -72,6 +72,8 @@ If you want the model to know where the user is, pass `llmFallback.pageContext` 
 
 The package also exports `createOpenAiVoiceCommandMatcher(...)` for a first-party OpenAI Chat Completions matcher. It uses a minimal request shape and defaults to `reasoning_effort: "minimal"` for reasoning-capable GPT-5 models.
 
+The lower-level `AICommand.Root` also accepts `maxVisibleItems` when you want to cap the number of rendered command results without breaking keyboard navigation.
+
 ## Development
 
 ```bash

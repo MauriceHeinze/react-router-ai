@@ -1,7 +1,6 @@
-import type { VoiceCommand } from 'react-router-ai'
-import { defineVoiceFieldCommands } from 'react-router-ai'
+import type { AICommandItem } from 'react-router-ai'
 import { createHomeCommand, createNavigationCommands } from './settings-command-factories.ts'
-import { createSettingsFields } from './settings-fields.ts'
+import { createSettingsCommands } from './settings-fields.ts'
 import type { SettingsRoute } from './settings-routes.ts'
 import type { AppDispatch } from './settings-store.ts'
 
@@ -10,12 +9,12 @@ type DefineSettingsCommandsOptions = {
   navigate: (to: string) => void
 }
 
-export function defineSettingsCommands(routes: SettingsRoute[], options: DefineSettingsCommandsOptions): VoiceCommand[] {
+export function defineSettingsCommands(routes: SettingsRoute[], options: DefineSettingsCommandsOptions): AICommandItem[] {
   const { dispatch, navigate } = options
 
   return [
     createHomeCommand(navigate),
-    ...defineVoiceFieldCommands(createSettingsFields(dispatch), { navigate }),
+    ...createSettingsCommands({ dispatch, navigate }),
     ...createNavigationCommands(routes, navigate),
   ]
 }

@@ -36,6 +36,7 @@ export function AICommandRoot({
   matcher,
   threshold = 0.45,
   maxMatcherCandidates = 10,
+  maxVisibleItems,
 }: PropsWithChildren<AICommandRootProps>) {
   const registry = useCommandRegistry();
   const items = useRegisteredItems(registry);
@@ -53,11 +54,28 @@ export function AICommandRoot({
   const matcherRef = useRef(matcher);
   matcherRef.current = matcher;
 
-  const filteredItems = useMemo(() => rankCommandItems(query, items), [query, items]);
+  const filteredItems = useMemo(() => {
+    const rankedItems = rankCommandItems(query, items);
+    if (maxVisibleItems === undefined) {
+      return rankedItems;
+    }
+
+    const visibleItemLimit = Math.max(0, Math.floor(maxVisibleItems));
+    return rankedItems.slice(0, visibleItemLimit);
+  }, [items, maxVisibleItems, query]);
 
   useEffect(() => {
     setActiveIndex(0);
   }, [query]);
+
+  useEffect(() => {
+    setActiveIndex((current) => {
+      if (filteredItems.length === 0) {
+        return 0;
+      }
+      return Math.min(current, filteredItems.length - 1);
+    });
+  }, [filteredItems.length]);
 
   const openDialog = useCallback(() => {
     dialogRef.current?.setOpen(true);

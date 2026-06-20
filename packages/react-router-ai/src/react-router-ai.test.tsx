@@ -190,17 +190,17 @@ describe("matchItems", () => {
   });
 
   it("prefers the matcher result over the local best match", async () => {
-    const onSelect = vi.fn();
     const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
-      id: "matcher.pick",
-      value: "Matcher pick",
-      onSelect,
+      id: "b",
+      value: "Open billing settings",
+      onSelect: vi.fn(),
     });
     const items: AICommandItem[] = [
       { id: "a", value: "Open settings", onSelect: vi.fn() },
+      { id: "b", value: "Open billing settings", onSelect: vi.fn() },
     ];
     const match = await matchItems("settings", items, { matcher });
-    expect(match?.item.id).toBe("matcher.pick");
+    expect(match?.item.id).toBe("b");
     expect(match?.source).toBe("matcher");
   });
 
@@ -232,6 +232,31 @@ describe("AICommand matching", () => {
     await user.type(screen.getByLabelText("Command query"), "xyz123");
 
     expect(screen.getByText("No commands found.")).toBeTruthy();
+  });
+
+  it("limits the number of visible commands when maxVisibleItems is set", async () => {
+    render(
+      <AICommandRoot maxVisibleItems={2}>
+        <AICommand.Dialog open>
+          <AICommand.Input />
+          <AICommand.List>
+            <AICommand.Item id="a" value="Open settings" onSelect={vi.fn()}>
+              Open settings
+            </AICommand.Item>
+            <AICommand.Item id="b" value="Open billing" onSelect={vi.fn()}>
+              Open billing
+            </AICommand.Item>
+            <AICommand.Item id="c" value="Open members" onSelect={vi.fn()}>
+              Open members
+            </AICommand.Item>
+          </AICommand.List>
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    expect(screen.getByText("Open settings")).toBeTruthy();
+    expect(screen.getByText("Open billing")).toBeTruthy();
+    expect(screen.queryByText("Open members")).toBeNull();
   });
 
   it("selects a command by clicking an item", async () => {
@@ -627,12 +652,12 @@ describe("AICommand custom matcher", () => {
     expect(alert.textContent).toBe('No command match found for "nothing matches this".');
   });
 
-  it("executes a matcher result that is not in the local candidates", async () => {
+  it("lets the matcher choose from fallback candidates when local ranking is empty", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
-      id: "matcher.only",
-      value: "Matcher only",
+      id: "billing.support",
+      value: "Open billing support",
       onSelect,
     });
 
@@ -641,18 +666,23 @@ describe("AICommand custom matcher", () => {
         <AICommand.Dialog open>
           <AICommand.Input />
           <AICommand.List>
-            <AICommand.Item id="local" value="Local match" onSelect={vi.fn()}>
-              Local match
+            <AICommand.Item
+              id="billing.support"
+              value="Open billing support"
+              onSelect={onSelect}
+            >
+              Open billing support
             </AICommand.Item>
           </AICommand.List>
           <AICommand.Error />
         </AICommand.Dialog>
-        <SubmitButton query="matcher only" />
+        <SubmitButton query="subscription help" />
       </AICommandRoot>,
     );
 
     await user.click(screen.getByRole("button", { name: "Submit" }));
 
+    await waitFor(() => expect(matcher).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
   });
 });
@@ -929,6 +959,74 @@ describe("AICommand voice button", () => {
       expect(screen.queryByRole("button", { name: "Listening..." })).toBeNull(),
     );
     expect(screen.getByRole("button", { name: "Use voice" })).toBeTruthy();
+  });
+
+  it("starts listening when AICommand.Input uses the tab voice shortcut", async () => {
+    const user = userEvent.setup();
+    const start = vi.fn();
+
+    const Recognition = vi.fn().mockImplementation(() => ({
+      lang: "",
+      interimResults: false,
+      continuous: false,
+      onresult: null,
+      onerror: null,
+      onend: null,
+      start,
+      stop: vi.fn(),
+    }));
+    window.SpeechRecognition = Recognition as unknown as typeof window.SpeechRecognition;
+    window.webkitSpeechRecognition = Recognition as unknown as typeof window.webkitSpeechRecognition;
+
+    render(
+      <AICommandRoot>
+        <AICommand.Dialog open>
+          <AICommand.Input autoFocus voiceShortcut="tab" />
+          <AICommand.List />
+        </AICommand.Dialog>
+        <AICommand.VoiceButton />
+      </AICommandRoot>,
+    );
+
+    await user.keyboard("{Tab}");
+
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(await screen.findByRole("button", { name: "Listening..." })).toBeTruthy();
+  });
+
+  it("stops listening when Tab is pressed again with the AICommand.Input voice shortcut", async () => {
+    const user = userEvent.setup();
+    const stop = vi.fn();
+
+    const Recognition = vi.fn().mockImplementation(() => ({
+      lang: "",
+      interimResults: false,
+      continuous: false,
+      onresult: null,
+      onerror: null,
+      onend: null,
+      start: vi.fn(),
+      stop,
+    }));
+    window.SpeechRecognition = Recognition as unknown as typeof window.SpeechRecognition;
+    window.webkitSpeechRecognition = Recognition as unknown as typeof window.webkitSpeechRecognition;
+
+    render(
+      <AICommandRoot>
+        <AICommand.Dialog open>
+          <AICommand.Input autoFocus voiceShortcut="tab" />
+          <AICommand.List />
+        </AICommand.Dialog>
+        <AICommand.VoiceButton />
+      </AICommandRoot>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Use voice" }));
+    await screen.findByRole("button", { name: "Listening..." });
+    await user.click(screen.getByLabelText("Command query"));
+    await user.keyboard("{Tab}");
+
+    expect(stop).toHaveBeenCalledTimes(1);
   });
 });
 
