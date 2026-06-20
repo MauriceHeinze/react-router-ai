@@ -28,22 +28,20 @@ export async function matchItems(
       : items.filter((item) => !item.disabled).slice(0, maxMatcherCandidates);
 
   if (matcher) {
-    try {
-      const matched = await matcher(trimmed, matcherCandidates);
-      const resolvedMatch = matched
-        ? matcherCandidates.find((candidate) => candidate.id === matched.id) ?? null
-        : null;
-      if (resolvedMatch) {
-        return {
-          item: resolvedMatch,
-          query: trimmed,
-          confidence: 1,
-          source: "matcher",
-        };
-      }
-    } catch {
-      // Fall through to local best match.
+    const matched = await matcher(trimmed, matcherCandidates);
+    const resolvedMatch = matched
+      ? matcherCandidates.find((candidate) => candidate.id === matched.id) ?? null
+      : null;
+    if (resolvedMatch) {
+      return {
+        item: resolvedMatch,
+        query: trimmed,
+        confidence: 1,
+        source: "matcher",
+      };
     }
+
+    return null;
   }
 
   const bestLocal = ranked[0];

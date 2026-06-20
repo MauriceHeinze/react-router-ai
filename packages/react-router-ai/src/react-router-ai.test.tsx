@@ -204,13 +204,14 @@ describe("matchItems", () => {
     expect(match?.source).toBe("matcher");
   });
 
-  it("falls back to the local best match when the matcher throws", async () => {
+  it("throws when the matcher throws", async () => {
     const matcher = vi.fn<AICommandMatcher>().mockRejectedValue(new Error("model down"));
     const items: AICommandItem[] = [
       { id: "a", value: "Open settings", onSelect: vi.fn() },
     ];
-    const match = await matchItems("settings", items, { matcher, threshold: 0.45 });
-    expect(match?.item.id).toBe("a");
+    await expect(matchItems("settings", items, { matcher, threshold: 0.45 })).rejects.toThrow(
+      "model down",
+    );
   });
 });
 
@@ -603,7 +604,7 @@ describe("AICommand custom matcher", () => {
     expect(candidates).toHaveLength(2);
   });
 
-  it("falls back to local match when the matcher returns nothing", async () => {
+  it("does not fall back to local match when the matcher returns nothing", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const matcher = vi.fn<AICommandMatcher>().mockResolvedValue(null);
@@ -616,10 +617,12 @@ describe("AICommand custom matcher", () => {
     await user.type(screen.getByLabelText("Command query"), "local match");
     await user.keyboard("{Enter}");
 
-    await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe('No command match found for "local match".');
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it("falls back to local match when the matcher throws", async () => {
+  it("shows the matcher error when the matcher throws", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const matcher = vi.fn<AICommandMatcher>().mockRejectedValue(new Error("timeout"));
@@ -632,8 +635,9 @@ describe("AICommand custom matcher", () => {
     await user.type(screen.getByLabelText("Command query"), "local match");
     await user.keyboard("{Enter}");
 
-    await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
-    expect(screen.queryByRole("alert")).toBeNull();
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe("timeout");
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it("shows an error when submitQuery finds no matcher or local match", async () => {
