@@ -272,7 +272,7 @@ describe("AICommand matching", () => {
     await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
   });
 
-  it("submits the current query with Enter", async () => {
+  it("selects the active command with Enter", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     renderCommandPalette({
@@ -285,17 +285,11 @@ describe("AICommand matching", () => {
     await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
   });
 
-  it("uses the matcher result on Enter instead of the active item", async () => {
+  it("uses arrow keys to move the active selection before Enter", async () => {
     const user = userEvent.setup();
     const first = vi.fn();
     const second = vi.fn();
-    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
-      id: "second",
-      value: "Second command",
-      onSelect: second,
-    });
     renderCommandPalette({
-      matcher,
       items: [
         { id: "first", value: "First command", onSelect: first },
         { id: "second", value: "Second command", onSelect: second },
@@ -306,7 +300,6 @@ describe("AICommand matching", () => {
     await user.keyboard("{ArrowDown}");
     await user.keyboard("{Enter}");
 
-    await waitFor(() => expect(matcher).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(second).toHaveBeenCalledTimes(1));
     expect(first).not.toHaveBeenCalled();
   });
@@ -532,6 +525,15 @@ function SubmitButton({ query }: { query: string }) {
   );
 }
 
+function AskAIButton({ query }: { query: string }) {
+  const ctx = useAICommand();
+  return (
+    <button type="button" onClick={() => void ctx.submitMatcherQuery(query)}>
+      Ask AI
+    </button>
+  );
+}
+
 describe("AICommand custom matcher", () => {
   it("sends the active command catalog to the matcher and executes its selection", async () => {
     const user = userEvent.setup();
@@ -558,12 +560,12 @@ describe("AICommand custom matcher", () => {
             </AICommand.Item>
           </AICommand.List>
           <AICommand.Error />
-          <SubmitButton query="matched" />
+          <AskAIButton query="matched" />
         </AICommand.Dialog>
       </AICommandRoot>,
     );
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(screen.getByRole("button", { name: "Ask AI" }));
 
     await waitFor(() => expect(matcher).toHaveBeenCalledTimes(1));
     const [, candidates] = matcher.mock.calls[0]!;
@@ -592,48 +594,66 @@ describe("AICommand custom matcher", () => {
             ))}
           </AICommand.List>
           <AICommand.Error />
-          <SubmitButton query="item" />
+          <AskAIButton query="item" />
         </AICommand.Dialog>
       </AICommandRoot>,
     );
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(screen.getByRole("button", { name: "Ask AI" }));
 
     await waitFor(() => expect(matcher).toHaveBeenCalledTimes(1));
     const [, candidates] = matcher.mock.calls[0]!;
     expect(candidates).toHaveLength(2);
   });
 
-  it("does not fall back to local match when the matcher returns nothing", async () => {
+  it("does not fall back to local match when Ask AI returns nothing", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const matcher = vi.fn<AICommandMatcher>().mockResolvedValue(null);
 
-    renderCommandPalette({
-      matcher,
-      items: [{ id: "local", value: "Local match", onSelect }],
-    });
+    render(
+      <AICommandRoot matcher={matcher}>
+        <AICommand.Dialog open>
+          <AICommand.Input />
+          <AICommand.List>
+            <AICommand.Item id="local" value="Local match" onSelect={onSelect}>
+              Local match
+            </AICommand.Item>
+          </AICommand.List>
+          <AICommand.Error />
+          <AskAIButton query="local match" />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
 
-    await user.type(screen.getByLabelText("Command query"), "local match");
-    await user.keyboard("{Enter}");
+    await user.click(screen.getByRole("button", { name: "Ask AI" }));
 
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toBe('No command match found for "local match".');
+    expect(alert.textContent).toBe('No AI command match found for "local match".');
     expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it("shows the matcher error when the matcher throws", async () => {
+  it("shows the matcher error when Ask AI throws", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const matcher = vi.fn<AICommandMatcher>().mockRejectedValue(new Error("timeout"));
 
-    renderCommandPalette({
-      matcher,
-      items: [{ id: "local", value: "Local match", onSelect }],
-    });
+    render(
+      <AICommandRoot matcher={matcher}>
+        <AICommand.Dialog open>
+          <AICommand.Input />
+          <AICommand.List>
+            <AICommand.Item id="local" value="Local match" onSelect={onSelect}>
+              Local match
+            </AICommand.Item>
+          </AICommand.List>
+          <AICommand.Error />
+          <AskAIButton query="local match" />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
 
-    await user.type(screen.getByLabelText("Command query"), "local match");
-    await user.keyboard("{Enter}");
+    await user.click(screen.getByRole("button", { name: "Ask AI" }));
 
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toBe("timeout");
@@ -650,15 +670,15 @@ describe("AICommand custom matcher", () => {
           <AICommand.Input />
           <AICommand.List />
           <AICommand.Error />
+          <AskAIButton query="nothing matches this" />
         </AICommand.Dialog>
-        <SubmitButton query="nothing matches this" />
       </AICommandRoot>,
     );
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(screen.getByRole("button", { name: "Ask AI" }));
 
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toBe('No command match found for "nothing matches this".');
+    expect(alert.textContent).toBe('No AI command match found for "nothing matches this".');
   });
 
   it("lets the matcher choose from fallback candidates when local ranking is empty", async () => {
@@ -684,12 +704,12 @@ describe("AICommand custom matcher", () => {
             </AICommand.Item>
           </AICommand.List>
           <AICommand.Error />
+          <AskAIButton query="subscription help" />
         </AICommand.Dialog>
-        <SubmitButton query="subscription help" />
       </AICommandRoot>,
     );
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(screen.getByRole("button", { name: "Ask AI" }));
 
     await waitFor(() => expect(matcher).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
@@ -730,13 +750,19 @@ describe("AICommand voice button", () => {
     expect(await screen.findByRole("button", { name: "Listening..." })).toBeTruthy();
   });
 
-  it("submits a transcript as a query and executes the selected command", async () => {
+  it("submits a transcript through the matcher and executes the AI-selected command", async () => {
     const user = userEvent.setup();
-    const onSelect = vi.fn();
+    const localSelect = vi.fn();
+    const aiSelect = vi.fn();
     const start = vi.fn();
     const recognitionInstance: {
       current: { onresult: ((event: SpeechRecognitionEvent) => void) | null } | null;
     } = { current: null };
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
+      id: "invoice.ai",
+      value: "Create invoice with AI",
+      onSelect: aiSelect,
+    });
 
     const Recognition = vi.fn().mockImplementation(() => {
       const recognition = {
@@ -756,12 +782,15 @@ describe("AICommand voice button", () => {
     window.webkitSpeechRecognition = Recognition as unknown as typeof window.webkitSpeechRecognition;
 
     render(
-      <AICommandRoot>
+      <AICommandRoot matcher={matcher}>
         <AICommand.Dialog open>
           <AICommand.Input />
           <AICommand.List>
-            <AICommand.Item id="invoice" value="Create invoice" onSelect={onSelect}>
+            <AICommand.Item id="invoice" value="Create invoice" onSelect={localSelect}>
               Create invoice
+            </AICommand.Item>
+            <AICommand.Item id="invoice.ai" value="Create invoice with AI" onSelect={aiSelect}>
+              Create invoice with AI
             </AICommand.Item>
           </AICommand.List>
           <AICommand.Error />
@@ -784,7 +813,9 @@ describe("AICommand voice button", () => {
     } as unknown as SpeechRecognitionEvent;
     recognitionInstance.current?.onresult?.(fakeEvent);
 
-    await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(matcher).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(aiSelect).toHaveBeenCalledTimes(1));
+    expect(localSelect).not.toHaveBeenCalled();
   });
 
   it("reports a controlled error when speech recognition is unavailable", async () => {

@@ -113,7 +113,6 @@ export function AICommandRoot({
 
       try {
         const match = await matchItems(trimmed, items, {
-          matcher: matcherRef.current,
           threshold,
           maxMatcherCandidates,
         });
@@ -129,6 +128,44 @@ export function AICommandRoot({
       } catch (err) {
         setIsSubmitting(false);
         setError(err instanceof Error ? err.message : "Command failed.");
+        return null;
+      }
+    },
+    [items, threshold, maxMatcherCandidates, executeMatch],
+  );
+
+  const submitMatcherQuery = useCallback(
+    async (nextQuery?: string): Promise<AICommandItem | null> => {
+      const trimmed = (nextQuery ?? queryRef.current).trim();
+      if (!trimmed) {
+        setError(null);
+        setPendingConfirmation(null);
+        return null;
+      }
+
+      setIsSubmitting(true);
+      setError(null);
+      setPendingConfirmation(null);
+
+      try {
+        const match = await matchItems(trimmed, items, {
+          matcher: matcherRef.current,
+          threshold,
+          maxMatcherCandidates,
+          forceMatcher: true,
+        });
+        setIsSubmitting(false);
+
+        if (!match) {
+          setError(`No AI command match found for "${trimmed}".`);
+          return null;
+        }
+
+        await executeMatch(match);
+        return match.item;
+      } catch (err) {
+        setIsSubmitting(false);
+        setError(err instanceof Error ? err.message : "AI command failed.");
         return null;
       }
     },
@@ -188,7 +225,7 @@ export function AICommandRoot({
     recognizerRef.current = createSpeechRecognizer({
       onResult: (transcript) => {
         setQueryState(transcript);
-        void submitQuery(transcript);
+        void submitMatcherQuery(transcript);
       },
       onError: (message) => {
         setError(message);
@@ -203,13 +240,14 @@ export function AICommandRoot({
       recognizerRef.current?.cleanup();
       recognizerRef.current = null;
     };
-  }, [submitQuery]);
+  }, [submitMatcherQuery]);
 
   const value: AICommandContextValue = {
     query,
     setQuery,
     items,
     filteredItems,
+    hasMatcher: matcherRef.current !== undefined,
     activeIndex,
     setActiveIndex,
     isListening,
@@ -222,6 +260,7 @@ export function AICommandRoot({
     startListening,
     stopListening,
     submitQuery,
+    submitMatcherQuery,
     selectItem,
     confirmPending,
     cancelPending,

@@ -10,7 +10,8 @@ type CommandDialogProps = {
 }
 
 export default function CommandDialog({ open, onOpenChange, items }: CommandDialogProps) {
-  const { error, isListening, isSubmitting, stopListening } = useAICommand()
+  const { error, hasMatcher, isListening, isSubmitting, query, stopListening, submitMatcherQuery } =
+    useAICommand()
 
   useEffect(() => {
     if (!open && isListening) {
@@ -130,6 +131,19 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
 
                 <AICommand.Confirmation className="command-dialog-confirmation" />
 
+                {hasMatcher && query.trim() ? (
+                  <button
+                    type="button"
+                    className="command-dialog-item command-dialog-item-ai"
+                    onClick={() => void submitMatcherQuery()}
+                  >
+                    <span className="command-dialog-item-value">Ask AI</span>
+                    <span className="command-dialog-item-description">
+                      Send &quot;{query.trim()}&quot; to the language model.
+                    </span>
+                  </button>
+                ) : null}
+
                 <AICommand.List className="command-dialog-list">
                   {items.map((item) => (
                     <AICommand.Item
@@ -149,9 +163,11 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                   ))}
                 </AICommand.List>
 
-                <AICommand.Empty className="command-dialog-empty">
-                  No matching command.
-                </AICommand.Empty>
+                {!hasMatcher || !query.trim() ? (
+                  <AICommand.Empty className="command-dialog-empty">
+                    No matching command.
+                  </AICommand.Empty>
+                ) : null}
 
                 <div className="command-dialog-actions">
                   <div className="command-dialog-shortcuts" aria-hidden="true">
@@ -166,8 +182,8 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                   {isSubmitting
                     ? 'Working...'
                     : error
-                      ? 'Try another phrase, or press Tab to use the mic.'
-                      : 'Press Tab for mic mode, then Enter to run the top match.'}
+                      ? 'Try another phrase, ask AI, or press Tab to use the mic.'
+                      : 'Press Enter to run the top match, or click Ask AI.'}
                 </span>
               </div>
             </>

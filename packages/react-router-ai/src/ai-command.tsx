@@ -111,7 +111,12 @@ export function AICommandInput({
       );
     } else if (event.key === "Enter") {
       event.preventDefault();
-      void ctx.submitQuery();
+      const item = ctx.filteredItems[ctx.activeIndex];
+      if (item) {
+        void ctx.selectItem(item);
+      } else if (ctx.hasMatcher) {
+        void ctx.submitMatcherQuery();
+      }
     } else if (event.key === "Escape") {
       event.preventDefault();
       ctx.closeDialog();

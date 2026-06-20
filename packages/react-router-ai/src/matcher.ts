@@ -5,6 +5,7 @@ export type MatchItemsOptions = {
   matcher?: AICommandMatcher;
   threshold?: number;
   maxMatcherCandidates?: number;
+  forceMatcher?: boolean;
 };
 
 export async function matchItems(
@@ -16,10 +17,17 @@ export async function matchItems(
     matcher,
     threshold = 0.45,
     maxMatcherCandidates,
+    forceMatcher = false,
   } = options;
 
   const trimmed = query.trim();
   if (!trimmed) return null;
+
+  if (forceMatcher) {
+    if (!matcher) {
+      throw new Error("AI matching is not available.");
+    }
+  }
 
   const ranked = rankCommandItems(trimmed, items);
   const activeItems = items.filter((item) => !item.disabled);
@@ -41,7 +49,9 @@ export async function matchItems(
       };
     }
 
-    return null;
+    if (forceMatcher) {
+      return null;
+    }
   }
 
   const bestLocal = ranked[0];

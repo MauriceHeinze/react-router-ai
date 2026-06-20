@@ -113,6 +113,7 @@ export type AICommandContextValue = {
   setQuery: (query: string) => void;
   items: AICommandItem[];
   filteredItems: AICommandItem[];
+  hasMatcher: boolean;
   activeIndex: number;
   setActiveIndex: Dispatch<SetStateAction<number>>;
   isListening: boolean;
@@ -125,6 +126,7 @@ export type AICommandContextValue = {
   startListening: () => void;
   stopListening: () => void;
   submitQuery: (query?: string) => Promise<AICommandItem | null>;
+  submitMatcherQuery: (query?: string) => Promise<AICommandItem | null>;
   selectItem: (item: AICommandItem) => Promise<void>;
   confirmPending: () => Promise<void>;
   cancelPending: () => void;

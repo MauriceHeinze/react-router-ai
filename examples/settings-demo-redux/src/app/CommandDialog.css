@@ -576,6 +576,21 @@
   cursor: pointer;
 }
 
+.command-dialog-item-ai {
+  width: 100%;
+  margin-bottom: 8px;
+  text-align: left;
+  background:
+    linear-gradient(135deg, rgba(219, 234, 254, 0.94) 0%, rgba(239, 246, 255, 0.98) 100%);
+  border-color: rgba(59, 130, 246, 0.28);
+}
+
+.command-dialog-item-ai:hover {
+  border-color: rgba(37, 99, 235, 0.4);
+  background:
+    linear-gradient(135deg, rgba(191, 219, 254, 0.95) 0%, rgba(224, 242, 254, 0.98) 100%);
+}
+
 .command-dialog-item[aria-selected='true'] {
   border-color: rgba(59, 130, 246, 0.48);
   background: rgba(239, 246, 255, 0.94);
@@ -584,6 +599,18 @@
 .theme-dark .command-dialog-item {
   background: rgba(15, 23, 42, 0.7);
   border-color: rgba(148, 163, 184, 0.16);
+}
+
+.theme-dark .command-dialog-item-ai {
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.96) 100%);
+  border-color: rgba(96, 165, 250, 0.3);
+}
+
+.theme-dark .command-dialog-item-ai:hover {
+  border-color: rgba(125, 211, 252, 0.42);
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 1) 100%);
 }
 
 .theme-dark .command-dialog-item[aria-selected='true'] {
