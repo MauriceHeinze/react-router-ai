@@ -80,6 +80,10 @@ export function createOpenAICommandMatcher(
   } = options;
 
   return async (query, candidates) => {
+    if (!apiKey.trim()) {
+      throw new Error("OpenAI API key is missing.");
+    }
+
     const candidateLimit =
       maxCandidates === undefined ? undefined : Math.max(1, Math.floor(maxCandidates));
     const items = candidateLimit ? candidates.slice(0, candidateLimit) : candidates;

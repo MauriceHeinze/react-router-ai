@@ -533,7 +533,7 @@ function SubmitButton({ query }: { query: string }) {
 }
 
 describe("AICommand custom matcher", () => {
-  it("sends bounded candidates to the matcher and executes its selection", async () => {
+  it("sends the active command catalog to the matcher and executes its selection", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
@@ -567,7 +567,7 @@ describe("AICommand custom matcher", () => {
 
     await waitFor(() => expect(matcher).toHaveBeenCalledTimes(1));
     const [, candidates] = matcher.mock.calls[0]!;
-    expect(candidates.length).toBeLessThanOrEqual(10);
+    expect(candidates).toHaveLength(3);
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
@@ -1177,6 +1177,16 @@ describe("createOpenAICommandMatcher", () => {
     const items: AICommandItem[] = [{ id: "a", value: "A", onSelect: vi.fn() }];
     const result = await matcher("test", items);
     expect(result).toBeNull();
+  });
+
+  it("throws a clear error when the OpenAI API key is missing", async () => {
+    const matcher = createOpenAICommandMatcher({
+      apiKey: "   ",
+      endpoint: "https://example.com/v1/chat/completions",
+    });
+
+    const items: AICommandItem[] = [{ id: "a", value: "A", onSelect: vi.fn() }];
+    await expect(matcher("test", items)).rejects.toThrow("OpenAI API key is missing.");
   });
 });
 

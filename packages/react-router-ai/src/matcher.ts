@@ -15,17 +15,17 @@ export async function matchItems(
   const {
     matcher,
     threshold = 0.45,
-    maxMatcherCandidates = 10,
+    maxMatcherCandidates,
   } = options;
 
   const trimmed = query.trim();
   if (!trimmed) return null;
 
   const ranked = rankCommandItems(trimmed, items);
-  const matcherCandidates =
-    ranked.length > 0
-      ? ranked.slice(0, maxMatcherCandidates)
-      : items.filter((item) => !item.disabled).slice(0, maxMatcherCandidates);
+  const activeItems = items.filter((item) => !item.disabled);
+  const matcherLimit =
+    maxMatcherCandidates === undefined ? undefined : Math.max(1, Math.floor(maxMatcherCandidates));
+  const matcherCandidates = matcherLimit ? activeItems.slice(0, matcherLimit) : activeItems;
 
   if (matcher) {
     const matched = await matcher(trimmed, matcherCandidates);

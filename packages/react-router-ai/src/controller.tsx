@@ -35,7 +35,7 @@ export function AICommandRoot({
   children,
   matcher,
   threshold = 0.45,
-  maxMatcherCandidates = 10,
+  maxMatcherCandidates,
   maxVisibleItems,
 }: PropsWithChildren<AICommandRootProps>) {
   const registry = useCommandRegistry();
