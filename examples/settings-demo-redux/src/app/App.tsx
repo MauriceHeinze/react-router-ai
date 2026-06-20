@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
-import { AICommand } from 'react-router-ai'
+import { AICommand, createOpenAICommandMatcher } from 'react-router-ai'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { createOpenAiCommandMatcher } from './openai-command-matcher.ts'
 import CommandDialog from './CommandDialog.tsx'
 import SettingsLayout from '../features/settings/SettingsLayout.tsx'
 import { defineSettingsCommands, routes } from '../features/settings/index.ts'
@@ -27,7 +26,13 @@ function AppShell() {
     return location.pathname
   }, [currentRoute, location.pathname])
   const openAiCommandMatcher = useMemo(
-    () => createOpenAiCommandMatcher({ pageContext }),
+    () =>
+      createOpenAICommandMatcher({
+        apiKey: import.meta.env.VITE_OPENAI_API_KEY as string,
+        model: 'gpt-5-nano',
+        reasoningEffort: 'minimal',
+        pageContext,
+      }),
     [pageContext],
   )
 

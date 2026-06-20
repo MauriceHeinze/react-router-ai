@@ -1,13 +1,22 @@
 import type { AICommandItem, AICommandMatcher } from "./types";
 
+export type OpenAICommandMatcherFetch = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) => Promise<Response>;
+
 export type OpenAICommandMatcherOptions = {
   apiKey: string;
   model?: string;
   endpoint?: string;
   reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high" | "xhigh";
   serviceTier?: "auto" | "default" | "flex" | "priority";
-  pageContext?: string;
+  pageContext?: string | (() => string | null | undefined);
   maxCandidates?: number;
+  headers?: Record<string, string>;
+  project?: string;
+  organization?: string;
+  fetch?: OpenAICommandMatcherFetch;
 };
 
 type ChatCompletionResponse = {
@@ -31,6 +40,15 @@ function serializeItem(item: AICommandItem) {
   };
 }
 
+function resolvePageContext(
+  pageContext?: string | (() => string | null | undefined),
+): string | undefined {
+  if (typeof pageContext === "function") {
+    return pageContext() ?? undefined;
+  }
+  return pageContext ?? undefined;
+}
+
 function createDynamicRequestContext(query: string, pageContext?: string) {
   const parts = [];
   if (pageContext) {
@@ -38,6 +56,10 @@ function createDynamicRequestContext(query: string, pageContext?: string) {
   }
   parts.push(`query: ${query}`);
   return parts.join("\n");
+}
+
+function getCommandIds(items: readonly AICommandItem[]) {
+  return items.map((item) => item.id);
 }
 
 export function createOpenAICommandMatcher(
@@ -51,17 +73,33 @@ export function createOpenAICommandMatcher(
     serviceTier,
     pageContext,
     maxCandidates,
+    headers,
+    project,
+    organization,
+    fetch: fetchImplementation,
   } = options;
 
   return async (query, candidates) => {
-    const items = maxCandidates ? candidates.slice(0, maxCandidates) : candidates;
+    const candidateLimit =
+      maxCandidates === undefined ? undefined : Math.max(1, Math.floor(maxCandidates));
+    const items = candidateLimit ? candidates.slice(0, candidateLimit) : candidates;
     if (items.length === 0) return null;
+    const resolvedFetch = fetchImplementation ?? globalThis.fetch;
+    if (!resolvedFetch) {
+      throw new Error("OpenAI command matching requires fetch.");
+    }
 
-    const response = await fetch(endpoint, {
+    const currentPageContext = resolvePageContext(pageContext);
+    const commandIds = getCommandIds(items);
+
+    const response = await resolvedFetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
+        ...(organization ? { "OpenAI-Organization": organization } : {}),
+        ...(project ? { "OpenAI-Project": project } : {}),
+        ...headers,
       },
       body: JSON.stringify({
         model,
@@ -73,6 +111,7 @@ export function createOpenAICommandMatcher(
             content: [
               "Select exactly one app command for the user query.",
               "Return the id of the command that best matches the user's intent.",
+              "If none of the commands clearly fit, return null for commandId.",
             ].join("\n"),
           },
           {
@@ -81,7 +120,7 @@ export function createOpenAICommandMatcher(
           },
           {
             role: "user",
-            content: createDynamicRequestContext(query, pageContext),
+            content: createDynamicRequestContext(query, currentPageContext),
           },
         ],
         tools: [
@@ -89,14 +128,21 @@ export function createOpenAICommandMatcher(
             type: "function",
             function: {
               name: "select_command",
-              description: "Return the best matching command for the user request.",
+              description: "Return the best matching command for the user request, or null.",
               parameters: {
                 type: "object",
                 additionalProperties: false,
                 properties: {
                   commandId: {
-                    type: "string",
-                    enum: items.map((item) => item.id),
+                    anyOf: [
+                      {
+                        type: "string",
+                        enum: commandIds,
+                      },
+                      {
+                        type: "null",
+                      },
+                    ],
                   },
                 },
                 required: ["commandId"],
@@ -121,7 +167,12 @@ export function createOpenAICommandMatcher(
     const rawArguments = data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
     if (!rawArguments) return null;
 
-    const parsed = JSON.parse(rawArguments) as { commandId?: string };
+    let parsed: { commandId?: string | null };
+    try {
+      parsed = JSON.parse(rawArguments) as { commandId?: string | null };
+    } catch {
+      return null;
+    }
     if (!parsed.commandId) return null;
 
     return items.find((item) => item.id === parsed.commandId) ?? null;

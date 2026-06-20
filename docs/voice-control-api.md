@@ -45,7 +45,7 @@ Provides matching, execution, voice input, and local command registration.
 
 Both the built-in fallback and custom matchers can receive explicit page context from the host app. Pass a string such as `Settings > Billing (/settings/billing)` via `llmFallback.pageContext` or your own matcher options so the model can see the current page without the library inferring it.
 
-For OpenAI Chat Completions integrations, the package can provide that callback via `createOpenAICommandMatcher(...)`, which defaults to `gpt-5-nano` with `reasoning_effort: "minimal"` and places stable command input before dynamic page/query context.
+For OpenAI Chat Completions integrations, the package can provide that callback via `createOpenAICommandMatcher(...)`, which defaults to `gpt-5-nano` with `reasoning_effort: "minimal"`, accepts page context as a string or callback, and can return no match when nothing clearly fits.
 
 ```ts
 useVoiceCommand(command)

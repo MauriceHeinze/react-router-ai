@@ -11,7 +11,10 @@ export {
   AICommandVoiceButton,
 } from "./ai-command";
 export { createOpenAICommandMatcher } from "./openai-matcher";
-export type { OpenAICommandMatcherOptions } from "./openai-matcher";
+export type {
+  OpenAICommandMatcherFetch,
+  OpenAICommandMatcherOptions,
+} from "./openai-matcher";
 export { matchItems } from "./matcher";
 export { rankCommandItems } from "./local-matcher";
 export type {

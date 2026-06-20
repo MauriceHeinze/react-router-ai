@@ -1033,12 +1033,6 @@ describe("AICommand voice button", () => {
 describe("createOpenAICommandMatcher", () => {
   it("sends a chat completions request and returns the selected command", async () => {
     const onSelect = vi.fn();
-    const matcher = createOpenAICommandMatcher({
-      apiKey: "test-key",
-      endpoint: "https://example.com/v1/chat/completions",
-      model: "gpt-5-nano",
-      pageContext: "Settings > Billing (/settings/billing)",
-    });
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -1057,8 +1051,18 @@ describe("createOpenAICommandMatcher", () => {
         ],
       }),
     });
-
-    vi.stubGlobal("fetch", fetchMock);
+    const matcher = createOpenAICommandMatcher({
+      apiKey: "test-key",
+      endpoint: "https://example.com/v1/chat/completions",
+      model: "gpt-5-nano",
+      pageContext: () => "Settings > Billing (/settings/billing)",
+      organization: "org_123",
+      project: "proj_123",
+      headers: {
+        "X-Test-Header": "enabled",
+      },
+      fetch: fetchMock,
+    });
 
     const items: AICommandItem[] = [
       { id: "settings.billing.open", value: "Open billing", onSelect },
@@ -1069,13 +1073,20 @@ describe("createOpenAICommandMatcher", () => {
     expect(result?.id).toBe("settings.billing.open");
     const init = fetchMock.mock.calls[0]?.[1];
     const body = init?.body ? JSON.parse(String(init.body)) : null;
+    const headers = init?.headers as Record<string, string> | undefined;
     expect(body?.model).toBe("gpt-5-nano");
     expect(body?.reasoning_effort).toBe("minimal");
     expect(body?.messages?.[0]?.content).not.toContain("Current page:");
+    expect(body?.messages?.[0]?.content).toContain("return null for commandId");
     expect(body?.messages?.[1]?.content).toContain("Available commands:");
     expect(body?.messages?.[2]?.content).toBe(
       "current_page: Settings > Billing (/settings/billing)\nquery: go to billing",
     );
+    expect(body?.tools?.[0]?.function?.parameters?.properties?.commandId?.anyOf).toBeTruthy();
+    expect(headers?.Authorization).toBe("Bearer test-key");
+    expect(headers?.["OpenAI-Organization"]).toBe("org_123");
+    expect(headers?.["OpenAI-Project"]).toBe("proj_123");
+    expect(headers?.["X-Test-Header"]).toBe("enabled");
   });
 
   it("returns null when the API response has no tool call", async () => {
@@ -1093,6 +1104,68 @@ describe("createOpenAICommandMatcher", () => {
     const items: AICommandItem[] = [
       { id: "a", value: "A", onSelect: vi.fn() },
     ];
+    const result = await matcher("test", items);
+    expect(result).toBeNull();
+  });
+
+  it("returns null when the model explicitly declines to match a command", async () => {
+    const matcher = createOpenAICommandMatcher({
+      apiKey: "test-key",
+      endpoint: "https://example.com/v1/chat/completions",
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              tool_calls: [
+                {
+                  function: {
+                    arguments: JSON.stringify({ commandId: null }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const items: AICommandItem[] = [{ id: "a", value: "A", onSelect: vi.fn() }];
+    const result = await matcher("test", items);
+    expect(result).toBeNull();
+  });
+
+  it("returns null when the model returns invalid JSON", async () => {
+    const matcher = createOpenAICommandMatcher({
+      apiKey: "test-key",
+      endpoint: "https://example.com/v1/chat/completions",
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              tool_calls: [
+                {
+                  function: {
+                    arguments: "{not valid json",
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const items: AICommandItem[] = [{ id: "a", value: "A", onSelect: vi.fn() }];
     const result = await matcher("test", items);
     expect(result).toBeNull();
   });
