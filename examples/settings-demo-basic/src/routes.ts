@@ -242,10 +242,6 @@ export function defineSettingsCommands(
     description: route.description,
     phrases: route.phrases ?? [route.label.toLowerCase()],
     keywords: route.label.toLowerCase().split(' '),
-    highlight: {
-      targetId: route.id,
-      kind: 'navigation' as const,
-    },
     run: () => actions.navigate(route.path),
   }))
 
@@ -264,10 +260,6 @@ export function defineSettingsCommands(
       description: 'Change the application theme.',
       phrases: ['switch theme', 'use light mode', 'turn on dark mode', 'use system theme'],
       keywords: ['theme', 'light', 'dark', 'system', 'appearance'],
-      highlight: {
-        targetId: 'settings.appearance.theme',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Theme',
@@ -287,10 +279,6 @@ export function defineSettingsCommands(
       description: 'Change the layout density.',
       phrases: ['use compact mode', 'set comfortable density', 'change layout density'],
       keywords: ['density', 'compact', 'comfortable', 'appearance', 'layout'],
-      highlight: {
-        targetId: 'settings.appearance.density',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Density',
@@ -310,10 +298,6 @@ export function defineSettingsCommands(
       description: 'Change the application accent color.',
       phrases: ['use blue accent', 'set accent to green', 'change accent color'],
       keywords: ['accent', 'color', 'blue', 'green', 'amber', 'red', 'purple', 'appearance'],
-      highlight: {
-        targetId: 'settings.appearance.accent',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Accent color',
@@ -341,10 +325,6 @@ export function defineSettingsCommands(
       description: 'Turn email notifications on or off.',
       phrases: ['turn on email notifications', 'disable email alerts', 'change email notifications'],
       keywords: ['email', 'notifications', 'alerts', 'enable', 'disable'],
-      highlight: {
-        targetId: 'settings.notifications.email',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Email notifications',
@@ -364,10 +344,6 @@ export function defineSettingsCommands(
       description: 'Turn push notifications on or off.',
       phrases: ['turn on push notifications', 'disable push alerts', 'change push notifications'],
       keywords: ['push', 'notifications', 'alerts', 'enable', 'disable'],
-      highlight: {
-        targetId: 'settings.notifications.push',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Push notifications',
@@ -387,10 +363,6 @@ export function defineSettingsCommands(
       description: 'Change the workspace default language.',
       phrases: ['switch language to german', 'use english by default', 'change default language'],
       keywords: ['language', 'english', 'german', 'spanish', 'general', 'workspace'],
-      highlight: {
-        targetId: 'settings.general.language',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Default language',
@@ -415,10 +387,6 @@ export function defineSettingsCommands(
       description: 'Change the call recorder display name.',
       phrases: ['set recorder name', 'change notetaker name', 'rename recorder'],
       keywords: ['recorder', 'notetaker', 'name', 'call recorder'],
-      highlight: {
-        targetId: 'settings.call-recorder.name',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Recorder name',
@@ -438,10 +406,6 @@ export function defineSettingsCommands(
       description: 'Change the call recorder visual style.',
       phrases: ['use default recorder', 'set workspace style', 'use minimal recorder', 'hide recorder image'],
       keywords: ['recorder', 'style', 'default', 'workspace', 'minimal', 'none', 'notetaker'],
-      highlight: {
-        targetId: 'settings.call-recorder.style',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Recorder style',
@@ -461,10 +425,6 @@ export function defineSettingsCommands(
       description: 'Change the default call summary format.',
       phrases: ['use short summary', 'set bullet summary', 'use detailed recap'],
       keywords: ['summary', 'length', 'short', 'bullet', 'detailed', 'recap'],
-      highlight: {
-        targetId: 'settings.call-intelligence.summary-length',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Default summary length',
@@ -484,10 +444,6 @@ export function defineSettingsCommands(
       description: 'Change how long transcripts are kept.',
       phrases: ['keep transcripts for 30 days', 'retain calls for one year', 'keep transcripts forever'],
       keywords: ['transcript', 'retention', 'keep', 'days', 'year', 'forever'],
-      highlight: {
-        targetId: 'settings.call-intelligence.retention',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Transcript retention',
@@ -507,10 +463,6 @@ export function defineSettingsCommands(
       description: 'Change how often digest emails are sent.',
       phrases: ['send daily digest', 'switch to weekly digest', 'disable digest emails'],
       keywords: ['digest', 'frequency', 'daily', 'weekly', 'never', 'email'],
-      highlight: {
-        targetId: 'settings.notifications.digest-frequency',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Digest frequency',
@@ -530,10 +482,6 @@ export function defineSettingsCommands(
       description: 'Change the workspace timezone.',
       phrases: ['set timezone to berlin', 'use new york timezone', 'change timezone to tokyo'],
       keywords: ['timezone', 'berlin', 'new york', 'tokyo', 'time'],
-      highlight: {
-        targetId: 'settings.general.timezone',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Timezone',
@@ -553,10 +501,6 @@ export function defineSettingsCommands(
       description: 'Change the first day of the work week.',
       phrases: ['start week on monday', 'week starts on sunday'],
       keywords: ['week', 'start', 'monday', 'sunday', 'calendar'],
-      highlight: {
-        targetId: 'settings.general.week-start',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Week starts on',
@@ -576,10 +520,6 @@ export function defineSettingsCommands(
       description: 'Change the workspace password policy.',
       phrases: ['use basic passwords', 'set strong password policy', 'use custom password rules'],
       keywords: ['password', 'policy', 'basic', 'strong', 'custom', 'security'],
-      highlight: {
-        targetId: 'settings.security.password-policy',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Password policy',
@@ -599,10 +539,6 @@ export function defineSettingsCommands(
       description: 'Change the default visibility for new records.',
       phrases: ['make records private', 'set records to workspace', 'make records public'],
       keywords: ['record', 'visibility', 'private', 'workspace', 'public'],
-      highlight: {
-        targetId: 'settings.records.default-visibility',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Default record visibility',
@@ -622,10 +558,6 @@ export function defineSettingsCommands(
       description: 'Change which events trigger webhooks.',
       phrases: ['send all webhook events', 'webhook on record changes', 'webhook on user events'],
       keywords: ['webhook', 'events', 'all', 'record', 'user', 'developer'],
-      highlight: {
-        targetId: 'settings.developers.webhook-events',
-        kind: 'field',
-      },
       parameters: {
         value: {
           label: 'Webhook events',

@@ -41,8 +41,6 @@ Defines settings-style field controls and compiles them into explicit app comman
 
 Provides matching, execution, voice input, and local command registration.
 
-The provider also exposes the last executed highlight target through context so the host app can briefly mark the updated route or field without the library querying the DOM.
-
 `llmFallback.match(query, commands)` can replace the built-in browser `LanguageModel` fallback with an app-owned remote matcher.
 
 Both the built-in fallback and custom matchers can receive explicit page context from the host app. Pass a string such as `Settings > Billing (/settings/billing)` via `llmFallback.pageContext` or your own matcher options so the model can see the current page without the library inferring it.
@@ -76,10 +74,6 @@ Lower-level UI primitives for text and voice input when you need a custom layout
   title: string
   description?: string
   phrases?: string[]
-  highlight?: {
-    targetId: string
-    kind: "navigation" | "field"
-  }
   parameters?: {
     [key: string]: {
       label: string

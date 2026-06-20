@@ -1,0 +1,3 @@
+[mcp_servers.opencode]
+command = "npx"
+args = ["-y", "opencode-mcp"]

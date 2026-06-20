@@ -1,179 +1,137 @@
-import type { ReactNode } from "react";
+import type { Dispatch, ReactNode, RefObject, SetStateAction } from "react";
 
-export type VoiceCommandParameterType = "string" | "number" | "boolean";
-
-export type VoiceCommandHighlightKind = "navigation" | "field";
-
-export type VoiceCommandHighlight = {
-  targetId: string;
-  kind: VoiceCommandHighlightKind;
-};
-
-export type VoiceCommandParameterDefinition = {
-  label: string;
-  description?: string;
-  options?: readonly string[];
-  type?: VoiceCommandParameterType;
-};
-
-export type VoiceCommandParameters = Record<string, VoiceCommandParameterDefinition>;
-
-export type VoiceCommandExecutionContext<TArgs extends Record<string, unknown> = Record<string, unknown>> = {
-  command: VoiceCommand<TArgs>;
-  match: VoiceCommandMatch<TArgs>;
-  query: string;
-  readCurrentValue: () => unknown;
-};
-
-export type VoiceCommand<TArgs extends Record<string, unknown> = Record<string, unknown>> = {
+export type AICommandItem = {
   id: string;
-  title: string;
+  value: string;
+  keywords?: readonly string[];
   description?: string;
-  phrases?: string[];
-  keywords?: string[];
-  parameters?: VoiceCommandParameters;
+  disabled?: boolean;
   confirmation?: boolean | string;
-  highlight?: VoiceCommandHighlight;
-  read?: () => unknown;
-  run: (args: TArgs, context: VoiceCommandExecutionContext<TArgs>) => void | Promise<void>;
+  onSelect: () => void | Promise<void>;
 };
 
-export type VoiceCommandMatch<TArgs extends Record<string, unknown> = Record<string, unknown>> = {
-  command: VoiceCommand<TArgs>;
+export type AICommandMatch = {
+  item: AICommandItem;
   query: string;
   confidence: number;
-  source: "fuzzy" | "llm";
-  parameters: TArgs;
-  missingParameters: string[];
+  source: "local" | "matcher";
 };
 
-export type VoiceFieldType = "boolean" | "enum" | "string" | "number";
+export type AICommandMatcher = (
+  query: string,
+  candidates: readonly AICommandItem[],
+) => Promise<AICommandItem | null | undefined>;
 
-export type VoiceField<TValue = unknown> = {
-  id: string;
-  label: string;
-  description?: string;
-  type: VoiceFieldType;
-  options?: readonly string[];
-  phrases?: string[];
-  keywords?: string[];
-  route?: string;
-  highlight?: VoiceCommandHighlight;
-  read?: () => TValue;
-  write: (value: TValue) => void | Promise<void>;
-  confirmation?: boolean | string;
-};
-
-export type VoiceFieldCommandOptions = {
-  navigate?: (to: string) => void;
-};
-
-export type VoiceCommandLlmCandidate = {
-  commandId: string | null;
-  confidence?: number;
-  parameters?: Record<string, unknown>;
-};
-
-export type BuiltInLlmFallbackOptions = {
-  enabled?: boolean;
-  promptPrefix?: string;
-  pageContext?: string;
-  match?: (
-    query: string,
-    commands: VoiceCommand[],
-  ) => Promise<VoiceCommandLlmCandidate | VoiceCommandLlmCandidate[] | null>;
-};
-
-export type VoiceProviderProps = {
-  commands: VoiceCommand[];
-  threshold?: number;
-  ambiguityThreshold?: number;
-  fuzzyMatching?: boolean;
-  llmFallback?: BuiltInLlmFallbackOptions;
+export type AICommandRootProps = {
   children: ReactNode;
+  matcher?: AICommandMatcher;
+  threshold?: number;
+  maxMatcherCandidates?: number;
 };
 
-export type VoiceContextValue = {
-  commands: VoiceCommand[];
+export type AICommandDialogProps = {
+  children: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
+export type AICommandInputProps = {
+  placeholder?: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  onFocus?: (event: React.FocusEvent<HTMLInputElement>) => void;
+  onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
+  autoFocus?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export type AICommandListProps = {
+  children?: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export type AICommandItemProps = AICommandItem & {
+  children: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export type AICommandEmptyProps = {
+  children: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export type AICommandLoadingProps = {
+  children?: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export type AICommandErrorProps = {
+  children?: (error: string) => ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export type AICommandConfirmationProps = {
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export type AICommandVoiceButtonProps = {
+  children?: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+};
+
+export type AICommandRegistryEntry = {
+  id: string;
+  getItem: () => AICommandItem;
+};
+
+export type AICommandRegistry = {
+  register: (entry: AICommandRegistryEntry) => () => void;
+  getItems: () => AICommandItem[];
+  subscribe: (listener: () => void) => () => void;
+};
+
+export type AICommandDialogController = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+};
+
+export type AICommandContextValue = {
   query: string;
+  setQuery: (query: string) => void;
+  items: AICommandItem[];
+  filteredItems: AICommandItem[];
+  activeIndex: number;
+  setActiveIndex: Dispatch<SetStateAction<number>>;
   isListening: boolean;
   isSubmitting: boolean;
-  lastMatch: VoiceCommandMatch | null;
-  lastHighlight: VoiceCommandHighlight | null;
-  candidates: VoiceCommandMatch[] | null;
-  pendingConfirmation: VoiceCommandMatch | null;
   error: string | null;
-  setQuery: (value: string) => void;
-  submitQuery: (value?: string) => Promise<VoiceCommandMatch | null>;
-  selectMatch: (match: VoiceCommandMatch) => Promise<void>;
-  clearCandidates: () => void;
+  pendingConfirmation: AICommandMatch | null;
+  dialogRef: RefObject<AICommandDialogController | null>;
+  openDialog: () => void;
+  closeDialog: () => void;
+  startListening: () => void;
+  stopListening: () => void;
+  submitQuery: (query?: string) => Promise<AICommandItem | null>;
+  selectItem: (item: AICommandItem) => Promise<void>;
   confirmPending: () => Promise<void>;
   cancelPending: () => void;
-  startListening: () => void;
-  stopListening: () => void;
-  registerCommand: (command: VoiceCommand) => () => void;
-};
-
-export type BaseIntent = {
-  id: string;
-  title: string;
-  description?: string;
-  phrases?: string[];
-  keywords?: string[];
-};
-
-export type NavigationIntent = BaseIntent & {
-  type: "navigation";
-  to: string;
-};
-
-export type ActionIntent = BaseIntent & {
-  type: "action";
-  action: string;
-  payload?: Record<string, unknown>;
-};
-
-export type Intent = NavigationIntent | ActionIntent;
-
-export type IntentMatch = {
-  intent: Intent;
-  query: string;
-  confidence: number;
-  source: "fuzzy" | "llm";
-};
-
-export type IntentProviderProps = {
-  intents: Intent[];
-  onMatch: (match: IntentMatch) => void | Promise<void>;
-  threshold?: number;
-  ambiguityThreshold?: number;
-  fuzzyMatching?: boolean;
-  llmFallback?: BuiltInLlmFallbackOptions;
-  children: ReactNode;
-};
-
-export type IntentContextValue = {
-  intents: Intent[];
-  query: string;
-  isListening: boolean;
-  isSubmitting: boolean;
-  lastMatch: IntentMatch | null;
-  lastHighlight: VoiceCommandHighlight | null;
-  candidates: IntentMatch[] | null;
-  error: string | null;
-  setQuery: (value: string) => void;
-  submitQuery: (value?: string) => Promise<IntentMatch | null>;
-  selectMatch: (match: IntentMatch) => Promise<void>;
-  clearCandidates: () => void;
-  startListening: () => void;
-  stopListening: () => void;
+  registerItem: (entry: AICommandRegistryEntry) => () => void;
 };
 
 declare global {
   interface Window {
     SpeechRecognition?: SpeechRecognitionConstructor;
     webkitSpeechRecognition?: SpeechRecognitionConstructor;
-    LanguageModel?: LanguageModelConstructor;
   }
 }
 
@@ -208,29 +166,4 @@ export interface SpeechRecognitionInstance extends EventTarget {
 
 export interface SpeechRecognitionConstructor {
   new (): SpeechRecognitionInstance;
-}
-
-export type LanguageModelAvailability =
-  | "available"
-  | "downloadable"
-  | "downloading"
-  | "unavailable";
-
-export interface LanguageModelCreateMonitor {
-  addEventListener(
-    type: "downloadprogress",
-    listener: (event: { loaded: number }) => void,
-  ): void;
-}
-
-export interface LanguageModelSession {
-  prompt: (input: string) => Promise<string>;
-  destroy?: () => void;
-}
-
-export interface LanguageModelConstructor {
-  availability: () => Promise<LanguageModelAvailability>;
-  create: (options?: {
-    monitor?: (monitor: LanguageModelCreateMonitor) => void;
-  }) => Promise<LanguageModelSession>;
 }

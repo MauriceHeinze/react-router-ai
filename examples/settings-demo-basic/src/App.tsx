@@ -1,5 +1,5 @@
-import { useMemo, useState, type ReactNode } from 'react'
-import { VoiceProvider, defineVoiceCommands, useVoiceController } from 'react-router-ai'
+import { useMemo, useState } from 'react'
+import { VoiceProvider, defineVoiceCommands } from 'react-router-ai'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import CommandDialog from './CommandDialog.tsx'
 import { SearchIcon } from './Icons.tsx'
@@ -91,80 +91,70 @@ function AppShell() {
   return (
     <div className={`app-shell theme-${effectiveTheme}`}>
       <VoiceProvider commands={commands} fuzzyMatching={false} llmFallback={{ enabled: true, match: openAiCommandMatcher }}>
-        <VoiceHighlightBridge>
-          {(highlightTargetId) => (
-            <>
-              <Routes>
-                <Route path="/" element={<LandingPage onOpenCommand={() => setDialogOpen(true)} />} />
-                <Route
-                  path="/settings/*"
-                  element={
-                    <SettingsLayout
-                      onOpenCommand={() => setDialogOpen(true)}
-                      highlightTargetId={highlightTargetId}
-                      theme={theme}
-                      onThemeChange={setTheme}
-                      density={density}
-                      onDensityChange={setDensity}
-                      accent={accent}
-                      onAccentChange={setAccent}
-                      emailNotifications={emailNotifications}
-                      onEmailNotificationsChange={setEmailNotifications}
-                      pushNotifications={pushNotifications}
-                      onPushNotificationsChange={setPushNotifications}
-                      defaultLanguage={defaultLanguage}
-                      onDefaultLanguageChange={setDefaultLanguage}
-                      recorderName={recorderName}
-                      onRecorderNameChange={setRecorderName}
-                      recorderStyle={recorderStyle}
-                      onRecorderStyleChange={setRecorderStyle}
-                      summaryLength={summaryLength}
-                      onSummaryLengthChange={setSummaryLength}
-                      transcriptRetention={transcriptRetention}
-                      onTranscriptRetentionChange={setTranscriptRetention}
-                      digestFrequency={digestFrequency}
-                      onDigestFrequencyChange={setDigestFrequency}
-                      timezone={timezone}
-                      onTimezoneChange={setTimezone}
-                      weekStart={weekStart}
-                      onWeekStartChange={setWeekStart}
-                      passwordPolicy={passwordPolicy}
-                      onPasswordPolicyChange={setPasswordPolicy}
-                      recordVisibility={recordVisibility}
-                      onRecordVisibilityChange={setRecordVisibility}
-                      webhookEvents={webhookEvents}
-                      onWebhookEventsChange={setWebhookEvents}
-                    />
-                  }
+        <>
+          <Routes>
+            <Route path="/" element={<LandingPage onOpenCommand={() => setDialogOpen(true)} />} />
+            <Route
+              path="/settings/*"
+              element={
+                <SettingsLayout
+                  onOpenCommand={() => setDialogOpen(true)}
+                  theme={theme}
+                  onThemeChange={setTheme}
+                  density={density}
+                  onDensityChange={setDensity}
+                  accent={accent}
+                  onAccentChange={setAccent}
+                  emailNotifications={emailNotifications}
+                  onEmailNotificationsChange={setEmailNotifications}
+                  pushNotifications={pushNotifications}
+                  onPushNotificationsChange={setPushNotifications}
+                  defaultLanguage={defaultLanguage}
+                  onDefaultLanguageChange={setDefaultLanguage}
+                  recorderName={recorderName}
+                  onRecorderNameChange={setRecorderName}
+                  recorderStyle={recorderStyle}
+                  onRecorderStyleChange={setRecorderStyle}
+                  summaryLength={summaryLength}
+                  onSummaryLengthChange={setSummaryLength}
+                  transcriptRetention={transcriptRetention}
+                  onTranscriptRetentionChange={setTranscriptRetention}
+                  digestFrequency={digestFrequency}
+                  onDigestFrequencyChange={setDigestFrequency}
+                  timezone={timezone}
+                  onTimezoneChange={setTimezone}
+                  weekStart={weekStart}
+                  onWeekStartChange={setWeekStart}
+                  passwordPolicy={passwordPolicy}
+                  onPasswordPolicyChange={setPasswordPolicy}
+                  recordVisibility={recordVisibility}
+                  onRecordVisibilityChange={setRecordVisibility}
+                  webhookEvents={webhookEvents}
+                  onWebhookEventsChange={setWebhookEvents}
                 />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
 
-              <button
-                className="floating-command-button"
-                type="button"
-                onClick={() => setDialogOpen(true)}
-                aria-label="Open command palette"
-              >
-                <SearchIcon className="floating-command-icon" />
-              </button>
+          <button
+            className="floating-command-button"
+            type="button"
+            onClick={() => setDialogOpen(true)}
+            aria-label="Open command palette"
+          >
+            <SearchIcon className="floating-command-icon" />
+          </button>
 
-              <CommandDialog
-                open={dialogOpen}
-                onOpen={() => setDialogOpen(true)}
-                onClose={() => setDialogOpen(false)}
-              />
-            </>
-          )}
-        </VoiceHighlightBridge>
+          <CommandDialog
+            open={dialogOpen}
+            onOpen={() => setDialogOpen(true)}
+            onClose={() => setDialogOpen(false)}
+          />
+        </>
       </VoiceProvider>
     </div>
   )
-}
-
-function VoiceHighlightBridge({ children }: { children: (highlightTargetId: string | null) => ReactNode }) {
-  const { lastHighlight } = useVoiceController()
-  return <>{children(lastHighlight?.targetId ?? null)}</>
 }
 
 export default function App() {

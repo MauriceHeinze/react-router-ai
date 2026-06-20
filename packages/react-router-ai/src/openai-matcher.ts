@@ -1,16 +1,13 @@
-import type { BuiltInLlmFallbackOptions, VoiceCommand } from "./types";
+import type { AICommandItem, AICommandMatcher } from "./types";
 
-const VALUE_NORMALIZATION_PROMPT =
-  'Normalize common spoken contact values into their typed form. For example, convert "hello at googlemail.com" to "hello@googlemail.com".';
-const COMMAND_CATALOG_PREFIX = "Available commands: ";
-
-export type OpenAiVoiceCommandMatcherOptions = {
-  apiKey?: string;
+export type OpenAICommandMatcherOptions = {
+  apiKey: string;
   model?: string;
   endpoint?: string;
   reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high" | "xhigh";
   serviceTier?: "auto" | "default" | "flex" | "priority";
   pageContext?: string;
+  maxCandidates?: number;
 };
 
 type ChatCompletionResponse = {
@@ -25,46 +22,31 @@ type ChatCompletionResponse = {
   }>;
 };
 
-function serializeCommand(command: VoiceCommand) {
-  const parameters = command.parameters
-    ? Object.fromEntries(
-        Object.entries(command.parameters).map(([key, definition]) => [
-          key,
-          {
-            ...(definition.options?.length ? { options: definition.options } : {}),
-            ...(!definition.options?.length && definition.type ? { type: definition.type } : {}),
-          },
-        ]),
-      )
-    : undefined;
-
+function serializeItem(item: AICommandItem) {
   return {
-    id: command.id,
-    ...(command.description ? { description: command.description } : {}),
-    phrases: command.phrases ?? [],
-    keywords: command.keywords ?? [],
-    ...(parameters ? { parameters } : {}),
+    id: item.id,
+    value: item.value,
+    ...(item.description ? { description: item.description } : {}),
+    keywords: item.keywords ?? [],
   };
 }
 
-function buildMessageContext(options: OpenAiVoiceCommandMatcherOptions) {
-  const pageContext = options.pageContext?.trim();
-  return pageContext ? [`Current page: ${pageContext}`] : [];
-}
-
-export function createOpenAiVoiceCommandMatcher(
-  options: OpenAiVoiceCommandMatcherOptions = {},
-): NonNullable<BuiltInLlmFallbackOptions["match"]> {
+export function createOpenAICommandMatcher(
+  options: OpenAICommandMatcherOptions,
+): AICommandMatcher {
   const {
     apiKey,
     model = "gpt-5-nano",
     endpoint = "https://api.openai.com/v1/chat/completions",
     reasoningEffort = "minimal",
     serviceTier,
+    pageContext,
+    maxCandidates,
   } = options;
 
-  return async (query, commands) => {
-    if (!apiKey) return null;
+  return async (query, candidates) => {
+    const items = maxCandidates ? candidates.slice(0, maxCandidates) : candidates;
+    if (items.length === 0) return null;
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -81,20 +63,13 @@ export function createOpenAiVoiceCommandMatcher(
             role: "system",
             content: [
               "Select exactly one app command for the user query.",
-              "If the user wants to open or manage a page, choose the page command.",
-              "If the user includes a target setting value, choose the setting command and fill parameters.",
-              "If the user names only a field, choose the page that owns it.",
-              ...buildMessageContext(options),
-              'The parameters object must contain only the actual values the user provided, keyed by parameter name (e.g. {"value": "dark"}).',
-              VALUE_NORMALIZATION_PROMPT,
-              "Do not return parameter definitions, schemas, or option lists.",
-              "If a value is missing, omit the parameter or set it to null.",
-              "Return tool arguments only.",
+              "Return the id of the command that best matches the user's intent.",
+              ...(pageContext ? [`Current page: ${pageContext}`] : []),
             ].join("\n"),
           },
           {
             role: "user",
-            content: `${COMMAND_CATALOG_PREFIX}${JSON.stringify(commands.map(serializeCommand))}`,
+            content: `Available commands: ${JSON.stringify(items.map(serializeItem))}`,
           },
           {
             role: "user",
@@ -113,14 +88,7 @@ export function createOpenAiVoiceCommandMatcher(
                 properties: {
                   commandId: {
                     type: "string",
-                    enum: commands.map((command) => command.id),
-                  },
-                  confidence: {
-                    type: "number",
-                  },
-                  parameters: {
-                    type: "object",
-                    additionalProperties: true,
+                    enum: items.map((item) => item.id),
                   },
                 },
                 required: ["commandId"],
@@ -145,16 +113,9 @@ export function createOpenAiVoiceCommandMatcher(
     const rawArguments = data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
     if (!rawArguments) return null;
 
-    const parsed = JSON.parse(rawArguments) as {
-      commandId?: string;
-      confidence?: number;
-      parameters?: Record<string, unknown>;
-    };
+    const parsed = JSON.parse(rawArguments) as { commandId?: string };
+    if (!parsed.commandId) return null;
 
-    return {
-      commandId: parsed.commandId ?? null,
-      confidence: parsed.confidence,
-      parameters: parsed.parameters,
-    };
+    return items.find((item) => item.id === parsed.commandId) ?? null;
   };
 }

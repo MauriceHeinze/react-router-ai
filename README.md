@@ -55,9 +55,6 @@ function AppShell() {
 ```
 
 `VoiceWidget` is a self-contained floating assistant that includes the orb button and the command dialog shown above. For a custom layout, use the lower-level `VoiceCommandPalette` and `VoiceButton` primitives instead.
-
-Commands and derived field commands can also carry `highlight` metadata. The provider exposes the last executed highlight target through context, so a host app can briefly draw a blue outline around the route, card, or field that changed without the library touching the DOM itself.
-
 The core model is command-first:
 
 - `run` stays app-owned, so commands can call `setState`, `dispatch`, `navigate`, or service functions directly.
