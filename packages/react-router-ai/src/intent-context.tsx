@@ -16,6 +16,7 @@ import type {
   IntentMatch,
   IntentProviderProps,
   SpeechRecognitionInstance,
+  VoiceCommandHighlight,
   VoiceCommand,
   VoiceCommandExecutionContext,
   VoiceCommandMatch,
@@ -39,6 +40,37 @@ function getAmbiguousCandidates(matches: VoiceCommandMatch[], threshold: number,
   if (best.confidence - second.confidence > ambiguityThreshold) return null;
 
   return viable.slice(0, 3);
+}
+
+function mergeClarifyingCandidates(candidateLists: VoiceCommandMatch[][]) {
+  const byCommandId = new Map<string, VoiceCommandMatch>();
+
+  for (const list of candidateLists) {
+    for (const match of list) {
+      const existing = byCommandId.get(match.command.id);
+      if (!existing) {
+        byCommandId.set(match.command.id, match);
+        continue;
+      }
+
+      const nextMissingCount = match.missingParameters.length;
+      const existingMissingCount = existing.missingParameters.length;
+      if (
+        nextMissingCount < existingMissingCount ||
+        (nextMissingCount === existingMissingCount && match.confidence > existing.confidence)
+      ) {
+        byCommandId.set(match.command.id, match);
+      }
+    }
+  }
+
+  return [...byCommandId.values()]
+    .sort((a, b) => {
+      const missingDifference = a.missingParameters.length - b.missingParameters.length;
+      if (missingDifference !== 0) return missingDifference;
+      return b.confidence - a.confidence;
+    })
+    .slice(0, 3);
 }
 
 async function executeMatch(match: VoiceCommandMatch) {
@@ -74,12 +106,33 @@ export function VoiceProvider({
   const [isListening, setIsListening] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastMatch, setLastMatch] = useState<VoiceCommandMatch | null>(null);
+  const [lastHighlight, setLastHighlight] = useState<VoiceCommandHighlight | null>(null);
   const [candidates, setCandidates] = useState<VoiceCommandMatch[] | null>(null);
   const [pendingConfirmation, setPendingConfirmation] = useState<VoiceCommandMatch | null>(null);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const registeredCommandsRef = useRef<VoiceCommand[]>([]);
   const [registeredCommandsVersion, setRegisteredCommandsVersion] = useState(0);
+  const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function clearHighlightTimeout() {
+    if (highlightTimeoutRef.current) {
+      clearTimeout(highlightTimeoutRef.current);
+      highlightTimeoutRef.current = null;
+    }
+  }
+
+  function flashHighlight(highlight: VoiceCommandHighlight | undefined) {
+    clearHighlightTimeout();
+    setLastHighlight(highlight ?? null);
+
+    if (!highlight) return;
+
+    highlightTimeoutRef.current = setTimeout(() => {
+      setLastHighlight(null);
+      highlightTimeoutRef.current = null;
+    }, 1400);
+  }
 
   const allCommands = useMemo(
     () => [...commands, ...registeredCommandsRef.current],
@@ -112,6 +165,7 @@ export function VoiceProvider({
     return () => {
       recognition.stop();
       recognitionRef.current = null;
+      clearHighlightTimeout();
     };
   }, []);
 
@@ -126,6 +180,7 @@ export function VoiceProvider({
     }
 
     setPendingConfirmation(null);
+    flashHighlight(match.command.highlight);
     await executeMatch(match);
     return match;
   }
@@ -143,9 +198,11 @@ export function VoiceProvider({
     setCandidates(null);
     setPendingConfirmation(null);
     setError(null);
+    clearHighlightTimeout();
+    setLastHighlight(null);
+    const rankedMatches = rankVoiceCommands(trimmed, allCommands);
 
     if (fuzzyMatching) {
-      const rankedMatches = rankVoiceCommands(trimmed, allCommands);
       const bestMatch = rankedMatches[0] ?? null;
 
       if (bestMatch && bestMatch.confidence >= threshold) {
@@ -153,6 +210,14 @@ export function VoiceProvider({
         if (ambiguous) {
           setLastMatch(null);
           setCandidates(ambiguous);
+          setIsSubmitting(false);
+          return null;
+        }
+
+        if (bestMatch.missingParameters.length > 0) {
+          setLastMatch(null);
+          setCandidates(mergeClarifyingCandidates([rankedMatches]));
+          setError(`I need a bit more detail for "${bestMatch.command.title}".`);
           setIsSubmitting(false);
           return null;
         }
@@ -167,17 +232,46 @@ export function VoiceProvider({
 
     if (llmMatches.length === 0) {
       setLastMatch(null);
+      clearHighlightTimeout();
+      setLastHighlight(null);
       setError(`No command match found for "${trimmed}".`);
       return null;
     }
 
     if (llmMatches.length > 1 && llmMatches[0].confidence - llmMatches[1].confidence <= ambiguityThreshold) {
       setLastMatch(null);
-      setCandidates(llmMatches.slice(0, 3));
+      clearHighlightTimeout();
+      setLastHighlight(null);
+      setCandidates(mergeClarifyingCandidates([llmMatches, rankedMatches]));
       return null;
     }
 
-    return handleResolvedMatch(llmMatches[0]);
+    const bestLlmMatch = llmMatches[0];
+    if (!bestLlmMatch) {
+      setLastMatch(null);
+      setError(`No command match found for "${trimmed}".`);
+      return null;
+    }
+
+    if (bestLlmMatch.confidence < threshold || bestLlmMatch.missingParameters.length > 0) {
+      const clarifyingCandidates = mergeClarifyingCandidates([llmMatches, rankedMatches]);
+      if (clarifyingCandidates.length > 0) {
+        setLastMatch(null);
+        clearHighlightTimeout();
+        setLastHighlight(null);
+        setCandidates(clarifyingCandidates);
+        setError(`I need a clearer command for "${trimmed}".`);
+        return null;
+      }
+
+      setLastMatch(null);
+      clearHighlightTimeout();
+      setLastHighlight(null);
+      setError(`No command match found for "${trimmed}".`);
+      return null;
+    }
+
+    return handleResolvedMatch(bestLlmMatch);
   }
 
   async function selectMatch(match: VoiceCommandMatch) {
@@ -192,6 +286,7 @@ export function VoiceProvider({
     if (!pendingConfirmation) return;
     const pending = pendingConfirmation;
     setPendingConfirmation(null);
+    flashHighlight(pending.command.highlight);
     await executeMatch(pending);
   }
 
@@ -217,6 +312,7 @@ export function VoiceProvider({
     isListening,
     isSubmitting,
     lastMatch,
+    lastHighlight,
     candidates,
     pendingConfirmation,
     error,
@@ -237,8 +333,13 @@ export function VoiceProvider({
       }
 
       setError(null);
-      setIsListening(true);
-      recognition.start();
+      try {
+        recognition.start();
+        setIsListening(true);
+      } catch {
+        setIsListening(false);
+        setError("Voice input failed. Keep typing instead.");
+      }
     },
     stopListening() {
       recognitionRef.current?.stop();
@@ -287,6 +388,9 @@ export function useVoiceCommand(command: VoiceCommand) {
       },
       get confirmation() {
         return commandRef.current.confirmation;
+      },
+      get highlight() {
+        return commandRef.current.highlight;
       },
       read() {
         return commandRef.current.read?.();
@@ -357,6 +461,7 @@ function IntentContextBridge({
     isListening: voice.isListening,
     isSubmitting: voice.isSubmitting,
     lastMatch: voice.lastMatch ? toIntentMatch(intents, voice.lastMatch) : null,
+    lastHighlight: voice.lastHighlight,
     candidates: voice.candidates
       ? voice.candidates
           .map((match) => toIntentMatch(intents, match))

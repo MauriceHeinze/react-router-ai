@@ -1,8 +1,16 @@
 import type { ReactNode } from 'react'
 import './FormComponents.css'
 
-export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`settings-card ${className}`}>{children}</div>
+export function Card({
+  children,
+  className = '',
+  highlighted = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  highlighted?: boolean;
+}) {
+  return <div className={`settings-card ${className} ${highlighted ? 'highlighted' : ''}`}>{children}</div>
 }
 
 export function SectionHeader({ title, description }: { title: string; description?: string }) {
@@ -14,9 +22,19 @@ export function SectionHeader({ title, description }: { title: string; descripti
   )
 }
 
-export function Field({ label, children, hint }: { label?: string; children: ReactNode; hint?: string }) {
+export function Field({
+  label,
+  children,
+  hint,
+  highlighted = false,
+}: {
+  label?: string;
+  children: ReactNode;
+  hint?: string;
+  highlighted?: boolean;
+}) {
   return (
-    <label className="form-field">
+    <label className={`form-field ${highlighted ? 'highlighted' : ''}`}>
       <span className="form-label">{label}</span>
       {children}
       {hint ? <span className="form-hint">{hint}</span> : null}

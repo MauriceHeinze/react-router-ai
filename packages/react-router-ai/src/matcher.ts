@@ -4,6 +4,17 @@ function normalize(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 }
 
+function normalizeFreeformValue(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+at\s+/g, "@")
+    .replace(/\s+dot\s+/g, ".")
+    .replace(/\s*\.\s*/g, ".")
+    .replace(/\s*@\s*/g, "@")
+    .replace(/\s+/g, " ");
+}
+
 function toTokens(value: string) {
   return normalize(value).split(" ").filter(Boolean);
 }
@@ -13,8 +24,35 @@ function includesPhrase(query: string, phrase: string) {
   return query.includes(phrase);
 }
 
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function toBooleanishValue(value: string) {
+  const normalizedValue = normalize(value);
+  if (
+    ["on", "enable", "enabled", "true", "yes", "active", "activated"].includes(normalizedValue)
+  ) {
+    return true;
+  }
+  if (
+    ["off", "disable", "disabled", "false", "no", "inactive", "deactivated"].includes(normalizedValue)
+  ) {
+    return false;
+  }
+  return null;
+}
+
 function resolveOption(query: string, options: readonly string[]) {
   const normalizedQuery = normalize(query);
+  const queryBoolean = resolveBoolean(query);
+  if (queryBoolean !== null) {
+    const booleanishOption = options.find((option) => toBooleanishValue(option) === queryBoolean);
+    if (booleanishOption) {
+      return { value: booleanishOption, score: 0.95 };
+    }
+  }
+
   let best: { value: string; score: number } | null = null;
 
   for (const option of options) {
@@ -43,8 +81,15 @@ function resolveOption(query: string, options: readonly string[]) {
 
 function resolveBoolean(query: string) {
   const normalizedQuery = normalize(query);
-  if (/\b(on|enable|enabled|true|yes)\b/.test(normalizedQuery)) return true;
-  if (/\b(off|disable|disabled|false|no)\b/.test(normalizedQuery)) return false;
+  if (
+    /\b(do not|don't|does not|doesn't|should not|shouldn't|not be|stop|without)\b/.test(
+      normalizedQuery,
+    )
+  ) {
+    return false;
+  }
+  if (/\b(on|enable|enabled|true|yes|activate|activated)\b/.test(normalizedQuery)) return true;
+  if (/\b(off|disable|disabled|false|no|deactivate|deactivated)\b/.test(normalizedQuery)) return false;
   return null;
 }
 
@@ -55,17 +100,35 @@ function resolveNumber(query: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function resolveTrailingString(query: string, phrases: string[] | undefined) {
+function resolveTrailingString(
+  query: string,
+  phrases: string[] | undefined,
+  parameterLabel?: string,
+) {
   const normalizedQuery = normalize(query);
+
+  if (parameterLabel) {
+    const normalizedLabel = escapeRegExp(normalize(parameterLabel));
+    const labelPattern = new RegExp(
+      `\\b${normalizedLabel.replace(/\s+/g, "\\s+")}\\b\\s+(?:to|as|with)\\s+(.+)$`,
+      "i",
+    );
+    const labelMatch = query.match(labelPattern);
+    if (labelMatch?.[1]) return normalizeFreeformValue(labelMatch[1]);
+  }
+
+  const commandPattern = /\b(?:set|change|update|rename|use)\b.+\b(?:to|as|with)\b\s+(.+)$/i;
+  const commandMatch = query.match(commandPattern);
+  if (commandMatch?.[1]) return normalizeFreeformValue(commandMatch[1]);
 
   for (const phrase of phrases ?? []) {
     const normalizedPhrase = normalize(phrase);
     if (!normalizedPhrase || !normalizedQuery.startsWith(normalizedPhrase)) continue;
     const remainder = normalizedQuery.slice(normalizedPhrase.length).trim();
-    if (remainder) return remainder;
+    if (remainder) return normalizeFreeformValue(remainder.replace(/^(?:to|as|with)\s+/i, ""));
   }
 
-  return normalizedQuery || null;
+  return null;
 }
 
 export function resolveCommandParameters(query: string, command: VoiceCommand) {
@@ -107,7 +170,7 @@ export function resolveCommandParameters(query: string, command: VoiceCommand) {
 
     if (!matched && parameter.type !== "boolean" && parameter.type !== "number" && !parameter.options?.length) {
       if (parameterEntries.length === 1) {
-        const value = resolveTrailingString(query, command.phrases);
+        const value = resolveTrailingString(query, command.phrases, parameter.label);
         if (value) {
           values[key] = value;
           matched = true;

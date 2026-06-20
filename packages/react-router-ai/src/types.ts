@@ -2,6 +2,13 @@ import type { ReactNode } from "react";
 
 export type VoiceCommandParameterType = "string" | "number" | "boolean";
 
+export type VoiceCommandHighlightKind = "navigation" | "field";
+
+export type VoiceCommandHighlight = {
+  targetId: string;
+  kind: VoiceCommandHighlightKind;
+};
+
 export type VoiceCommandParameterDefinition = {
   label: string;
   description?: string;
@@ -26,6 +33,7 @@ export type VoiceCommand<TArgs extends Record<string, unknown> = Record<string, 
   keywords?: string[];
   parameters?: VoiceCommandParameters;
   confirmation?: boolean | string;
+  highlight?: VoiceCommandHighlight;
   read?: () => unknown;
   run: (args: TArgs, context: VoiceCommandExecutionContext<TArgs>) => void | Promise<void>;
 };
@@ -50,6 +58,7 @@ export type VoiceField<TValue = unknown> = {
   phrases?: string[];
   keywords?: string[];
   route?: string;
+  highlight?: VoiceCommandHighlight;
   read?: () => TValue;
   write: (value: TValue) => void | Promise<void>;
   confirmation?: boolean | string;
@@ -68,6 +77,7 @@ export type VoiceCommandLlmCandidate = {
 export type BuiltInLlmFallbackOptions = {
   enabled?: boolean;
   promptPrefix?: string;
+  pageContext?: string;
   match?: (
     query: string,
     commands: VoiceCommand[],
@@ -89,6 +99,7 @@ export type VoiceContextValue = {
   isListening: boolean;
   isSubmitting: boolean;
   lastMatch: VoiceCommandMatch | null;
+  lastHighlight: VoiceCommandHighlight | null;
   candidates: VoiceCommandMatch[] | null;
   pendingConfirmation: VoiceCommandMatch | null;
   error: string | null;
@@ -147,6 +158,7 @@ export type IntentContextValue = {
   isListening: boolean;
   isSubmitting: boolean;
   lastMatch: IntentMatch | null;
+  lastHighlight: VoiceCommandHighlight | null;
   candidates: IntentMatch[] | null;
   error: string | null;
   setQuery: (value: string) => void;

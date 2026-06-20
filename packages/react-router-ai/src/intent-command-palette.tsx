@@ -15,7 +15,6 @@ export function VoiceCommandPalette({
     setQuery,
     submitQuery,
     error,
-    lastMatch,
     candidates,
     clearCandidates,
     selectMatch,
@@ -44,12 +43,6 @@ export function VoiceCommandPalette({
         />
         <button type="submit">{submitLabel}</button>
       </div>
-      {lastMatch ? (
-        <p style={{ marginTop: 8 }}>
-          Match: <strong>{lastMatch.command.title}</strong> ({Math.round(lastMatch.confidence * 100)}%,{" "}
-          {lastMatch.source})
-        </p>
-      ) : null}
       {pendingConfirmation ? (
         <div style={{ marginTop: 8 }}>
           <p style={{ marginBottom: 8 }}>
@@ -69,7 +62,7 @@ export function VoiceCommandPalette({
       ) : null}
       {candidates?.length ? (
         <div style={{ marginTop: 8 }}>
-          <p style={{ marginBottom: 8 }}>Choose a command:</p>
+          <p style={{ marginBottom: 8 }}>Did you mean one of these?</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {candidates.map((candidate) => (
               <button

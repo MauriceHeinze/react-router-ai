@@ -25,7 +25,7 @@ function getNestedSettingsPath(path: string) {
   return path.replace('/settings/', '')
 }
 
-function SidebarNav({ filter }: { filter: string }) {
+function SidebarNav({ filter, highlightTargetId }: { filter: string; highlightTargetId?: string | null }) {
   const [dataExpanded, setDataExpanded] = useState(true)
   const lowerFilter = filter.trim().toLowerCase()
 
@@ -48,10 +48,18 @@ function SidebarNav({ filter }: { filter: string }) {
       <NavLink
         key={route.path}
         to={route.path}
-        className={({ isActive }) => (isActive ? 'sidebar-link active' : 'sidebar-link')}
+        className={({ isActive }) =>
+          [
+            'sidebar-link',
+            isActive ? 'active' : '',
+            highlightTargetId === route.id ? 'highlighted' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')
+        }
       >
         {Icon ? <Icon className="sidebar-link-icon" /> : null}
-        <span>{route.label}</span>
+        <span className="sidebar-link-label">{route.label}</span>
       </NavLink>
     )
   }
@@ -88,6 +96,7 @@ function SidebarNav({ filter }: { filter: string }) {
 
 type SettingsLayoutProps = {
   onOpenCommand: () => void
+  highlightTargetId?: string | null
   theme: AppTheme
   onThemeChange: (theme: AppTheme) => void
   density: AppDensity
@@ -124,6 +133,7 @@ type SettingsLayoutProps = {
 
 function Shell({
   onOpenCommand,
+  highlightTargetId,
   theme,
   onThemeChange,
   density,
@@ -167,6 +177,7 @@ function Shell({
   )
 
   const HeaderIcon = iconMap[currentRoute.icon]
+  const isRouteHighlighted = highlightTargetId === currentRoute.id
 
   if (location.pathname === '/settings' || location.pathname === '/settings/') {
     return <Navigate to="/settings/call-recorder" replace />
@@ -197,14 +208,14 @@ function Shell({
           />
         </div>
 
-        <SidebarNav filter={search} />
+        <SidebarNav filter={search} highlightTargetId={highlightTargetId} />
       </aside>
 
       <div className="settings-main">
-        <header className="settings-topbar">
-          <div className="topbar-title">
+        <header className={`settings-topbar ${isRouteHighlighted ? 'highlighted' : ''}`}>
+          <div className={`topbar-title ${isRouteHighlighted ? 'highlighted' : ''}`}>
             {HeaderIcon ? <HeaderIcon className="topbar-icon" /> : null}
-            <span>{currentRoute.title}</span>
+            <span className="topbar-title-label">{currentRoute.title}</span>
           </div>
           <button className="topbar-help" type="button" onClick={onOpenCommand}>
             <HelpIcon className="topbar-help-icon" />
@@ -217,20 +228,22 @@ function Shell({
             {routes.map((route) => (
               <Route
                 key={route.path}
-                path={getNestedSettingsPath(route.path)}
-                element={
-                  route.path === '/settings/call-recorder' ? (
-                    <CallRecorderPage
-                      recorderName={recorderName}
-                      onRecorderNameChange={onRecorderNameChange}
-                      recorderStyle={recorderStyle}
-                      onRecorderStyleChange={onRecorderStyleChange}
-                    />
-                  ) : (
-                    <SettingsPage
-                      route={route}
-                      theme={theme}
-                      onThemeChange={onThemeChange}
+              path={getNestedSettingsPath(route.path)}
+              element={
+                route.path === '/settings/call-recorder' ? (
+                  <CallRecorderPage
+                    highlightTargetId={highlightTargetId}
+                    recorderName={recorderName}
+                    onRecorderNameChange={onRecorderNameChange}
+                    recorderStyle={recorderStyle}
+                    onRecorderStyleChange={onRecorderStyleChange}
+                  />
+                ) : (
+                  <SettingsPage
+                    route={route}
+                    highlightTargetId={highlightTargetId}
+                    theme={theme}
+                    onThemeChange={onThemeChange}
                       density={density}
                       onDensityChange={onDensityChange}
                       accent={accent}

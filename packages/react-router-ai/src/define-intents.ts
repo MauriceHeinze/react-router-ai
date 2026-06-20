@@ -68,6 +68,10 @@ export function defineVoiceCommands<TCommand extends VoiceCommand>(commands: TCo
     ) {
       throw new Error(`Command "${command.id}" has an invalid confirmation value.`);
     }
+
+    if (command.highlight && !command.highlight.targetId.trim()) {
+      throw new Error(`Command "${command.id}" has an invalid highlight target.`);
+    }
   });
 
   return commands;

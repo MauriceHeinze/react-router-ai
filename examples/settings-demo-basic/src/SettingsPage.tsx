@@ -18,6 +18,7 @@ import './SettingsPage.css'
 
 type SettingsPageProps = {
   route: SettingsRoute
+  highlightTargetId?: string | null
   theme: AppTheme
   onThemeChange: (theme: AppTheme) => void
   density: AppDensity
@@ -49,10 +50,10 @@ type SettingsPageProps = {
 }
 
 export default function SettingsPage(props: SettingsPageProps) {
-  const { route } = props
+  const { route, highlightTargetId } = props
   return (
     <section className="settings-page">
-      <div className="settings-page-header">
+      <div className={`settings-page-header ${highlightTargetId === route.id ? 'highlighted' : ''}`}>
         <h1>{route.title}</h1>
         <p>{route.description}</p>
       </div>

@@ -3,6 +3,7 @@ import type { BuiltInLlmFallbackOptions, VoiceCommand } from 'react-router-ai'
 type OpenAiCommandMatcherOptions = {
   apiKey?: string
   model?: string
+  pageContext?: string
 }
 
 type ChatCompletionResponse = {
@@ -16,6 +17,8 @@ type ChatCompletionResponse = {
     }
   }>
 }
+
+const COMMAND_CATALOG_PREFIX = 'Available commands: '
 
 function serializeCommand(command: VoiceCommand) {
   return {
@@ -35,6 +38,7 @@ export function createOpenAiCommandMatcher(
   const {
     apiKey = import.meta.env.VITE_OPENAI_API_KEY as string | undefined,
     model = 'gpt-5-nano',
+    pageContext,
   } = options
 
   return async (query, commands) => {
@@ -56,10 +60,19 @@ export function createOpenAiCommandMatcher(
           },
           {
             role: 'user',
-            content: JSON.stringify({
-              query,
-              commands: commands.map(serializeCommand),
-            }),
+            content: `${COMMAND_CATALOG_PREFIX}${JSON.stringify(commands.map(serializeCommand))}`,
+          },
+          ...(pageContext
+            ? [
+                {
+                  role: 'user' as const,
+                  content: `Current page: ${pageContext}`,
+                },
+              ]
+            : []),
+          {
+            role: 'user',
+            content: `query: ${query}`,
           },
         ],
         tools: [

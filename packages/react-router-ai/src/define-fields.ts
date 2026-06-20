@@ -1,6 +1,7 @@
 import { defineVoiceCommands } from "./define-intents";
 import type {
   VoiceCommand,
+  VoiceCommandHighlight,
   VoiceCommandParameterDefinition,
   VoiceField,
   VoiceFieldCommandOptions,
@@ -26,6 +27,10 @@ function ensureField(field: VoiceField<any>) {
 
   if (field.route !== undefined && field.route.trim().length === 0) {
     throw new Error(`Field "${field.id}" has an invalid route.`);
+  }
+
+  if (field.highlight && !field.highlight.targetId.trim()) {
+    throw new Error(`Field "${field.id}" has an invalid highlight target.`);
   }
 
   if (field.read !== undefined && typeof field.read !== "function") {
@@ -116,6 +121,11 @@ function isValidValue(field: VoiceField<any>, value: unknown) {
 }
 
 function toVoiceCommand(field: VoiceField<any>, options: VoiceFieldCommandOptions): VoiceCommand {
+  const highlight: VoiceCommandHighlight = field.highlight ?? {
+    targetId: field.id,
+    kind: "field",
+  };
+
   return {
     id: `${field.id}.set`,
     title: `Set ${field.label}`,
@@ -126,6 +136,7 @@ function toVoiceCommand(field: VoiceField<any>, options: VoiceFieldCommandOption
       value: buildParameter(field),
     },
     confirmation: field.confirmation,
+    highlight,
     read: field.read,
     async run({ value }) {
       if (!isValidValue(field, value)) return;

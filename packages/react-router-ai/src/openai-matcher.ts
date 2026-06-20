@@ -1,11 +1,16 @@
 import type { BuiltInLlmFallbackOptions, VoiceCommand } from "./types";
 
+const VALUE_NORMALIZATION_PROMPT =
+  'Normalize common spoken contact values into their typed form. For example, convert "hello at googlemail.com" to "hello@googlemail.com".';
+const COMMAND_CATALOG_PREFIX = "Available commands: ";
+
 export type OpenAiVoiceCommandMatcherOptions = {
   apiKey?: string;
   model?: string;
   endpoint?: string;
   reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high" | "xhigh";
   serviceTier?: "auto" | "default" | "flex" | "priority";
+  pageContext?: string;
 };
 
 type ChatCompletionResponse = {
@@ -21,13 +26,30 @@ type ChatCompletionResponse = {
 };
 
 function serializeCommand(command: VoiceCommand) {
+  const parameters = command.parameters
+    ? Object.fromEntries(
+        Object.entries(command.parameters).map(([key, definition]) => [
+          key,
+          {
+            ...(definition.options?.length ? { options: definition.options } : {}),
+            ...(!definition.options?.length && definition.type ? { type: definition.type } : {}),
+          },
+        ]),
+      )
+    : undefined;
+
   return {
     id: command.id,
-    title: command.title,
+    ...(command.description ? { description: command.description } : {}),
     phrases: command.phrases ?? [],
     keywords: command.keywords ?? [],
-    parameters: command.parameters ?? {},
+    ...(parameters ? { parameters } : {}),
   };
+}
+
+function buildMessageContext(options: OpenAiVoiceCommandMatcherOptions) {
+  const pageContext = options.pageContext?.trim();
+  return pageContext ? [`Current page: ${pageContext}`] : [];
 }
 
 export function createOpenAiVoiceCommandMatcher(
@@ -57,12 +79,26 @@ export function createOpenAiVoiceCommandMatcher(
         messages: [
           {
             role: "system",
-            content:
-              "Select exactly one app command for the user query. If the user wants to open or manage a page, choose the page command. If the user includes a target setting value, choose the setting command and fill parameters. If the user names only a field, choose the page that owns it. Return tool arguments only.",
+            content: [
+              "Select exactly one app command for the user query.",
+              "If the user wants to open or manage a page, choose the page command.",
+              "If the user includes a target setting value, choose the setting command and fill parameters.",
+              "If the user names only a field, choose the page that owns it.",
+              ...buildMessageContext(options),
+              'The parameters object must contain only the actual values the user provided, keyed by parameter name (e.g. {"value": "dark"}).',
+              VALUE_NORMALIZATION_PROMPT,
+              "Do not return parameter definitions, schemas, or option lists.",
+              "If a value is missing, omit the parameter or set it to null.",
+              "Return tool arguments only.",
+            ].join("\n"),
           },
           {
             role: "user",
-            content: `query: ${query}\ncommands: ${JSON.stringify(commands.map(serializeCommand))}`,
+            content: `${COMMAND_CATALOG_PREFIX}${JSON.stringify(commands.map(serializeCommand))}`,
+          },
+          {
+            role: "user",
+            content: `query: ${query}`,
           },
         ],
         tools: [

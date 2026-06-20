@@ -12,6 +12,8 @@ import { resolveCommandParameters } from "./matcher";
 
 const DEFAULT_PROMPT_PREFIX =
   "You map user requests to one voice command id from the provided catalog.";
+const VALUE_NORMALIZATION_PROMPT =
+  'Normalize common spoken contact values into their typed form. For example, convert "hello at googlemail.com" to "hello@googlemail.com".';
 
 function getLanguageModel() {
   if (typeof window === "undefined") return null;
@@ -30,15 +32,27 @@ function serializeCommand(command: VoiceCommand) {
   };
 }
 
+function buildPromptHeader(options?: BuiltInLlmFallbackOptions) {
+  const header = [options?.promptPrefix?.trim() || DEFAULT_PROMPT_PREFIX];
+  const pageContext = options?.pageContext?.trim();
+
+  if (pageContext) {
+    header.push(`Current page: ${pageContext}`);
+  }
+
+  return header;
+}
+
 function buildPrompt(
   query: string,
   commands: VoiceCommand[],
   options?: BuiltInLlmFallbackOptions,
 ) {
   return [
-    options?.promptPrefix?.trim() || DEFAULT_PROMPT_PREFIX,
+    ...buildPromptHeader(options),
     'Return strict JSON with this shape: {"commandId":"string|null","confidence":0-1,"parameters":{},"reason":"string"}.',
     'If no command is a reasonable match, return {"commandId":null,"confidence":0,"parameters":{},"reason":"no-match"}.',
+    VALUE_NORMALIZATION_PROMPT,
     `User query: ${JSON.stringify(query)}`,
     `Available commands: ${JSON.stringify(commands.map(serializeCommand))}`,
   ].join("\n");
@@ -50,9 +64,10 @@ function buildMultiplePrompt(
   options?: BuiltInLlmFallbackOptions,
 ) {
   return [
-    options?.promptPrefix?.trim() || DEFAULT_PROMPT_PREFIX,
+    ...buildPromptHeader(options),
     'Return strict JSON array with up to 3 matches in this shape: [{"commandId":"string","confidence":0-1,"parameters":{},"reason":"string"}].',
     'If no command is a reasonable match, return an empty array [].',
+    VALUE_NORMALIZATION_PROMPT,
     `User query: ${JSON.stringify(query)}`,
     `Available commands: ${JSON.stringify(commands.map(serializeCommand))}`,
   ].join("\n");
@@ -79,6 +94,36 @@ function parseMultipleResponse(raw: string) {
   return Array.isArray(parsed) ? parsed : [parsed];
 }
 
+function isValidParameterValue(command: VoiceCommand, key: string, value: unknown) {
+  const definition = command.parameters?.[key];
+  if (!definition) return false;
+
+  if (definition.options?.length) {
+    return typeof value === "string" && definition.options.includes(value);
+  }
+
+  if (definition.type === "boolean") return typeof value === "boolean";
+  if (definition.type === "number") return typeof value === "number" && Number.isFinite(value);
+  if (definition.type === "string" || !definition.type) {
+    return typeof value === "string" && value.trim().length > 0;
+  }
+
+  return false;
+}
+
+function validLlmParameters(command: VoiceCommand, parameters?: Record<string, unknown>) {
+  const values: Record<string, unknown> = {};
+  if (!parameters) return values;
+
+  for (const [key, value] of Object.entries(parameters)) {
+    if (isValidParameterValue(command, key, value)) {
+      values[key] = value;
+    }
+  }
+
+  return values;
+}
+
 async function createSession() {
   const LanguageModel = getLanguageModel();
   if (!LanguageModel) return null;
@@ -95,9 +140,10 @@ function toCommandMatch(
   parsed: VoiceCommandLlmCandidate,
 ): VoiceCommandMatch {
   const inferred = resolveCommandParameters(query, command);
+  const llmParameters = validLlmParameters(command, parsed.parameters);
   const parameters = {
     ...inferred.values,
-    ...(parsed.parameters ?? {}),
+    ...llmParameters,
   };
   const missingParameters = Object.keys(command.parameters ?? {}).filter(
     (key) => parameters[key] === undefined,

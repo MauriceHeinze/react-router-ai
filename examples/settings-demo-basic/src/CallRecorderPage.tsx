@@ -2,6 +2,7 @@ import './CallRecorderPage.css'
 import type { RecorderStyle } from './App.tsx'
 
 type CallRecorderPageProps = {
+  highlightTargetId?: string | null
   recorderName: string
   onRecorderNameChange: (name: string) => void
   recorderStyle: RecorderStyle
@@ -107,6 +108,7 @@ function PreviewCard({ name, style }: { name: string; style: RecorderStyle }) {
 }
 
 export default function CallRecorderPage({
+  highlightTargetId,
   recorderName,
   onRecorderNameChange,
   recorderStyle,
@@ -141,7 +143,7 @@ export default function CallRecorderPage({
 
   return (
     <section className="call-recorder-page">
-      <div className="recorder-heading">
+      <div className={`recorder-heading ${highlightTargetId === 'settings.call-recorder' ? 'highlighted' : ''}`}>
         <h1>Call recorder</h1>
         <p>Manage your call recorder settings</p>
       </div>
@@ -152,7 +154,9 @@ export default function CallRecorderPage({
           <p>Customize how the recorder appears in your team's meetings</p>
         </div>
 
-        <label className="recorder-field">
+        <label
+          className={`recorder-field ${highlightTargetId === 'settings.call-recorder.name' ? 'highlighted' : ''}`}
+        >
           <span className="recorder-label">Recorder name</span>
           <input
             type="text"
@@ -162,7 +166,9 @@ export default function CallRecorderPage({
           />
         </label>
 
-        <div className="style-field">
+        <div
+          className={`style-field ${highlightTargetId === 'settings.call-recorder.style' ? 'highlighted' : ''}`}
+        >
           <span className="recorder-label">Style</span>
           <div className="style-layout">
             <div className="style-options" role="radiogroup" aria-label="Recorder style">

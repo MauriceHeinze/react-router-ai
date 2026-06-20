@@ -34,6 +34,7 @@ import type { SettingsRoute } from './routes.ts'
 
 type SharedFormProps = {
   route: SettingsRoute
+  highlightTargetId?: string | null
   theme: AppTheme
   onThemeChange: (theme: AppTheme) => void
   density: AppDensity
@@ -92,10 +93,18 @@ function ProfileForm() {
   )
 }
 
-function AppearanceForm({ theme, onThemeChange, density, onDensityChange, accent, onAccentChange }: SharedFormProps) {
+function AppearanceForm({
+  theme,
+  onThemeChange,
+  density,
+  onDensityChange,
+  accent,
+  onAccentChange,
+  highlightTargetId,
+}: SharedFormProps) {
   return (
     <>
-      <Card>
+      <Card highlighted={highlightTargetId === 'settings.appearance.theme'}>
         <SectionHeader title="Theme" />
         <RadioGroup
           value={theme}
@@ -107,7 +116,7 @@ function AppearanceForm({ theme, onThemeChange, density, onDensityChange, accent
           ]}
         />
       </Card>
-      <Card>
+      <Card highlighted={highlightTargetId === 'settings.appearance.density'}>
         <SectionHeader title="Density" />
         <RadioGroup
           value={density}
@@ -118,7 +127,7 @@ function AppearanceForm({ theme, onThemeChange, density, onDensityChange, accent
           ]}
         />
       </Card>
-      <Card>
+      <Card highlighted={highlightTargetId === 'settings.appearance.accent'}>
         <SectionHeader title="Accent color" />
         <ColorSwatches
           value={accent}
@@ -166,6 +175,7 @@ function CallIntelligenceForm({
   onSummaryLengthChange,
   transcriptRetention,
   onTranscriptRetentionChange,
+  highlightTargetId,
 }: SharedFormProps) {
   const [transcription, setTranscription] = useState(true)
   const [coaching, setCoaching] = useState(false)
@@ -183,9 +193,12 @@ function CallIntelligenceForm({
           </Select>
         </Field>
       </Card>
-      <Card>
+      <Card highlighted={highlightTargetId === 'settings.call-intelligence.summary-length'}>
         <SectionHeader title="Summaries" />
-        <Field label="Default summary length">
+        <Field
+          label="Default summary length"
+          highlighted={highlightTargetId === 'settings.call-intelligence.summary-length'}
+        >
           <Select
             value={summaryLength}
             onChange={(event) => onSummaryLengthChange(event.target.value as AppSummaryLength)}
@@ -197,9 +210,12 @@ function CallIntelligenceForm({
         </Field>
         <Toggle checked={coaching} onChange={setCoaching} label="Enable coaching insights" />
       </Card>
-      <Card>
+      <Card highlighted={highlightTargetId === 'settings.call-intelligence.retention'}>
         <SectionHeader title="Data retention" />
-        <Field label="Keep transcripts for">
+        <Field
+          label="Keep transcripts for"
+          highlighted={highlightTargetId === 'settings.call-intelligence.retention'}
+        >
           <Select
             value={transcriptRetention}
             onChange={(event) => onTranscriptRetentionChange(event.target.value as AppRetention)}
@@ -291,6 +307,7 @@ function NotificationsForm({
   onPushNotificationsChange,
   digestFrequency,
   onDigestFrequencyChange,
+  highlightTargetId,
 }: SharedFormProps) {
   const [slack, setSlack] = useState(true)
   const [digest, setDigest] = useState(true)
@@ -299,14 +316,18 @@ function NotificationsForm({
     <>
       <Card>
         <SectionHeader title="Notification channels" />
-        <div className="form-field">
+        <div
+          className={`form-field ${highlightTargetId === 'settings.notifications.email' ? 'highlighted' : ''}`}
+        >
           <Toggle
             checked={emailNotifications}
             onChange={onEmailNotificationsChange}
             label="Email notifications"
           />
         </div>
-        <div className="form-field">
+        <div
+          className={`form-field ${highlightTargetId === 'settings.notifications.push' ? 'highlighted' : ''}`}
+        >
           <Toggle
             checked={pushNotifications}
             onChange={onPushNotificationsChange}
@@ -320,7 +341,10 @@ function NotificationsForm({
       <Card>
         <SectionHeader title="Email digests" />
         <Toggle checked={digest} onChange={setDigest} label="Send me a daily digest" />
-        <Field label="Digest frequency">
+        <Field
+          label="Digest frequency"
+          highlighted={highlightTargetId === 'settings.notifications.digest-frequency'}
+        >
           <Select
             value={digestFrequency}
             onChange={(event) => onDigestFrequencyChange(event.target.value as AppDigestFrequency)}
@@ -384,6 +408,7 @@ function GeneralForm({
   onTimezoneChange,
   weekStart,
   onWeekStartChange,
+  highlightTargetId,
 }: SharedFormProps) {
   return (
     <>
@@ -392,21 +417,21 @@ function GeneralForm({
         <Field label="Workspace name">
           <Input defaultValue="Acme Corp" />
         </Field>
-        <Field label="Timezone">
+        <Field label="Timezone" highlighted={highlightTargetId === 'settings.general.timezone'}>
           <Select value={timezone} onChange={(event) => onTimezoneChange(event.target.value as AppTimezone)}>
             <option value="Europe/Berlin">Europe/Berlin</option>
             <option value="America/New_York">America/New_York</option>
             <option value="Asia/Tokyo">Asia/Tokyo</option>
           </Select>
         </Field>
-        <Field label="Default language">
+        <Field label="Default language" highlighted={highlightTargetId === 'settings.general.language'}>
           <Select value={defaultLanguage} onChange={(event) => onDefaultLanguageChange(event.target.value as AppLanguage)}>
             <option value="en">English</option>
             <option value="de">German</option>
             <option value="es">Spanish</option>
           </Select>
         </Field>
-        <Field label="Week starts on">
+        <Field label="Week starts on" highlighted={highlightTargetId === 'settings.general.week-start'}>
           <Select value={weekStart} onChange={(event) => onWeekStartChange(event.target.value as AppWeekStart)}>
             <option value="monday">Monday</option>
             <option value="sunday">Sunday</option>
@@ -565,7 +590,7 @@ function BillingForm() {
   )
 }
 
-function DevelopersForm({ webhookEvents, onWebhookEventsChange }: SharedFormProps) {
+function DevelopersForm({ webhookEvents, onWebhookEventsChange, highlightTargetId }: SharedFormProps) {
   const keys = [
     { name: 'Production', created: 'Jan 5, 2026', lastUsed: '2 hours ago' },
     { name: 'Staging', created: 'Mar 12, 2026', lastUsed: '3 days ago' },
@@ -603,7 +628,7 @@ function DevelopersForm({ webhookEvents, onWebhookEventsChange }: SharedFormProp
         <Field label="Webhook URL">
           <Input placeholder="https://api.example.com/webhooks" />
         </Field>
-        <Field label="Events">
+        <Field label="Events" highlighted={highlightTargetId === 'settings.developers.webhook-events'}>
           <Select
             value={webhookEvents}
             onChange={(event) => onWebhookEventsChange(event.target.value as AppWebhookEvents)}
@@ -621,7 +646,7 @@ function DevelopersForm({ webhookEvents, onWebhookEventsChange }: SharedFormProp
   )
 }
 
-function SecurityForm({ passwordPolicy, onPasswordPolicyChange }: SharedFormProps) {
+function SecurityForm({ passwordPolicy, onPasswordPolicyChange, highlightTargetId }: SharedFormProps) {
   const [sso, setSso] = useState(false)
   const [mfa, setMfa] = useState(false)
   const logs = [
@@ -638,7 +663,7 @@ function SecurityForm({ passwordPolicy, onPasswordPolicyChange }: SharedFormProp
         <div className="form-field">
           <Toggle checked={mfa} onChange={setMfa} label="Require MFA for all members" />
         </div>
-        <Field label="Password policy">
+        <Field label="Password policy" highlighted={highlightTargetId === 'settings.security.password-policy'}>
           <Select
             value={passwordPolicy}
             onChange={(event) => onPasswordPolicyChange(event.target.value as AppPasswordPolicy)}
@@ -664,13 +689,16 @@ function SecurityForm({ passwordPolicy, onPasswordPolicyChange }: SharedFormProp
   )
 }
 
-function RecordsForm({ recordVisibility, onRecordVisibilityChange }: SharedFormProps) {
+function RecordsForm({ recordVisibility, onRecordVisibilityChange, highlightTargetId }: SharedFormProps) {
   const [audit, setAudit] = useState(true)
   return (
     <>
       <Card>
         <SectionHeader title="Record settings" description="Control how records are stored and tracked." />
-        <Field label="Default visibility">
+        <Field
+          label="Default visibility"
+          highlighted={highlightTargetId === 'settings.records.default-visibility'}
+        >
           <Select
             value={recordVisibility}
             onChange={(event) => onRecordVisibilityChange(event.target.value as AppRecordVisibility)}
