@@ -8,6 +8,10 @@ export function createNavigationCommand(route: SettingsRoute, navigate: (to: str
     description: route.description,
     phrases: route.phrases ?? [route.label.toLowerCase()],
     keywords: route.label.toLowerCase().split(' '),
+    highlight: {
+      targetId: route.id,
+      kind: 'navigation',
+    },
     run: () => navigate(route.path),
   }
 }

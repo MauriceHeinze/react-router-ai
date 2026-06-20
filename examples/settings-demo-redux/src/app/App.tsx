@@ -1,21 +1,47 @@
-import { useMemo, useState } from 'react'
-import { VoiceProvider, defineVoiceCommands } from 'react-router-ai'
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import CommandDialog from '../features/commands/CommandDialog.tsx'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { VoiceProvider, VoiceWidget, defineVoiceCommands, useVoiceController } from 'react-router-ai'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { createOpenAiCommandMatcher } from './openai-command-matcher.ts'
 import SettingsLayout from '../features/settings/SettingsLayout.tsx'
 import { defineSettingsCommands, routes } from '../features/settings/index.ts'
 import { useAppDispatch, useAppSelector } from '../features/settings/settings-store.ts'
 import LandingPage from '../pages/landing/LandingPage.tsx'
-import { SearchIcon } from '../shared/ui/Icons.tsx'
 import './App.css'
 
 function AppShell() {
   const navigate = useNavigate()
+  const location = useLocation()
   const dispatch = useAppDispatch()
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const [widgetOpen, setWidgetOpen] = useState(false)
   const theme = useAppSelector((state) => state.settings.theme)
-  const openAiCommandMatcher = useMemo(() => createOpenAiCommandMatcher(), [])
+  const currentRoute = useMemo(
+    () => routes.find((route) => route.path === location.pathname) ?? null,
+    [location.pathname],
+  )
+  const pageContext = useMemo(() => {
+    if (location.pathname === '/') return 'Home (/)'
+    if (currentRoute) {
+      return `Settings > ${currentRoute.title} (${currentRoute.path})`
+    }
+    return location.pathname
+  }, [currentRoute, location.pathname])
+  const openAiCommandMatcher = useMemo(
+    () => createOpenAiCommandMatcher({ pageContext }),
+    [pageContext],
+  )
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setWidgetOpen((open) => !open)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   const commands = useMemo(
     () =>
       defineVoiceCommands(
@@ -25,7 +51,7 @@ function AppShell() {
             dispatch,
             navigate: (to) => {
               navigate(to)
-              setDialogOpen(false)
+              setWidgetOpen(false)
             },
           },
         ),
@@ -37,25 +63,35 @@ function AppShell() {
   return (
     <div className={`app-shell theme-${effectiveTheme}`}>
       <VoiceProvider commands={commands} fuzzyMatching={false} llmFallback={{ enabled: true, match: openAiCommandMatcher }}>
-        <Routes>
-          <Route path="/" element={<LandingPage onOpenCommand={() => setDialogOpen(true)} />} />
-          <Route path="/settings/*" element={<SettingsLayout onOpenCommand={() => setDialogOpen(true)} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <VoiceHighlightBridge>
+          {(highlightTargetId) => (
+            <>
+              <Routes>
+                <Route path="/" element={<LandingPage onOpenCommand={() => setWidgetOpen(true)} />} />
+                <Route
+                  path="/settings/*"
+                  element={
+                    <SettingsLayout
+                      onOpenCommand={() => setWidgetOpen(true)}
+                      highlightTargetId={highlightTargetId}
+                    />
+                  }
+                />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
 
-        <button
-          className="floating-command-button"
-          type="button"
-          onClick={() => setDialogOpen(true)}
-          aria-label="Open command palette"
-        >
-          <SearchIcon className="floating-command-icon" />
-        </button>
-
-        <CommandDialog open={dialogOpen} onOpen={() => setDialogOpen(true)} onClose={() => setDialogOpen(false)} />
+              <VoiceWidget open={widgetOpen} onOpenChange={setWidgetOpen} />
+            </>
+          )}
+        </VoiceHighlightBridge>
       </VoiceProvider>
     </div>
   )
+}
+
+function VoiceHighlightBridge({ children }: { children: (highlightTargetId: string | null) => ReactNode }) {
+  const { lastHighlight } = useVoiceController()
+  return <>{children(lastHighlight?.targetId ?? null)}</>
 }
 
 export default function App() {

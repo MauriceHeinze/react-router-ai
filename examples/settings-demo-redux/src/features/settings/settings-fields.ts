@@ -398,7 +398,14 @@ export function createSettingsFields(dispatch: AppDispatch): VoiceField<any>[] {
       label: 'Billing email',
       description: 'Change the billing contact email.',
       type: 'string',
-      phrases: ['set billing email', 'change billing contact', 'update invoice email'],
+      phrases: [
+        'set billing email',
+        'change billing contact',
+        'update invoice email',
+        'update my billing email address',
+        'change my billing email address',
+        'set my billing email address to',
+      ],
       keywords: ['billing', 'email', 'invoice', 'contact'],
       route: '/settings/billing',
       write: (value) => {
