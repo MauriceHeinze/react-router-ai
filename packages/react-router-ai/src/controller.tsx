@@ -112,7 +112,7 @@ export function AICommandRoot({
       setPendingConfirmation(null);
 
       try {
-        const match = await matchItems(trimmed, registry.getItems(), {
+        const match = await matchItems(trimmed, items, {
           matcher: matcherRef.current,
           threshold,
           maxMatcherCandidates,
@@ -132,7 +132,7 @@ export function AICommandRoot({
         return null;
       }
     },
-    [threshold, maxMatcherCandidates, executeMatch],
+    [items, threshold, maxMatcherCandidates, executeMatch],
   );
 
   const selectItem = useCallback(
