@@ -163,6 +163,14 @@ Do not let docs describe APIs that no longer exist.
 - If the worktree has unrelated changes, leave them alone.
 - If generated output changes unexpectedly, inspect it before proceeding.
 
+## Git Workflow
+
+- After each completed turn that changes files, stage the intended changes with `git add`.
+- Create a commit with a scoped, descriptive message for that turn.
+- Push the commit to the current remote branch before finishing the turn.
+- If the worktree contains unrelated user changes, commit and push only the files that belong to the turn.
+- If verification fails because of unrelated pre-existing issues, note that clearly in the final response, but still commit and push the completed turn if the changed surface is verified.
+
 ## Final Response Checklist
 
 When reporting completed work, include:
