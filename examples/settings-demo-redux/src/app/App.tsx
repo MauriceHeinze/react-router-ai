@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { VoiceProvider, VoiceWidget, defineVoiceCommands, useVoiceController } from 'react-router-ai'
+import { useEffect, useMemo, useState } from 'react'
+import { VoiceProvider, VoiceWidget, defineVoiceCommands } from 'react-router-ai'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { createOpenAiCommandMatcher } from './openai-command-matcher.ts'
 import SettingsLayout from '../features/settings/SettingsLayout.tsx'
@@ -63,35 +63,25 @@ function AppShell() {
   return (
     <div className={`app-shell theme-${effectiveTheme}`}>
       <VoiceProvider commands={commands} fuzzyMatching={false} llmFallback={{ enabled: true, match: openAiCommandMatcher }}>
-        <VoiceHighlightBridge>
-          {(highlightTargetId) => (
-            <>
-              <Routes>
-                <Route path="/" element={<LandingPage onOpenCommand={() => setWidgetOpen(true)} />} />
-                <Route
-                  path="/settings/*"
-                  element={
-                    <SettingsLayout
-                      onOpenCommand={() => setWidgetOpen(true)}
-                      highlightTargetId={highlightTargetId}
-                    />
-                  }
+        <>
+          <Routes>
+            <Route path="/" element={<LandingPage onOpenCommand={() => setWidgetOpen(true)} />} />
+            <Route
+              path="/settings/*"
+              element={
+                <SettingsLayout
+                  onOpenCommand={() => setWidgetOpen(true)}
                 />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
 
-              <VoiceWidget open={widgetOpen} onOpenChange={setWidgetOpen} />
-            </>
-          )}
-        </VoiceHighlightBridge>
+          <VoiceWidget open={widgetOpen} onOpenChange={setWidgetOpen} />
+        </>
       </VoiceProvider>
     </div>
   )
-}
-
-function VoiceHighlightBridge({ children }: { children: (highlightTargetId: string | null) => ReactNode }) {
-  const { lastHighlight } = useVoiceController()
-  return <>{children(lastHighlight?.targetId ?? null)}</>
 }
 
 export default function App() {
