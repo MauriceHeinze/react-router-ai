@@ -271,7 +271,7 @@ describe("AICommand matching", () => {
     await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
   });
 
-  it("selects the active command with Enter", async () => {
+  it("submits the current query with Enter", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     renderCommandPalette({
@@ -284,11 +284,17 @@ describe("AICommand matching", () => {
     await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
   });
 
-  it("navigates through items with arrow keys and selects with Enter", async () => {
+  it("uses the matcher result on Enter instead of the active item", async () => {
     const user = userEvent.setup();
     const first = vi.fn();
     const second = vi.fn();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
+      id: "second",
+      value: "Second command",
+      onSelect: second,
+    });
     renderCommandPalette({
+      matcher,
       items: [
         { id: "first", value: "First command", onSelect: first },
         { id: "second", value: "Second command", onSelect: second },
@@ -299,27 +305,26 @@ describe("AICommand matching", () => {
     await user.keyboard("{ArrowDown}");
     await user.keyboard("{Enter}");
 
+    await waitFor(() => expect(matcher).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(second).toHaveBeenCalledTimes(1));
     expect(first).not.toHaveBeenCalled();
   });
 
   it("wraps keyboard navigation around the list", async () => {
     const user = userEvent.setup();
-    const first = vi.fn();
-    const second = vi.fn();
     renderCommandPalette({
       items: [
-        { id: "first", value: "First command", onSelect: first },
-        { id: "second", value: "Second command", onSelect: second },
+        { id: "first", value: "First command", onSelect: vi.fn() },
+        { id: "second", value: "Second command", onSelect: vi.fn() },
       ],
     });
 
     await user.type(screen.getByLabelText("Command query"), "command");
     await user.keyboard("{ArrowUp}");
-    await user.keyboard("{Enter}");
 
-    await waitFor(() => expect(second).toHaveBeenCalledTimes(1));
-    expect(first).not.toHaveBeenCalled();
+    const options = screen.getAllByRole("option");
+    expect(options[0]?.getAttribute("aria-selected")).toBe("false");
+    expect(options[1]?.getAttribute("aria-selected")).toBe("true");
   });
 
   it("resets the active item when the query changes", async () => {
