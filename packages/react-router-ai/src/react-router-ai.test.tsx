@@ -6,6 +6,7 @@ import { defineIntents, defineVoiceCommands } from "./define-intents";
 import { VoiceCommandPalette } from "./intent-command-palette";
 import { IntentProvider, VoiceProvider, useVoiceCommand } from "./intent-context";
 import { matchVoiceCommand } from "./matcher";
+import { createOpenAiVoiceCommandMatcher } from "./openai-matcher";
 import type { LanguageModelSession } from "./types";
 
 const themeOptions = ["light", "dark", "system"] as const;
@@ -329,6 +330,37 @@ describe("VoiceProvider", () => {
     expect(await screen.findByText(/llm/)).toBeTruthy();
   });
 
+  it("skips fuzzy matching when fuzzyMatching is disabled", async () => {
+    const user = userEvent.setup();
+    const run = vi.fn();
+    const match = vi.fn().mockResolvedValue({
+      commandId: "settings.billing.open",
+      confidence: 0.91,
+    });
+
+    render(
+      <VoiceProvider
+        commands={[
+          {
+            ...commands[0],
+            run,
+          },
+        ]}
+        fuzzyMatching={false}
+        llmFallback={{ enabled: true, match }}
+      >
+        <VoiceCommandPalette />
+      </VoiceProvider>,
+    );
+
+    await user.type(screen.getByLabelText("Voice command query"), "open billing");
+    await user.click(screen.getByRole("button", { name: "Run" }));
+
+    await waitFor(() => expect(match).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(run).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText(/llm/)).toBeTruthy();
+  });
+
   it("supports page-local command registration", async () => {
     const user = userEvent.setup();
     const run = vi.fn();
@@ -354,6 +386,88 @@ describe("VoiceProvider", () => {
     await user.click(screen.getByRole("button", { name: "Run" }));
 
     await waitFor(() => expect(run).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe("createOpenAiVoiceCommandMatcher", () => {
+  it("sends a chat completions request without a reasoning field", async () => {
+    const matcher = createOpenAiVoiceCommandMatcher({
+      apiKey: "test-key",
+      endpoint: "https://example.com/v1/chat/completions",
+      model: "gpt-5-nano",
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              tool_calls: [
+                {
+                  function: {
+                    arguments: JSON.stringify({
+                      commandId: "settings.billing.open",
+                      confidence: 0.91,
+                    }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await matcher("go to billing", [commands[0]!]);
+    const init = fetchMock.mock.calls[0]?.[1];
+    const body = init?.body ? JSON.parse(String(init.body)) : null;
+
+    expect(result).toEqual({
+      commandId: "settings.billing.open",
+      confidence: 0.91,
+      parameters: undefined,
+    });
+    expect(body?.reasoning).toBeUndefined();
+    expect(body?.reasoning_effort).toBe("minimal");
+    expect(body?.model).toBe("gpt-5-nano");
+  });
+
+  it("passes service_tier when configured", async () => {
+    const matcher = createOpenAiVoiceCommandMatcher({
+      apiKey: "test-key",
+      endpoint: "https://example.com/v1/chat/completions",
+      serviceTier: "priority",
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              tool_calls: [
+                {
+                  function: {
+                    arguments: JSON.stringify({
+                      commandId: "settings.billing.open",
+                    }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await matcher("go to billing", [commands[0]!]);
+    const init = fetchMock.mock.calls[0]?.[1];
+    const body = init?.body ? JSON.parse(String(init.body)) : null;
+
+    expect(body?.service_tier).toBe("priority");
   });
 });
 

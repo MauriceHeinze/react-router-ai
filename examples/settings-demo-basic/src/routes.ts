@@ -224,6 +224,16 @@ export function defineSettingsCommands(
     setEmailNotifications: (enabled: boolean) => void
     setPushNotifications: (enabled: boolean) => void
     setDefaultLanguage: (language: 'en' | 'de' | 'es') => void
+    setRecorderName: (name: string) => void
+    setRecorderStyle: (style: 'default' | 'workspace' | 'minimal' | 'none') => void
+    setSummaryLength: (length: 'short' | 'bullet' | 'detailed') => void
+    setTranscriptRetention: (retention: '30' | '90' | '365' | 'forever') => void
+    setDigestFrequency: (frequency: 'daily' | 'weekly' | 'never') => void
+    setTimezone: (timezone: 'Europe/Berlin' | 'America/New_York' | 'Asia/Tokyo') => void
+    setWeekStart: (weekStart: 'monday' | 'sunday') => void
+    setPasswordPolicy: (policy: 'basic' | 'strong' | 'custom') => void
+    setRecordVisibility: (visibility: 'private' | 'workspace' | 'public') => void
+    setWebhookEvents: (events: 'all' | 'record' | 'user') => void
   },
 ): VoiceCommand[] {
   const routeCommands = routes.map((route) => ({
@@ -368,6 +378,196 @@ export function defineSettingsCommands(
         if (typeof value === 'string' && value in languageMap) {
           actions.setDefaultLanguage(languageMap[value as keyof typeof languageMap])
           actions.navigate('/settings/general')
+        }
+      },
+    },
+    {
+      id: 'settings.call-recorder.name.set',
+      title: 'Set recorder name',
+      description: 'Change the call recorder display name.',
+      phrases: ['set recorder name', 'change notetaker name', 'rename recorder'],
+      keywords: ['recorder', 'notetaker', 'name', 'call recorder'],
+      parameters: {
+        value: {
+          label: 'Recorder name',
+          type: 'string',
+        },
+      },
+      run: ({ value }) => {
+        if (typeof value === 'string' && value.trim().length > 0) {
+          actions.setRecorderName(value)
+          actions.navigate('/settings/call-recorder')
+        }
+      },
+    },
+    {
+      id: 'settings.call-recorder.style.set',
+      title: 'Set recorder style',
+      description: 'Change the call recorder visual style.',
+      phrases: ['use default recorder', 'set workspace style', 'use minimal recorder', 'hide recorder image'],
+      keywords: ['recorder', 'style', 'default', 'workspace', 'minimal', 'none', 'notetaker'],
+      parameters: {
+        value: {
+          label: 'Recorder style',
+          options: ['default', 'workspace', 'minimal', 'none'] as const,
+        },
+      },
+      run: ({ value }) => {
+        if (value === 'default' || value === 'workspace' || value === 'minimal' || value === 'none') {
+          actions.setRecorderStyle(value)
+          actions.navigate('/settings/call-recorder')
+        }
+      },
+    },
+    {
+      id: 'settings.call-intelligence.summary-length.set',
+      title: 'Set default summary length',
+      description: 'Change the default call summary format.',
+      phrases: ['use short summary', 'set bullet summary', 'use detailed recap'],
+      keywords: ['summary', 'length', 'short', 'bullet', 'detailed', 'recap'],
+      parameters: {
+        value: {
+          label: 'Default summary length',
+          options: ['short', 'bullet', 'detailed'] as const,
+        },
+      },
+      run: ({ value }) => {
+        if (value === 'short' || value === 'bullet' || value === 'detailed') {
+          actions.setSummaryLength(value)
+          actions.navigate('/settings/call-intelligence')
+        }
+      },
+    },
+    {
+      id: 'settings.call-intelligence.retention.set',
+      title: 'Set transcript retention',
+      description: 'Change how long transcripts are kept.',
+      phrases: ['keep transcripts for 30 days', 'retain calls for one year', 'keep transcripts forever'],
+      keywords: ['transcript', 'retention', 'keep', 'days', 'year', 'forever'],
+      parameters: {
+        value: {
+          label: 'Transcript retention',
+          options: ['30', '90', '365', 'forever'] as const,
+        },
+      },
+      run: ({ value }) => {
+        if (value === '30' || value === '90' || value === '365' || value === 'forever') {
+          actions.setTranscriptRetention(value)
+          actions.navigate('/settings/call-intelligence')
+        }
+      },
+    },
+    {
+      id: 'settings.notifications.digest-frequency.set',
+      title: 'Set digest frequency',
+      description: 'Change how often digest emails are sent.',
+      phrases: ['send daily digest', 'switch to weekly digest', 'disable digest emails'],
+      keywords: ['digest', 'frequency', 'daily', 'weekly', 'never', 'email'],
+      parameters: {
+        value: {
+          label: 'Digest frequency',
+          options: ['daily', 'weekly', 'never'] as const,
+        },
+      },
+      run: ({ value }) => {
+        if (value === 'daily' || value === 'weekly' || value === 'never') {
+          actions.setDigestFrequency(value)
+          actions.navigate('/settings/notifications')
+        }
+      },
+    },
+    {
+      id: 'settings.general.timezone.set',
+      title: 'Set timezone',
+      description: 'Change the workspace timezone.',
+      phrases: ['set timezone to berlin', 'use new york timezone', 'change timezone to tokyo'],
+      keywords: ['timezone', 'berlin', 'new york', 'tokyo', 'time'],
+      parameters: {
+        value: {
+          label: 'Timezone',
+          options: ['Europe/Berlin', 'America/New_York', 'Asia/Tokyo'] as const,
+        },
+      },
+      run: ({ value }) => {
+        if (value === 'Europe/Berlin' || value === 'America/New_York' || value === 'Asia/Tokyo') {
+          actions.setTimezone(value)
+          actions.navigate('/settings/general')
+        }
+      },
+    },
+    {
+      id: 'settings.general.week-start.set',
+      title: 'Set week start',
+      description: 'Change the first day of the work week.',
+      phrases: ['start week on monday', 'week starts on sunday'],
+      keywords: ['week', 'start', 'monday', 'sunday', 'calendar'],
+      parameters: {
+        value: {
+          label: 'Week starts on',
+          options: ['monday', 'sunday'] as const,
+        },
+      },
+      run: ({ value }) => {
+        if (value === 'monday' || value === 'sunday') {
+          actions.setWeekStart(value)
+          actions.navigate('/settings/general')
+        }
+      },
+    },
+    {
+      id: 'settings.security.password-policy.set',
+      title: 'Set password policy',
+      description: 'Change the workspace password policy.',
+      phrases: ['use basic passwords', 'set strong password policy', 'use custom password rules'],
+      keywords: ['password', 'policy', 'basic', 'strong', 'custom', 'security'],
+      parameters: {
+        value: {
+          label: 'Password policy',
+          options: ['basic', 'strong', 'custom'] as const,
+        },
+      },
+      run: ({ value }) => {
+        if (value === 'basic' || value === 'strong' || value === 'custom') {
+          actions.setPasswordPolicy(value)
+          actions.navigate('/settings/security')
+        }
+      },
+    },
+    {
+      id: 'settings.records.default-visibility.set',
+      title: 'Set default record visibility',
+      description: 'Change the default visibility for new records.',
+      phrases: ['make records private', 'set records to workspace', 'make records public'],
+      keywords: ['record', 'visibility', 'private', 'workspace', 'public'],
+      parameters: {
+        value: {
+          label: 'Default record visibility',
+          options: ['private', 'workspace', 'public'] as const,
+        },
+      },
+      run: ({ value }) => {
+        if (value === 'private' || value === 'workspace' || value === 'public') {
+          actions.setRecordVisibility(value)
+          actions.navigate('/settings/records')
+        }
+      },
+    },
+    {
+      id: 'settings.developers.webhook-events.set',
+      title: 'Set webhook events',
+      description: 'Change which events trigger webhooks.',
+      phrases: ['send all webhook events', 'webhook on record changes', 'webhook on user events'],
+      keywords: ['webhook', 'events', 'all', 'record', 'user', 'developer'],
+      parameters: {
+        value: {
+          label: 'Webhook events',
+          options: ['all', 'record', 'user'] as const,
+        },
+      },
+      run: ({ value }) => {
+        if (value === 'all' || value === 'record' || value === 'user') {
+          actions.setWebhookEvents(value)
+          actions.navigate('/settings/developers')
         }
       },
     },

@@ -66,6 +66,7 @@ export function VoiceProvider({
   commands,
   threshold = 0.45,
   ambiguityThreshold = 0.12,
+  fuzzyMatching = true,
   llmFallback,
   children,
 }: PropsWithChildren<VoiceProviderProps>) {
@@ -143,20 +144,22 @@ export function VoiceProvider({
     setPendingConfirmation(null);
     setError(null);
 
-    const rankedMatches = rankVoiceCommands(trimmed, allCommands);
-    const bestMatch = rankedMatches[0] ?? null;
+    if (fuzzyMatching) {
+      const rankedMatches = rankVoiceCommands(trimmed, allCommands);
+      const bestMatch = rankedMatches[0] ?? null;
 
-    if (bestMatch && bestMatch.confidence >= threshold) {
-      const ambiguous = getAmbiguousCandidates(rankedMatches, threshold, ambiguityThreshold);
-      if (ambiguous) {
-        setLastMatch(null);
-        setCandidates(ambiguous);
+      if (bestMatch && bestMatch.confidence >= threshold) {
+        const ambiguous = getAmbiguousCandidates(rankedMatches, threshold, ambiguityThreshold);
+        if (ambiguous) {
+          setLastMatch(null);
+          setCandidates(ambiguous);
+          setIsSubmitting(false);
+          return null;
+        }
+
         setIsSubmitting(false);
-        return null;
+        return handleResolvedMatch(bestMatch);
       }
-
-      setIsSubmitting(false);
-      return handleResolvedMatch(bestMatch);
     }
 
     const llmMatches = await matchVoiceCommandsWithBuiltInLlm(trimmed, allCommands, llmFallback);
@@ -301,6 +304,8 @@ export function IntentProvider({
   intents,
   onMatch,
   threshold,
+  ambiguityThreshold,
+  fuzzyMatching,
   llmFallback,
   children,
 }: PropsWithChildren<IntentProviderProps>) {
@@ -326,7 +331,13 @@ export function IntentProvider({
   );
 
   return (
-    <VoiceProvider commands={commands} threshold={threshold} llmFallback={llmFallback}>
+    <VoiceProvider
+      commands={commands}
+      threshold={threshold}
+      ambiguityThreshold={ambiguityThreshold}
+      fuzzyMatching={fuzzyMatching}
+      llmFallback={llmFallback}
+    >
       <IntentContextBridge intents={intents}>{children}</IntentContextBridge>
     </VoiceProvider>
   );

@@ -36,7 +36,7 @@ function AppShell() {
 
   return (
     <div className={`app-shell theme-${effectiveTheme}`}>
-      <VoiceProvider commands={commands} llmFallback={{ enabled: true, match: openAiCommandMatcher }}>
+      <VoiceProvider commands={commands} fuzzyMatching={false} llmFallback={{ enabled: true, match: openAiCommandMatcher }}>
         <Routes>
           <Route path="/" element={<LandingPage onOpenCommand={() => setDialogOpen(true)} />} />
           <Route path="/settings/*" element={<SettingsLayout onOpenCommand={() => setDialogOpen(true)} />} />

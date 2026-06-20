@@ -34,7 +34,7 @@ export function createOpenAiCommandMatcher(
 ): NonNullable<BuiltInLlmFallbackOptions['match']> {
   const {
     apiKey = import.meta.env.VITE_OPENAI_API_KEY as string | undefined,
-    model = 'gpt-realtime-mini',
+    model = 'gpt-5-nano',
   } = options
 
   return async (query, commands) => {
@@ -48,7 +48,6 @@ export function createOpenAiCommandMatcher(
       },
       body: JSON.stringify({
         model,
-        temperature: 0,
         messages: [
           {
             role: 'system',

@@ -28,21 +28,31 @@ import {
   useAppDispatch,
   useAppSelector,
   type AppLanguage,
+  type AppPasswordPolicy,
+  type AppRecordVisibility,
+  type AppRetention,
+  type AppSourceCrm,
+  type AppTimezone,
+  type AppWebhookEvents,
+  type AppWeekStart,
 } from '../settings-store.ts'
 import type { SettingsFormProps } from './form-types.ts'
 
 function GeneralForm() {
   const dispatch = useAppDispatch()
-  const defaultLanguage = useAppSelector((state) => state.settings.defaultLanguage)
+  const { workspaceName, defaultLanguage, timezone, weekStart } = useAppSelector((state) => state.settings)
   return (
     <>
       <Card>
         <SectionHeader title="Workspace details" description="Basic workspace preferences." />
         <Field label="Workspace name">
-          <Input defaultValue="Acme Corp" />
+          <Input value={workspaceName} onChange={(event) => dispatch(settingsActions.setWorkspaceName(event.target.value))} />
         </Field>
         <Field label="Timezone">
-          <Select defaultValue="Europe/Berlin">
+          <Select
+            value={timezone}
+            onChange={(event) => dispatch(settingsActions.setTimezone(event.target.value as AppTimezone))}
+          >
             {timezoneOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -63,7 +73,10 @@ function GeneralForm() {
           </Select>
         </Field>
         <Field label="Week starts on">
-          <Select defaultValue="monday">
+          <Select
+            value={weekStart}
+            onChange={(event) => dispatch(settingsActions.setWeekStart(event.target.value as AppWeekStart))}
+          >
             {weekStartOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -170,6 +183,8 @@ function PlansForm() {
 }
 
 function BillingForm() {
+  const dispatch = useAppDispatch()
+  const { billingEmail, billingAddress } = useAppSelector((state) => state.settings)
   const invoices = [
     { id: 'INV-001', date: 'Nov 1, 2026', amount: '$290.00', status: 'Paid' },
     { id: 'INV-002', date: 'Oct 1, 2026', amount: '$290.00', status: 'Paid' },
@@ -193,10 +208,14 @@ function BillingForm() {
       <Card>
         <SectionHeader title="Billing details" />
         <Field label="Billing email">
-          <Input type="email" defaultValue="billing@example.com" />
+          <Input
+            type="email"
+            value={billingEmail}
+            onChange={(event) => dispatch(settingsActions.setBillingEmail(event.target.value))}
+          />
         </Field>
         <Field label="Billing address">
-          <TextArea defaultValue="123 Main St&#10;Berlin, Germany" />
+          <TextArea value={billingAddress} onChange={(event) => dispatch(settingsActions.setBillingAddress(event.target.value))} />
         </Field>
       </Card>
       <Card>
@@ -230,7 +249,7 @@ function DevelopersForm() {
     { name: 'Production', created: 'Jan 5, 2026', lastUsed: '2 hours ago' },
     { name: 'Staging', created: 'Mar 12, 2026', lastUsed: '3 days ago' },
   ]
-  const webhooks = useAppSelector((state) => state.settings.webhooks)
+  const { webhooks, webhookUrl, webhookEvents } = useAppSelector((state) => state.settings)
   return (
     <>
       <Card>
@@ -265,10 +284,16 @@ function DevelopersForm() {
           label="Enable webhooks"
         />
         <Field label="Webhook URL">
-          <Input placeholder="https://api.example.com/webhooks" />
+          <Input
+            value={webhookUrl}
+            onChange={(event) => dispatch(settingsActions.setWebhookUrl(event.target.value))}
+          />
         </Field>
         <Field label="Events">
-          <Select defaultValue="all">
+          <Select
+            value={webhookEvents}
+            onChange={(event) => dispatch(settingsActions.setWebhookEvents(event.target.value as AppWebhookEvents))}
+          >
             {webhookEventOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -286,7 +311,7 @@ function DevelopersForm() {
 
 function SecurityForm() {
   const dispatch = useAppDispatch()
-  const { sso, mfa } = useAppSelector((state) => state.settings)
+  const { sso, mfa, passwordPolicy } = useAppSelector((state) => state.settings)
   const logs = [
     { action: 'Password changed', user: 'Jane Doe', time: '2 hours ago' },
     { action: 'MFA enabled', user: 'John Smith', time: '1 day ago' },
@@ -306,7 +331,10 @@ function SecurityForm() {
           />
         </div>
         <Field label="Password policy">
-          <Select defaultValue="strong">
+          <Select
+            value={passwordPolicy}
+            onChange={(event) => dispatch(settingsActions.setPasswordPolicy(event.target.value as AppPasswordPolicy))}
+          >
             {passwordPolicyOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -332,13 +360,16 @@ function SecurityForm() {
 
 function RecordsForm() {
   const dispatch = useAppDispatch()
-  const audit = useAppSelector((state) => state.settings.audit)
+  const { audit, recordVisibility, recordHistoryRetention } = useAppSelector((state) => state.settings)
   return (
     <>
       <Card>
         <SectionHeader title="Record settings" description="Control how records are stored and tracked." />
         <Field label="Default visibility">
-          <Select defaultValue="workspace">
+          <Select
+            value={recordVisibility}
+            onChange={(event) => dispatch(settingsActions.setRecordVisibility(event.target.value as AppRecordVisibility))}
+          >
             {recordVisibilityOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -347,7 +378,12 @@ function RecordsForm() {
           </Select>
         </Field>
         <Field label="History retention">
-          <Select defaultValue="forever">
+          <Select
+            value={recordHistoryRetention}
+            onChange={(event) =>
+              dispatch(settingsActions.setRecordHistoryRetention(event.target.value as AppRetention))
+            }
+          >
             {retentionOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -369,6 +405,8 @@ function RecordsForm() {
 }
 
 function SupportRequestsForm() {
+  const dispatch = useAppDispatch()
+  const { supportSubject, supportMessage } = useAppSelector((state) => state.settings)
   const tickets = [
     { subject: 'Billing question', status: 'Open', updated: '1 day ago' },
     { subject: 'Feature request', status: 'Closed', updated: '1 week ago' },
@@ -394,10 +432,13 @@ function SupportRequestsForm() {
       <Card>
         <SectionHeader title="New request" />
         <Field label="Subject">
-          <Input placeholder="How do I..." />
+          <Input value={supportSubject} onChange={(event) => dispatch(settingsActions.setSupportSubject(event.target.value))} />
         </Field>
         <Field label="Message">
-          <TextArea placeholder="Describe your issue or question." />
+          <TextArea
+            value={supportMessage}
+            onChange={(event) => dispatch(settingsActions.setSupportMessage(event.target.value))}
+          />
         </Field>
         <ButtonGroup>
           <Button>Submit request</Button>
@@ -408,6 +449,8 @@ function SupportRequestsForm() {
 }
 
 function MigrateCrmForm() {
+  const dispatch = useAppDispatch()
+  const { sourceCrm, connectionOrFile } = useAppSelector((state) => state.settings)
   const mappings = [
     { source: 'Contact', destination: 'Person', status: 'Mapped' },
     { source: 'Account', destination: 'Company', status: 'Mapped' },
@@ -418,7 +461,7 @@ function MigrateCrmForm() {
       <Card>
         <SectionHeader title="Source CRM" />
         <Field label="Choose source">
-          <Select defaultValue="salesforce">
+          <Select value={sourceCrm} onChange={(event) => dispatch(settingsActions.setSourceCrm(event.target.value as AppSourceCrm))}>
             {sourceCrmOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -427,7 +470,10 @@ function MigrateCrmForm() {
           </Select>
         </Field>
         <Field label="Connection or file">
-          <Input placeholder="API key or file URL" />
+          <Input
+            value={connectionOrFile}
+            onChange={(event) => dispatch(settingsActions.setConnectionOrFile(event.target.value))}
+          />
         </Field>
         <ButtonGroup>
           <Button variant="secondary">Test connection</Button>

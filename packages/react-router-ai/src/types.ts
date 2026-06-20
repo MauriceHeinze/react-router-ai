@@ -78,6 +78,7 @@ export type VoiceProviderProps = {
   commands: VoiceCommand[];
   threshold?: number;
   ambiguityThreshold?: number;
+  fuzzyMatching?: boolean;
   llmFallback?: BuiltInLlmFallbackOptions;
   children: ReactNode;
 };
@@ -134,6 +135,8 @@ export type IntentProviderProps = {
   intents: Intent[];
   onMatch: (match: IntentMatch) => void | Promise<void>;
   threshold?: number;
+  ambiguityThreshold?: number;
+  fuzzyMatching?: boolean;
   llmFallback?: BuiltInLlmFallbackOptions;
   children: ReactNode;
 };

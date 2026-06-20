@@ -13,6 +13,15 @@ export type AppTheme = 'light' | 'dark' | 'system'
 export type AppDensity = 'comfortable' | 'compact'
 export type AppAccent = '#111827' | '#3b82f6' | '#10b981' | '#f59e0b' | '#ef4444' | '#8b5cf6'
 export type AppLanguage = 'en' | 'de' | 'es'
+export type AppSummaryLength = 'short' | 'bullet' | 'detailed'
+export type AppRetention = '30' | '90' | '365' | 'forever'
+export type AppDigestFrequency = 'daily' | 'weekly' | 'never'
+export type AppTimezone = 'Europe/Berlin' | 'America/New_York' | 'Asia/Tokyo'
+export type AppWeekStart = 'monday' | 'sunday'
+export type AppPasswordPolicy = 'basic' | 'strong' | 'custom'
+export type AppRecordVisibility = 'private' | 'workspace' | 'public'
+export type AppWebhookEvents = 'all' | 'record' | 'user'
+export type RecorderStyle = 'default' | 'workspace' | 'minimal' | 'none'
 
 function AppShell() {
   const navigate = useNavigate()
@@ -23,6 +32,16 @@ function AppShell() {
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [pushNotifications, setPushNotifications] = useState(false)
   const [defaultLanguage, setDefaultLanguage] = useState<AppLanguage>('en')
+  const [recorderName, setRecorderName] = useState('Notetaker')
+  const [recorderStyle, setRecorderStyle] = useState<RecorderStyle>('default')
+  const [summaryLength, setSummaryLength] = useState<AppSummaryLength>('bullet')
+  const [transcriptRetention, setTranscriptRetention] = useState<AppRetention>('90')
+  const [digestFrequency, setDigestFrequency] = useState<AppDigestFrequency>('daily')
+  const [timezone, setTimezone] = useState<AppTimezone>('Europe/Berlin')
+  const [weekStart, setWeekStart] = useState<AppWeekStart>('monday')
+  const [passwordPolicy, setPasswordPolicy] = useState<AppPasswordPolicy>('strong')
+  const [recordVisibility, setRecordVisibility] = useState<AppRecordVisibility>('workspace')
+  const [webhookEvents, setWebhookEvents] = useState<AppWebhookEvents>('all')
   const openAiCommandMatcher = useMemo(() => createOpenAiCommandMatcher(), [])
   const commands = useMemo(
     () =>
@@ -38,6 +57,16 @@ function AppShell() {
           setEmailNotifications,
           setPushNotifications,
           setDefaultLanguage,
+          setRecorderName,
+          setRecorderStyle,
+          setSummaryLength,
+          setTranscriptRetention,
+          setDigestFrequency,
+          setTimezone,
+          setWeekStart,
+          setPasswordPolicy,
+          setRecordVisibility,
+          setWebhookEvents,
         }),
       ),
     [navigate],
@@ -46,7 +75,7 @@ function AppShell() {
 
   return (
     <div className={`app-shell theme-${effectiveTheme}`}>
-      <VoiceProvider commands={commands} llmFallback={{ enabled: true, match: openAiCommandMatcher }}>
+      <VoiceProvider commands={commands} fuzzyMatching={false} llmFallback={{ enabled: true, match: openAiCommandMatcher }}>
         <Routes>
           <Route path="/" element={<LandingPage onOpenCommand={() => setDialogOpen(true)} />} />
           <Route
@@ -66,6 +95,26 @@ function AppShell() {
                 onPushNotificationsChange={setPushNotifications}
                 defaultLanguage={defaultLanguage}
                 onDefaultLanguageChange={setDefaultLanguage}
+                recorderName={recorderName}
+                onRecorderNameChange={setRecorderName}
+                recorderStyle={recorderStyle}
+                onRecorderStyleChange={setRecorderStyle}
+                summaryLength={summaryLength}
+                onSummaryLengthChange={setSummaryLength}
+                transcriptRetention={transcriptRetention}
+                onTranscriptRetentionChange={setTranscriptRetention}
+                digestFrequency={digestFrequency}
+                onDigestFrequencyChange={setDigestFrequency}
+                timezone={timezone}
+                onTimezoneChange={setTimezone}
+                weekStart={weekStart}
+                onWeekStartChange={setWeekStart}
+                passwordPolicy={passwordPolicy}
+                onPasswordPolicyChange={setPasswordPolicy}
+                recordVisibility={recordVisibility}
+                onRecordVisibilityChange={setRecordVisibility}
+                webhookEvents={webhookEvents}
+                onWebhookEventsChange={setWebhookEvents}
               />
             }
           />

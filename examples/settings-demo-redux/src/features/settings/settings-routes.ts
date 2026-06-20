@@ -20,7 +20,7 @@ export const personalRoutes: SettingsRoute[] = [
     icon: 'user',
     title: 'Profile',
     description: 'Update your display name, avatar, biography, and public profile details.',
-    phrases: ['edit my profile', 'change my avatar', 'update my name'],
+    phrases: ['edit my profile', 'change my avatar', 'update my name', 'display name', 'profile settings'],
   },
   {
     id: 'settings.appearance',
@@ -30,7 +30,7 @@ export const personalRoutes: SettingsRoute[] = [
     icon: 'appearance',
     title: 'Appearance',
     description: 'Choose your theme, density, and accent preferences.',
-    phrases: ['change theme', 'dark mode', 'appearance settings'],
+    phrases: ['change theme', 'dark mode', 'appearance settings', 'theme settings', 'change theme settings'],
   },
   {
     id: 'settings.email-calendar',
@@ -143,7 +143,7 @@ export const workspaceRoutes: SettingsRoute[] = [
     icon: 'billing',
     title: 'Billing',
     description: 'Update your payment method, download invoices, and change your plan.',
-    phrases: ['manage subscription', 'open billing', 'change payment method'],
+    phrases: ['manage subscription', 'open billing', 'change payment method', 'go to billing', 'billing settings'],
   },
   {
     id: 'settings.developers',

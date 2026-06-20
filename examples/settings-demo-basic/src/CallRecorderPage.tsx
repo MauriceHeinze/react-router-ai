@@ -1,7 +1,12 @@
-import { useState } from 'react'
 import './CallRecorderPage.css'
+import type { RecorderStyle } from './App.tsx'
 
-type StyleOption = 'default' | 'workspace' | 'minimal' | 'none'
+type CallRecorderPageProps = {
+  recorderName: string
+  onRecorderNameChange: (name: string) => void
+  recorderStyle: RecorderStyle
+  onRecorderStyleChange: (style: RecorderStyle) => void
+}
 
 function DefaultIcon({ className = '' }: { className?: string }) {
   return (
@@ -56,7 +61,7 @@ function Radio({ checked }: { checked: boolean }) {
   )
 }
 
-function PreviewCard({ name, style }: { name: string; style: StyleOption }) {
+function PreviewCard({ name, style }: { name: string; style: RecorderStyle }) {
   if (style === 'none') {
     return (
       <div className="preview-wrapper">
@@ -101,31 +106,33 @@ function PreviewCard({ name, style }: { name: string; style: StyleOption }) {
   )
 }
 
-export default function CallRecorderPage() {
-  const [recorderName, setRecorderName] = useState('Notetaker')
-  const [style, setStyle] = useState<StyleOption>('default')
-
+export default function CallRecorderPage({
+  recorderName,
+  onRecorderNameChange,
+  recorderStyle,
+  onRecorderStyleChange,
+}: CallRecorderPageProps) {
   const options = [
     {
-      id: 'default' as StyleOption,
+      id: 'default' as RecorderStyle,
       icon: <DefaultIcon className="style-option-icon style-option-icon-dark" />,
       title: 'Default',
       description: 'Branded recorder',
     },
     {
-      id: 'workspace' as StyleOption,
+      id: 'workspace' as RecorderStyle,
       icon: <WorkspaceIcon className="style-option-icon style-option-icon-dark" />,
       title: 'Workspace',
       description: 'Workspace branded recorder',
     },
     {
-      id: 'minimal' as StyleOption,
+      id: 'minimal' as RecorderStyle,
       icon: <MinimalIcon className="style-option-icon style-option-icon-dark" />,
       title: 'Minimal',
       description: 'No logo',
     },
     {
-      id: 'none' as StyleOption,
+      id: 'none' as RecorderStyle,
       icon: <NoneIcon className="style-option-icon" />,
       title: 'None',
       description: 'No image',
@@ -150,7 +157,7 @@ export default function CallRecorderPage() {
           <input
             type="text"
             value={recorderName}
-            onChange={(e) => setRecorderName(e.target.value)}
+            onChange={(e) => onRecorderNameChange(e.target.value)}
             className="recorder-input"
           />
         </label>
@@ -160,7 +167,7 @@ export default function CallRecorderPage() {
           <div className="style-layout">
             <div className="style-options" role="radiogroup" aria-label="Recorder style">
               {options.map((option) => {
-                const checked = style === option.id
+                const checked = recorderStyle === option.id
                 return (
                   <label
                     key={option.id}
@@ -171,7 +178,7 @@ export default function CallRecorderPage() {
                       name="recorder-style"
                       value={option.id}
                       checked={checked}
-                      onChange={() => setStyle(option.id)}
+                      onChange={() => onRecorderStyleChange(option.id)}
                       className="visually-hidden"
                     />
                     {option.icon}
@@ -184,7 +191,7 @@ export default function CallRecorderPage() {
                 )
               })}
             </div>
-            <PreviewCard name={recorderName} style={style} />
+            <PreviewCard name={recorderName} style={recorderStyle} />
           </div>
         </div>
       </section>

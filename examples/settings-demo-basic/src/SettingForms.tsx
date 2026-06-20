@@ -1,5 +1,18 @@
 import { useState } from 'react'
-import type { AppAccent, AppDensity, AppLanguage, AppTheme } from './App.tsx'
+import type {
+  AppAccent,
+  AppDensity,
+  AppDigestFrequency,
+  AppLanguage,
+  AppPasswordPolicy,
+  AppRecordVisibility,
+  AppRetention,
+  AppSummaryLength,
+  AppTheme,
+  AppTimezone,
+  AppWebhookEvents,
+  AppWeekStart,
+} from './App.tsx'
 import {
   AvatarUpload,
   Badge,
@@ -33,6 +46,22 @@ type SharedFormProps = {
   onPushNotificationsChange: (enabled: boolean) => void
   defaultLanguage: AppLanguage
   onDefaultLanguageChange: (language: AppLanguage) => void
+  summaryLength: AppSummaryLength
+  onSummaryLengthChange: (length: AppSummaryLength) => void
+  transcriptRetention: AppRetention
+  onTranscriptRetentionChange: (retention: AppRetention) => void
+  digestFrequency: AppDigestFrequency
+  onDigestFrequencyChange: (frequency: AppDigestFrequency) => void
+  timezone: AppTimezone
+  onTimezoneChange: (timezone: AppTimezone) => void
+  weekStart: AppWeekStart
+  onWeekStartChange: (weekStart: AppWeekStart) => void
+  passwordPolicy: AppPasswordPolicy
+  onPasswordPolicyChange: (policy: AppPasswordPolicy) => void
+  recordVisibility: AppRecordVisibility
+  onRecordVisibilityChange: (visibility: AppRecordVisibility) => void
+  webhookEvents: AppWebhookEvents
+  onWebhookEventsChange: (events: AppWebhookEvents) => void
 }
 
 function ProfileForm() {
@@ -132,7 +161,12 @@ function EmailCalendarForm() {
   )
 }
 
-function CallIntelligenceForm() {
+function CallIntelligenceForm({
+  summaryLength,
+  onSummaryLengthChange,
+  transcriptRetention,
+  onTranscriptRetentionChange,
+}: SharedFormProps) {
   const [transcription, setTranscription] = useState(true)
   const [coaching, setCoaching] = useState(false)
   return (
@@ -152,7 +186,10 @@ function CallIntelligenceForm() {
       <Card>
         <SectionHeader title="Summaries" />
         <Field label="Default summary length">
-          <Select defaultValue="bullet">
+          <Select
+            value={summaryLength}
+            onChange={(event) => onSummaryLengthChange(event.target.value as AppSummaryLength)}
+          >
             <option value="short">Short paragraph</option>
             <option value="bullet">Bullet points</option>
             <option value="detailed">Detailed recap</option>
@@ -163,7 +200,10 @@ function CallIntelligenceForm() {
       <Card>
         <SectionHeader title="Data retention" />
         <Field label="Keep transcripts for">
-          <Select defaultValue="90">
+          <Select
+            value={transcriptRetention}
+            onChange={(event) => onTranscriptRetentionChange(event.target.value as AppRetention)}
+          >
             <option value="30">30 days</option>
             <option value="90">90 days</option>
             <option value="365">1 year</option>
@@ -249,6 +289,8 @@ function NotificationsForm({
   onEmailNotificationsChange,
   pushNotifications,
   onPushNotificationsChange,
+  digestFrequency,
+  onDigestFrequencyChange,
 }: SharedFormProps) {
   const [slack, setSlack] = useState(true)
   const [digest, setDigest] = useState(true)
@@ -279,7 +321,10 @@ function NotificationsForm({
         <SectionHeader title="Email digests" />
         <Toggle checked={digest} onChange={setDigest} label="Send me a daily digest" />
         <Field label="Digest frequency">
-          <Select defaultValue="daily">
+          <Select
+            value={digestFrequency}
+            onChange={(event) => onDigestFrequencyChange(event.target.value as AppDigestFrequency)}
+          >
             <option value="daily">Daily</option>
             <option value="weekly">Weekly</option>
             <option value="never">Never</option>
@@ -332,7 +377,14 @@ function SessionsForm() {
   )
 }
 
-function GeneralForm({ defaultLanguage, onDefaultLanguageChange }: SharedFormProps) {
+function GeneralForm({
+  defaultLanguage,
+  onDefaultLanguageChange,
+  timezone,
+  onTimezoneChange,
+  weekStart,
+  onWeekStartChange,
+}: SharedFormProps) {
   return (
     <>
       <Card>
@@ -341,7 +393,7 @@ function GeneralForm({ defaultLanguage, onDefaultLanguageChange }: SharedFormPro
           <Input defaultValue="Acme Corp" />
         </Field>
         <Field label="Timezone">
-          <Select defaultValue="Europe/Berlin">
+          <Select value={timezone} onChange={(event) => onTimezoneChange(event.target.value as AppTimezone)}>
             <option value="Europe/Berlin">Europe/Berlin</option>
             <option value="America/New_York">America/New_York</option>
             <option value="Asia/Tokyo">Asia/Tokyo</option>
@@ -355,7 +407,7 @@ function GeneralForm({ defaultLanguage, onDefaultLanguageChange }: SharedFormPro
           </Select>
         </Field>
         <Field label="Week starts on">
-          <Select defaultValue="monday">
+          <Select value={weekStart} onChange={(event) => onWeekStartChange(event.target.value as AppWeekStart)}>
             <option value="monday">Monday</option>
             <option value="sunday">Sunday</option>
           </Select>
@@ -513,7 +565,7 @@ function BillingForm() {
   )
 }
 
-function DevelopersForm() {
+function DevelopersForm({ webhookEvents, onWebhookEventsChange }: SharedFormProps) {
   const keys = [
     { name: 'Production', created: 'Jan 5, 2026', lastUsed: '2 hours ago' },
     { name: 'Staging', created: 'Mar 12, 2026', lastUsed: '3 days ago' },
@@ -552,7 +604,10 @@ function DevelopersForm() {
           <Input placeholder="https://api.example.com/webhooks" />
         </Field>
         <Field label="Events">
-          <Select defaultValue="all">
+          <Select
+            value={webhookEvents}
+            onChange={(event) => onWebhookEventsChange(event.target.value as AppWebhookEvents)}
+          >
             <option value="all">All events</option>
             <option value="record">Record changes</option>
             <option value="user">User events</option>
@@ -566,7 +621,7 @@ function DevelopersForm() {
   )
 }
 
-function SecurityForm() {
+function SecurityForm({ passwordPolicy, onPasswordPolicyChange }: SharedFormProps) {
   const [sso, setSso] = useState(false)
   const [mfa, setMfa] = useState(false)
   const logs = [
@@ -584,7 +639,10 @@ function SecurityForm() {
           <Toggle checked={mfa} onChange={setMfa} label="Require MFA for all members" />
         </div>
         <Field label="Password policy">
-          <Select defaultValue="strong">
+          <Select
+            value={passwordPolicy}
+            onChange={(event) => onPasswordPolicyChange(event.target.value as AppPasswordPolicy)}
+          >
             <option value="basic">Basic</option>
             <option value="strong">Strong</option>
             <option value="custom">Custom</option>
@@ -606,14 +664,17 @@ function SecurityForm() {
   )
 }
 
-function RecordsForm() {
+function RecordsForm({ recordVisibility, onRecordVisibilityChange }: SharedFormProps) {
   const [audit, setAudit] = useState(true)
   return (
     <>
       <Card>
         <SectionHeader title="Record settings" description="Control how records are stored and tracked." />
         <Field label="Default visibility">
-          <Select defaultValue="workspace">
+          <Select
+            value={recordVisibility}
+            onChange={(event) => onRecordVisibilityChange(event.target.value as AppRecordVisibility)}
+          >
             <option value="private">Private</option>
             <option value="workspace">Workspace</option>
             <option value="public">Public</option>

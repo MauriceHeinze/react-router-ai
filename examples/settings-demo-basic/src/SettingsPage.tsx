@@ -1,4 +1,17 @@
-import type { AppAccent, AppDensity, AppLanguage, AppTheme } from './App.tsx'
+import type {
+  AppAccent,
+  AppDensity,
+  AppDigestFrequency,
+  AppLanguage,
+  AppPasswordPolicy,
+  AppRecordVisibility,
+  AppRetention,
+  AppSummaryLength,
+  AppTheme,
+  AppTimezone,
+  AppWebhookEvents,
+  AppWeekStart,
+} from './App.tsx'
 import { SettingForm } from './SettingForms.tsx'
 import type { SettingsRoute } from './routes.ts'
 import './SettingsPage.css'
@@ -17,6 +30,22 @@ type SettingsPageProps = {
   onPushNotificationsChange: (enabled: boolean) => void
   defaultLanguage: AppLanguage
   onDefaultLanguageChange: (language: AppLanguage) => void
+  summaryLength: AppSummaryLength
+  onSummaryLengthChange: (length: AppSummaryLength) => void
+  transcriptRetention: AppRetention
+  onTranscriptRetentionChange: (retention: AppRetention) => void
+  digestFrequency: AppDigestFrequency
+  onDigestFrequencyChange: (frequency: AppDigestFrequency) => void
+  timezone: AppTimezone
+  onTimezoneChange: (timezone: AppTimezone) => void
+  weekStart: AppWeekStart
+  onWeekStartChange: (weekStart: AppWeekStart) => void
+  passwordPolicy: AppPasswordPolicy
+  onPasswordPolicyChange: (policy: AppPasswordPolicy) => void
+  recordVisibility: AppRecordVisibility
+  onRecordVisibilityChange: (visibility: AppRecordVisibility) => void
+  webhookEvents: AppWebhookEvents
+  onWebhookEventsChange: (events: AppWebhookEvents) => void
 }
 
 export default function SettingsPage(props: SettingsPageProps) {

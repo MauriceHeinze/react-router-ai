@@ -1,6 +1,20 @@
 import { useMemo, useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import type { AppAccent, AppDensity, AppLanguage, AppTheme } from './App.tsx'
+import type {
+  AppAccent,
+  AppDensity,
+  AppDigestFrequency,
+  AppLanguage,
+  AppPasswordPolicy,
+  AppRecordVisibility,
+  AppRetention,
+  AppSummaryLength,
+  AppTheme,
+  AppTimezone,
+  AppWebhookEvents,
+  AppWeekStart,
+  RecorderStyle,
+} from './App.tsx'
 import { iconMap, SearchIcon, ChevronLeftIcon, ChevronDownIcon, HelpIcon } from './Icons.tsx'
 import CallRecorderPage from './CallRecorderPage.tsx'
 import SettingsPage from './SettingsPage.tsx'
@@ -86,6 +100,26 @@ type SettingsLayoutProps = {
   onPushNotificationsChange: (enabled: boolean) => void
   defaultLanguage: AppLanguage
   onDefaultLanguageChange: (language: AppLanguage) => void
+  recorderName: string
+  onRecorderNameChange: (name: string) => void
+  recorderStyle: RecorderStyle
+  onRecorderStyleChange: (style: RecorderStyle) => void
+  summaryLength: AppSummaryLength
+  onSummaryLengthChange: (length: AppSummaryLength) => void
+  transcriptRetention: AppRetention
+  onTranscriptRetentionChange: (retention: AppRetention) => void
+  digestFrequency: AppDigestFrequency
+  onDigestFrequencyChange: (frequency: AppDigestFrequency) => void
+  timezone: AppTimezone
+  onTimezoneChange: (timezone: AppTimezone) => void
+  weekStart: AppWeekStart
+  onWeekStartChange: (weekStart: AppWeekStart) => void
+  passwordPolicy: AppPasswordPolicy
+  onPasswordPolicyChange: (policy: AppPasswordPolicy) => void
+  recordVisibility: AppRecordVisibility
+  onRecordVisibilityChange: (visibility: AppRecordVisibility) => void
+  webhookEvents: AppWebhookEvents
+  onWebhookEventsChange: (events: AppWebhookEvents) => void
 }
 
 function Shell({
@@ -102,6 +136,26 @@ function Shell({
   onPushNotificationsChange,
   defaultLanguage,
   onDefaultLanguageChange,
+  recorderName,
+  onRecorderNameChange,
+  recorderStyle,
+  onRecorderStyleChange,
+  summaryLength,
+  onSummaryLengthChange,
+  transcriptRetention,
+  onTranscriptRetentionChange,
+  digestFrequency,
+  onDigestFrequencyChange,
+  timezone,
+  onTimezoneChange,
+  weekStart,
+  onWeekStartChange,
+  passwordPolicy,
+  onPasswordPolicyChange,
+  recordVisibility,
+  onRecordVisibilityChange,
+  webhookEvents,
+  onWebhookEventsChange,
 }: SettingsLayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -166,7 +220,12 @@ function Shell({
                 path={getNestedSettingsPath(route.path)}
                 element={
                   route.path === '/settings/call-recorder' ? (
-                    <CallRecorderPage />
+                    <CallRecorderPage
+                      recorderName={recorderName}
+                      onRecorderNameChange={onRecorderNameChange}
+                      recorderStyle={recorderStyle}
+                      onRecorderStyleChange={onRecorderStyleChange}
+                    />
                   ) : (
                     <SettingsPage
                       route={route}
@@ -182,6 +241,22 @@ function Shell({
                       onPushNotificationsChange={onPushNotificationsChange}
                       defaultLanguage={defaultLanguage}
                       onDefaultLanguageChange={onDefaultLanguageChange}
+                      summaryLength={summaryLength}
+                      onSummaryLengthChange={onSummaryLengthChange}
+                      transcriptRetention={transcriptRetention}
+                      onTranscriptRetentionChange={onTranscriptRetentionChange}
+                      digestFrequency={digestFrequency}
+                      onDigestFrequencyChange={onDigestFrequencyChange}
+                      timezone={timezone}
+                      onTimezoneChange={onTimezoneChange}
+                      weekStart={weekStart}
+                      onWeekStartChange={onWeekStartChange}
+                      passwordPolicy={passwordPolicy}
+                      onPasswordPolicyChange={onPasswordPolicyChange}
+                      recordVisibility={recordVisibility}
+                      onRecordVisibilityChange={onRecordVisibilityChange}
+                      webhookEvents={webhookEvents}
+                      onWebhookEventsChange={onWebhookEventsChange}
                     />
                   )
                 }

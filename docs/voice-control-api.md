@@ -43,6 +43,8 @@ Provides matching, execution, voice input, and local command registration.
 
 `llmFallback.match(query, commands)` can replace the built-in browser `LanguageModel` fallback with an app-owned remote matcher.
 
+For OpenAI Chat Completions integrations, the package can provide that callback via `createOpenAiVoiceCommandMatcher(...)`, which defaults to `reasoning_effort: "none"`.
+
 ```ts
 useVoiceCommand(command)
 ```

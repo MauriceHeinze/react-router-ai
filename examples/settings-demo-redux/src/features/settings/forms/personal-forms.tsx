@@ -31,32 +31,40 @@ import {
   useAppSelector,
   type AppAccent,
   type AppDensity,
+  type AppDigestFrequency,
+  type AppRetention,
+  type AppSummaryLength,
   type AppTheme,
+  type AppTranscriptionLanguage,
 } from '../settings-store.ts'
 import type { SettingsFormProps } from './form-types.ts'
 
 function ProfileForm() {
   const dispatch = useAppDispatch()
-  const isPublic = useAppSelector((state) => state.settings.isPublicProfile)
+  const { displayName, emailAddress, bio, isPublicProfile } = useAppSelector((state) => state.settings)
   return (
     <>
       <Card>
         <SectionHeader title="Profile information" description="Manage how you appear across the workspace." />
         <AvatarUpload initials="JD" />
         <Field label="Display name">
-          <Input defaultValue="Jane Doe" />
+          <Input value={displayName} onChange={(e) => dispatch(settingsActions.setDisplayName(e.target.value))} />
         </Field>
         <Field label="Email address">
-          <Input type="email" defaultValue="jane@example.com" />
+          <Input
+            type="email"
+            value={emailAddress}
+            onChange={(e) => dispatch(settingsActions.setEmailAddress(e.target.value))}
+          />
         </Field>
         <Field label="Bio" hint="A short bio visible on your profile.">
-          <TextArea defaultValue="Product manager based in Berlin." />
+          <TextArea value={bio} onChange={(e) => dispatch(settingsActions.setBio(e.target.value))} />
         </Field>
       </Card>
       <Card>
         <SectionHeader title="Visibility" description="Control who can see your profile." />
         <Toggle
-          checked={isPublic}
+          checked={isPublicProfile}
           onChange={(value) => dispatch(settingsActions.setIsPublicProfile(value))}
           label="Make profile visible to everyone"
         />
@@ -134,7 +142,9 @@ function EmailCalendarForm() {
 
 function CallIntelligenceForm() {
   const dispatch = useAppDispatch()
-  const { transcription, coaching } = useAppSelector((state) => state.settings)
+  const { transcription, transcriptionLanguage, coaching, summaryLength, transcriptRetention } = useAppSelector(
+    (state) => state.settings,
+  )
   return (
     <>
       <Card>
@@ -145,7 +155,12 @@ function CallIntelligenceForm() {
           label="Enable call transcription"
         />
         <Field label="Transcription language">
-          <Select defaultValue="en">
+          <Select
+            value={transcriptionLanguage}
+            onChange={(event) =>
+              dispatch(settingsActions.setTranscriptionLanguage(event.target.value as AppTranscriptionLanguage))
+            }
+          >
             {transcriptionLanguageOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -157,7 +172,10 @@ function CallIntelligenceForm() {
       <Card>
         <SectionHeader title="Summaries" />
         <Field label="Default summary length">
-          <Select defaultValue="bullet">
+          <Select
+            value={summaryLength}
+            onChange={(event) => dispatch(settingsActions.setSummaryLength(event.target.value as AppSummaryLength))}
+          >
             {summaryLengthOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -174,7 +192,10 @@ function CallIntelligenceForm() {
       <Card>
         <SectionHeader title="Data retention" />
         <Field label="Keep transcripts for">
-          <Select defaultValue="90">
+          <Select
+            value={transcriptRetention}
+            onChange={(event) => dispatch(settingsActions.setTranscriptRetention(event.target.value as AppRetention))}
+          >
             {retentionOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -223,12 +244,19 @@ function StorageAccountsForm() {
 }
 
 function ReferForm() {
+  const dispatch = useAppDispatch()
+  const { referralEmail } = useAppSelector((state) => state.settings)
   return (
     <>
       <Card>
         <SectionHeader title="Invite a team" description="Send an invite and earn workspace credits." />
         <Field label="Email address">
-          <Input type="email" placeholder="team@example.com" />
+          <Input
+            type="email"
+            value={referralEmail}
+            onChange={(event) => dispatch(settingsActions.setReferralEmail(event.target.value))}
+            placeholder="team@example.com"
+          />
         </Field>
         <ButtonGroup>
           <Button>Send invite</Button>
@@ -258,9 +286,16 @@ function ReferForm() {
 
 function NotificationsForm() {
   const dispatch = useAppDispatch()
-  const { emailNotifications, pushNotifications, slackNotifications, digest, quietHours } = useAppSelector(
-    (state) => state.settings,
-  )
+  const {
+    emailNotifications,
+    pushNotifications,
+    slackNotifications,
+    digest,
+    quietHours,
+    quietHoursFrom,
+    quietHoursTo,
+    digestFrequency,
+  } = useAppSelector((state) => state.settings)
   return (
     <>
       <Card>
@@ -295,7 +330,10 @@ function NotificationsForm() {
           label="Send me a daily digest"
         />
         <Field label="Digest frequency">
-          <Select defaultValue="daily">
+          <Select
+            value={digestFrequency}
+            onChange={(event) => dispatch(settingsActions.setDigestFrequency(event.target.value as AppDigestFrequency))}
+          >
             {digestFrequencyOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -313,10 +351,18 @@ function NotificationsForm() {
         />
         <div className="form-row">
           <Field label="From">
-            <Input type="time" defaultValue="20:00" />
+            <Input
+              type="time"
+              value={quietHoursFrom}
+              onChange={(event) => dispatch(settingsActions.setQuietHoursFrom(event.target.value))}
+            />
           </Field>
           <Field label="To">
-            <Input type="time" defaultValue="08:00" />
+            <Input
+              type="time"
+              value={quietHoursTo}
+              onChange={(event) => dispatch(settingsActions.setQuietHoursTo(event.target.value))}
+            />
           </Field>
         </div>
       </Card>
