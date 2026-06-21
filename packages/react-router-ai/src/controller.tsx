@@ -269,8 +269,32 @@ export function AICommandRoot({
     setChatMessages((current) => [...current, message]);
   }, []);
 
+  const clearChatMessages = useCallback(() => {
+    setChatMessages([]);
+  }, []);
+
+  const startListening = useCallback(() => {
+    if (!recognizerRef.current) {
+      setError("Voice input is not available in this browser.");
+      return;
+    }
+    setError(null);
+    try {
+      recognizerRef.current.start();
+      setIsListening(true);
+    } catch {
+      setIsListening(false);
+      setError("Voice input failed. Keep typing instead.");
+    }
+  }, []);
+
+  const stopListening = useCallback(() => {
+    recognizerRef.current?.stop();
+    setIsListening(false);
+  }, []);
+
   const submitChat = useCallback(
-    async (nextMessage?: string) => {
+    async (nextMessage?: string, isVoice = false) => {
       const trimmed = (nextMessage ?? chatInputRef.current).trim();
       if (!trimmed) return;
 
@@ -296,9 +320,12 @@ export function AICommandRoot({
           const assistantMessage: AICommandChatMessageData = {
             id: createChatMessageId(),
             role: "assistant",
-            content: "Sorry, I couldn't find anything. Try rephrasing, or contact support.",
+            content: isVoice
+              ? "Please try again."
+              : "Sorry, I couldn't find anything. Try rephrasing, or contact support.",
           };
           appendChatMessage(assistantMessage);
+          if (isVoice) startListening();
           return;
         }
 
@@ -306,23 +333,33 @@ export function AICommandRoot({
           const assistantMessage: AICommandChatMessageData = {
             id: createChatMessageId(),
             role: "assistant",
-            content:
-              result.message?.trim() ||
-              "Sorry, I couldn't find anything. Try rephrasing, or contact support.",
+            content: isVoice
+              ? "Please try again."
+              : result.message?.trim() ||
+                "Sorry, I couldn't find anything. Try rephrasing, or contact support.",
           };
           appendChatMessage(assistantMessage);
+          if (isVoice) startListening();
           return;
         }
 
         if (result.kind === "clarify") {
-          const clarificationMessage: AICommandChatMessageData = {
-            id: createChatMessageId(),
-            role: "assistant",
-            content: result.message?.trim() || "Which one did you mean?",
-            candidates: result.candidates,
-          };
-          appendChatMessage(clarificationMessage);
-          setCandidates(result.candidates);
+          if (result.candidates.length === 1) {
+            await executeItem(result.candidates[0]);
+            return;
+          }
+          const topCandidates = result.candidates.slice(0, 3);
+          if (!isVoice) {
+            const clarificationMessage: AICommandChatMessageData = {
+              id: createChatMessageId(),
+              role: "assistant",
+              content: result.message?.trim() || "Which one did you mean?",
+              candidates: topCandidates,
+            };
+            appendChatMessage(clarificationMessage);
+          }
+          setCandidates(topCandidates);
+          if (isVoice) startListening();
           return;
         }
 
@@ -349,9 +386,10 @@ export function AICommandRoot({
           content: message,
         };
         appendChatMessage(assistantMessage);
+        if (isVoice) startListening();
       }
     },
-    [appendChatMessage, executeItem],
+    [appendChatMessage, executeItem, startListening],
   );
 
   const switchMode = useCallback(
@@ -394,35 +432,6 @@ export function AICommandRoot({
     [switchMode],
   );
 
-  const startListening = useCallback(() => {
-    if (!recognizerRef.current) {
-      setError("Voice input is not available in this browser.");
-      return;
-    }
-    setError(null);
-    try {
-      recognizerRef.current.start();
-      setIsListening(true);
-      if (modeRef.current === "ai") {
-        setModeState("voice");
-      }
-    } catch {
-      setIsListening(false);
-      setError("Voice input failed. Keep typing instead.");
-    }
-  }, []);
-
-  const stopListening = useCallback(() => {
-    recognizerRef.current?.stop();
-    setIsListening(false);
-  }, []);
-
-  useEffect(() => {
-    if (mode === "voice" && !isListening) {
-      startListening();
-    }
-  }, [mode, isListening, startListening]);
-
   useEffect(() => {
     recognizerRef.current = createSpeechRecognizer({
       onResult: (transcript) => {
@@ -430,7 +439,7 @@ export function AICommandRoot({
           setChatInputState(transcript);
           setError(null);
           setIsListening(false);
-          setModeState("ai");
+          void submitChat(transcript, true);
           return;
         }
         if (modeRef.current === "ai") {
@@ -444,15 +453,9 @@ export function AICommandRoot({
       onError: (message) => {
         setError(message);
         setIsListening(false);
-        if (modeRef.current === "voice") {
-          setModeState("ai");
-        }
       },
       onEnd: () => {
         setIsListening(false);
-        if (modeRef.current === "voice") {
-          setModeState("ai");
-        }
       },
     });
 
@@ -460,7 +463,13 @@ export function AICommandRoot({
       recognizerRef.current?.cleanup();
       recognizerRef.current = null;
     };
-  }, [submitMatcherQuery]);
+  }, [submitMatcherQuery, submitChat]);
+
+  useEffect(() => {
+    if (mode === "voice" && !isListening) {
+      startListening();
+    }
+  }, [mode, isListening, startListening]);
 
   const value: AICommandContextValue = {
     query,
@@ -495,6 +504,7 @@ export function AICommandRoot({
     candidates,
     selectCandidate,
     clearCandidates,
+    clearChatMessages,
     onContactSupport,
   };
 

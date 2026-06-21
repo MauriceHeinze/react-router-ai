@@ -188,6 +188,12 @@ export type AICommandNoMatchProps = {
   style?: React.CSSProperties;
 };
 
+export type AICommandVoiceEmptyPromptProps = {
+  children?: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
 export type AICommandRegistryEntry = {
   id: string;
   getItem: () => AICommandItem;
@@ -237,6 +243,7 @@ export type AICommandContextValue = {
   candidates: AICommandItem[] | null;
   selectCandidate: (item: AICommandItem) => Promise<void>;
   clearCandidates: () => void;
+  clearChatMessages: () => void;
   onContactSupport?: () => void;
 };
 

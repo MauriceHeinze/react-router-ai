@@ -19,6 +19,12 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
     }
   }, [ctx, isListening, open])
 
+  useEffect(() => {
+    if (mode === 'voice') {
+      ctx.clearChatMessages()
+    }
+  }, [ctx, mode])
+
   return (
     <AICommand.Dialog open={open} onOpenChange={onOpenChange}>
       <div className="command-dialog-overlay" onClick={() => onOpenChange(false)}>
@@ -100,7 +106,12 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
             </div>
           ) : (
             <div className="command-dialog-chat-panel">
-              <AICommand.Chat className="command-dialog-chat">
+              <AICommand.Chat
+                className={`command-dialog-chat ${mode === 'voice' && ctx.chatMessages.length === 0 ? 'command-dialog-chat-voice-empty' : ''}`}
+              >
+                <AICommand.VoiceEmptyPrompt className="command-dialog-voice-prompt">
+                  <h2>What are you looking for?</h2>
+                </AICommand.VoiceEmptyPrompt>
                 {ctx.chatMessages.map((message) => (
                   <AICommand.ChatMessage
                     key={message.id}
@@ -110,8 +121,21 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                   />
                 ))}
                 <AICommand.Loading className="command-dialog-loader">
-                  <span className="command-dialog-spinner" />
-                  <span>Thinking...</span>
+                  {mode === 'voice' ? (
+                    <span className="command-dialog-thinking">
+                      Thinking
+                      <span className="command-dialog-thinking-dots" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                      </span>
+                    </span>
+                  ) : (
+                    <>
+                      <span className="command-dialog-spinner" />
+                      <span>Thinking...</span>
+                    </>
+                  )}
                 </AICommand.Loading>
                 <AICommand.Error className="command-dialog-error" />
                 <AICommand.Confirmation className="command-dialog-confirmation" />

@@ -24,6 +24,7 @@ import type {
   AICommandModeHeaderProps,
   AICommandNoMatchProps,
   AICommandVoiceButtonProps,
+  AICommandVoiceEmptyPromptProps,
   AICommandVoiceWaveformProps,
 } from "./types";
 
@@ -594,6 +595,20 @@ export function AICommandClarification({
   );
 }
 
+export function AICommandVoiceEmptyPrompt({
+  children,
+  className,
+  style,
+}: PropsWithChildren<AICommandVoiceEmptyPromptProps>) {
+  const ctx = useAICommand();
+  if (ctx.mode !== "voice" || ctx.chatMessages.length > 0 || ctx.isSubmitting) return null;
+  return (
+    <div className={className} style={style}>
+      {children}
+    </div>
+  );
+}
+
 export function AICommandVoiceWaveform({
   barCount = 40,
   className,
@@ -683,4 +698,5 @@ export const AICommand = {
   Clarification: AICommandClarification,
   NoMatch: AICommandNoMatch,
   VoiceWaveform: AICommandVoiceWaveform,
+  VoiceEmptyPrompt: AICommandVoiceEmptyPrompt,
 };
