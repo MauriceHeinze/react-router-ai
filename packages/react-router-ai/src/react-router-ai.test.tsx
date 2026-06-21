@@ -1604,6 +1604,111 @@ describe("AICommand mode toggle and AI chat", () => {
   });
 });
 
+describe("AICommand voice panel behavior", () => {
+  function ModeProbe() {
+    const ctx = useAICommand();
+    return (
+      <>
+        <button type="button" onClick={() => ctx.switchMode("voice")}>
+          switch-to-voice
+        </button>
+        <span data-testid="mode">{ctx.mode}</span>
+        <span data-testid="listening">{ctx.isListening ? "yes" : "no"}</span>
+      </>
+    );
+  }
+
+  it("cycles mode with Tab when in voice mode", async () => {
+    const user = userEvent.setup();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue(null);
+
+    render(
+      <AICommandRoot matcher={matcher}>
+        <AICommand.Dialog open>
+          <AICommand.Input />
+          <AICommand.List />
+          <ModeProbe />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "switch-to-voice" }));
+    await waitFor(() => expect(screen.getByTestId("mode").textContent).toBe("voice"));
+
+    await user.keyboard("{Tab}");
+    await waitFor(() => expect(screen.getByTestId("mode").textContent).toBe("search"));
+  });
+
+  it("does not render VoiceWaveform when not listening", async () => {
+    const user = userEvent.setup();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue(null);
+    const start = vi.fn();
+    const Recognition = vi.fn().mockImplementation(() => ({
+      lang: "",
+      interimResults: false,
+      continuous: false,
+      onresult: null,
+      onerror: null,
+      onend: null,
+      start,
+      stop: vi.fn(),
+    }));
+    window.SpeechRecognition = Recognition as unknown as typeof window.SpeechRecognition;
+    window.webkitSpeechRecognition = Recognition as unknown as typeof window.webkitSpeechRecognition;
+
+    render(
+      <AICommandRoot matcher={matcher}>
+        <AICommand.Dialog open>
+          <AICommand.Input />
+          <AICommand.List />
+          <ModeProbe />
+          <AICommand.VoiceWaveform />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    expect(screen.queryByLabelText("Voice waveform")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "switch-to-voice" }));
+    await waitFor(() => expect(screen.getByTestId("listening").textContent).toBe("yes"));
+
+    expect(screen.queryByLabelText("Voice waveform")).toBeTruthy();
+  });
+
+  it("starts listening automatically when switching to voice mode", async () => {
+    const user = userEvent.setup();
+    const start = vi.fn();
+    const Recognition = vi.fn().mockImplementation(() => ({
+      lang: "",
+      interimResults: false,
+      continuous: false,
+      onresult: null,
+      onerror: null,
+      onend: null,
+      start,
+      stop: vi.fn(),
+    }));
+    window.SpeechRecognition = Recognition as unknown as typeof window.SpeechRecognition;
+    window.webkitSpeechRecognition = Recognition as unknown as typeof window.webkitSpeechRecognition;
+
+    render(
+      <AICommandRoot>
+        <AICommand.Dialog open>
+          <AICommand.Input />
+          <AICommand.List />
+          <ModeProbe />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "switch-to-voice" }));
+    await waitFor(() => expect(screen.getByTestId("mode").textContent).toBe("voice"));
+
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("listening").textContent).toBe("yes");
+  });
+});
+
 describe("rankCommandItems fuzzy matching", () => {
   it("tolerates minor typos via Fuse fuzzy matching", () => {
     const items: AICommandItem[] = [

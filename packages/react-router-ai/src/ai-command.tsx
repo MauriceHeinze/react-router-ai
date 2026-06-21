@@ -59,11 +59,27 @@ export function AICommandDialog({
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setOpen(true);
+        return;
+      }
+      if (
+        event.key === "Tab" &&
+        !event.defaultPrevented &&
+        !event.shiftKey &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        ctx.mode === "voice"
+      ) {
+        event.preventDefault();
+        const modes = ["search", "ai", "voice"] as const;
+        const idx = modes.indexOf(ctx.mode);
+        const next = modes[(idx + 1) % modes.length];
+        ctx.switchMode(next);
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setOpen]);
+  }, [setOpen, ctx.mode, ctx.switchMode]);
 
   if (!open) return null;
 
@@ -583,6 +599,8 @@ export function AICommandVoiceWaveform({
   className,
   style,
 }: AICommandVoiceWaveformProps) {
+  const ctx = useAICommand();
+  if (!ctx.isListening) return null;
   return (
     <div
       className={className}

@@ -418,6 +418,12 @@ export function AICommandRoot({
   }, []);
 
   useEffect(() => {
+    if (mode === "voice" && !isListening) {
+      startListening();
+    }
+  }, [mode, isListening, startListening]);
+
+  useEffect(() => {
     recognizerRef.current = createSpeechRecognizer({
       onResult: (transcript) => {
         if (modeRef.current === "voice") {

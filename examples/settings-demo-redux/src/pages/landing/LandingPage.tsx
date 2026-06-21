@@ -15,6 +15,7 @@ export default function LandingPage({ onOpenCommand }: LandingPageProps) {
           This is intentionally generic. It gives the demo a clear start page before entering
           the settings area powered by `react-router-ai`.
         </p>
+        <p className="landing-question">What are you looking for?</p>
 
         <div className="landing-actions">
           <Link className="landing-button landing-button-primary" to="/settings">
