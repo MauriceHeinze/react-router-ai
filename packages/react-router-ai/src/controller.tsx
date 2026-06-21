@@ -10,7 +10,7 @@ import {
   type RefObject,
 } from "react";
 import { matchItems, resolveIntent } from "./matcher";
-import { rankCommandItems } from "./local-matcher";
+import { findDirectCommandMatch, rankCommandItems } from "./local-matcher";
 import { createSpeechRecognizer } from "./speech";
 import { useCommandRegistry, useRegisteredItems } from "./registry";
 import type {
@@ -332,6 +332,13 @@ export function AICommandRoot({
       setIsSubmitting(true);
 
       try {
+        const directMatch = findDirectCommandMatch(trimmed, itemsRef.current);
+        if (directMatch) {
+          setIsSubmitting(false);
+          await executeItem(directMatch);
+          return;
+        }
+
         const result: AICommandMatcherResult = await resolveIntent(trimmed, itemsRef.current, {
           matcher: matcherRef.current,
           maxMatcherCandidates: maxMatcherCandidatesRef.current,

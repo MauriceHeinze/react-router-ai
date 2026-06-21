@@ -19,6 +19,56 @@ function buildFuse(items: readonly AICommandItem[]) {
   });
 }
 
+function normalizeText(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function createQueryVariants(query: string) {
+  const normalized = normalizeText(query);
+  const variants = new Set<string>([normalized]);
+  const prefixes = [
+    "go to ",
+    "open ",
+    "navigate to ",
+    "take me to ",
+    "bring me to ",
+    "show me ",
+  ];
+
+  for (const prefix of prefixes) {
+    if (normalized.startsWith(prefix)) {
+      const stripped = normalized.slice(prefix.length).trim();
+      if (stripped) {
+        variants.add(stripped);
+      }
+    }
+  }
+
+  return variants;
+}
+
+export function findDirectCommandMatch(
+  query: string,
+  items: readonly AICommandItem[],
+): ScoredCommandItem | null {
+  const activeItems = items.filter((item) => !item.disabled);
+  const variants = createQueryVariants(query);
+
+  const exactValueMatches = activeItems.filter((item) => variants.has(normalizeText(item.value)));
+  if (exactValueMatches.length === 1) {
+    return { ...exactValueMatches[0], confidence: 1 };
+  }
+
+  const exactKeywordMatches = activeItems.filter((item) =>
+    (item.keywords ?? []).some((keyword) => variants.has(normalizeText(keyword))),
+  );
+  if (exactKeywordMatches.length === 1) {
+    return { ...exactKeywordMatches[0], confidence: 1 };
+  }
+
+  return null;
+}
+
 export function rankCommandItems(
   query: string,
   items: readonly AICommandItem[],

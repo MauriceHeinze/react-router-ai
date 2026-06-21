@@ -24,7 +24,7 @@ export type {
 } from "./openai-matcher";
 export { matchItems, resolveIntent } from "./matcher";
 export type { MatchItemsOptions, ResolveIntentOptions } from "./matcher";
-export { rankCommandItems } from "./local-matcher";
+export { findDirectCommandMatch, rankCommandItems } from "./local-matcher";
 export type { ScoredCommandItem } from "./local-matcher";
 export type {
   AICommandChatInputProps,

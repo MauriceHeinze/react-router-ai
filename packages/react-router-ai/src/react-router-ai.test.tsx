@@ -6,6 +6,7 @@ import {
   AICommand,
   AICommandRoot,
   createOpenAICommandMatcher,
+  findDirectCommandMatch,
   matchItems,
   rankCommandItems,
   useAICommand,
@@ -165,6 +166,39 @@ describe("rankCommandItems", () => {
     expect(ranked).toHaveLength(1);
     expect(ranked[0]?.id).toBe("a");
     expect(ranked[0]?.confidence).toBe(0);
+  });
+});
+
+describe("findDirectCommandMatch", () => {
+  it("matches a stripped navigation phrase to a unique keyword", () => {
+    const items: AICommandItem[] = [
+      {
+        id: "settings.appearance",
+        value: "Appearance",
+        keywords: ["theme settings", "appearance settings"],
+        onSelect: vi.fn(),
+      },
+      {
+        id: "settings.appearance.theme",
+        value: "Theme",
+        keywords: ["theme", "appearance"],
+        onSelect: vi.fn(),
+      },
+    ];
+
+    const match = findDirectCommandMatch("go to theme settings", items);
+    expect(match?.id).toBe("settings.appearance");
+    expect(match?.confidence).toBe(1);
+  });
+
+  it("returns null when multiple commands share the same direct phrase", () => {
+    const items: AICommandItem[] = [
+      { id: "a", value: "Billing", keywords: ["billing settings"], onSelect: vi.fn() },
+      { id: "b", value: "Invoices", keywords: ["billing settings"], onSelect: vi.fn() },
+    ];
+
+    const match = findDirectCommandMatch("open billing settings", items);
+    expect(match).toBeNull();
   });
 });
 
@@ -1441,6 +1475,52 @@ describe("AICommand mode toggle and AI chat", () => {
     await user.keyboard("{Enter}");
 
     await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId("chat-count").textContent).toBe("0"));
+  });
+
+  it("executes a unique direct local match before consulting the chat matcher", async () => {
+    const user = userEvent.setup();
+    const navigateToTheme = vi.fn();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
+      kind: "clarify",
+      candidates: [
+        { id: "settings.appearance.theme", value: "Theme", onSelect: vi.fn() },
+        { id: "settings.appearance.theme.set.dark", value: "Set theme to dark", onSelect: vi.fn() },
+      ],
+    });
+
+    render(
+      <AICommandRoot matcher={matcher} initialMode="ai">
+        <AICommand.Dialog open>
+          <AICommand.ChatInput autoFocus />
+          <AICommand.List>
+            <AICommand.Item
+              id="settings.appearance"
+              value="Appearance"
+              keywords={["theme settings", "appearance settings"]}
+              onSelect={navigateToTheme}
+            >
+              Appearance
+            </AICommand.Item>
+            <AICommand.Item
+              id="settings.appearance.theme"
+              value="Theme"
+              keywords={["theme", "appearance"]}
+              onSelect={vi.fn()}
+            >
+              Theme
+            </AICommand.Item>
+          </AICommand.List>
+          <ChatProbe />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    await user.type(screen.getByLabelText("AI chat input"), "go to theme settings");
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => expect(navigateToTheme).toHaveBeenCalledTimes(1));
+    expect(matcher).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.getByTestId("chat-count").textContent).toBe("0"));
   });
 
