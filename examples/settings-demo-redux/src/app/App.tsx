@@ -51,7 +51,13 @@ function AppShell() {
 
   return (
     <div className={`app-shell theme-${effectiveTheme}`}>
-      <AICommand.Root matcher={openAiCommandMatcher} maxVisibleItems={8}>
+      <AICommand.Root
+        matcher={openAiCommandMatcher}
+        maxVisibleItems={8}
+        onContactSupport={() => {
+          window.location.href = 'mailto:support@example.com?subject=Settings%20help'
+        }}
+      >
         <Routes>
           <Route path="/" element={<LandingPage onOpenCommand={() => setWidgetOpen(true)} />} />
           <Route

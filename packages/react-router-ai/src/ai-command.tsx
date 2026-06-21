@@ -9,6 +9,10 @@ import {
 } from "react";
 import { AICommandRoot, useAICommand } from "./controller";
 import type {
+  AICommandChatInputProps,
+  AICommandChatMessageProps,
+  AICommandChatProps,
+  AICommandClarificationProps,
   AICommandConfirmationProps,
   AICommandDialogProps,
   AICommandEmptyProps,
@@ -17,6 +21,8 @@ import type {
   AICommandItemProps,
   AICommandListProps,
   AICommandLoadingProps,
+  AICommandModeToggleProps,
+  AICommandNoMatchProps,
   AICommandVoiceButtonProps,
 } from "./types";
 
@@ -290,6 +296,235 @@ export function AICommandConfirmation({ className, style }: AICommandConfirmatio
   );
 }
 
+export function AICommandModeToggle({
+  searchLabel = "Search",
+  aiLabel = "AI",
+  className,
+  style,
+}: AICommandModeToggleProps) {
+  const ctx = useAICommand();
+  return (
+    <div role="tablist" aria-label="Input mode" className={className} style={style}>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={ctx.mode === "search"}
+        onClick={() => ctx.switchMode("search")}
+      >
+        {searchLabel}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={ctx.mode === "ai"}
+        onClick={() => ctx.switchMode("ai")}
+      >
+        {aiLabel}
+      </button>
+    </div>
+  );
+}
+
+export function AICommandChat({ children, className, style }: PropsWithChildren<AICommandChatProps>) {
+  const ctx = useAICommand();
+  return (
+    <div
+      role="log"
+      aria-label="AI chat"
+      aria-live="polite"
+      aria-busy={ctx.isSubmitting || undefined}
+      className={className}
+      style={style}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function AICommandChatMessage({
+  message,
+  onSelectCandidate,
+  className,
+  style,
+}: AICommandChatMessageProps) {
+  const ctx = useAICommand();
+  const isUser = message.role === "user";
+  const handleSelect = (item: Parameters<NonNullable<typeof onSelectCandidate>>[0]) => {
+    if (onSelectCandidate) {
+      onSelectCandidate(item);
+    } else {
+      void ctx.selectCandidate(item);
+    }
+  };
+  return (
+    <div
+      role={isUser ? "user" : "assistant"}
+      data-role={message.role}
+      className={className}
+      style={style}
+    >
+      <p style={{ margin: 0 }}>{message.content}</p>
+      {message.candidates && message.candidates.length > 0 ? (
+        <ul style={{ listStyle: "none", padding: 0, margin: "8px 0 0" }}>
+          {message.candidates.map((item) => (
+            <li key={item.id} style={{ margin: "4px 0" }}>
+              <button type="button" onClick={() => handleSelect(item)}>
+                {item.value}
+                {item.description ? ` — ${item.description}` : ""}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+export function AICommandChatInput({
+  placeholder,
+  value: controlledValue,
+  onValueChange,
+  onKeyDown,
+  voiceShortcut,
+  onFocus,
+  onBlur,
+  autoFocus,
+  rows = 2,
+  className,
+  style,
+}: AICommandChatInputProps) {
+  const ctx = useAICommand();
+  const isControlled = controlledValue !== undefined;
+  const value = isControlled ? controlledValue : ctx.chatInput;
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [autoFocus]);
+
+  function handleChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    const nextValue = event.target.value;
+    if (!isControlled) {
+      ctx.setChatInput(nextValue);
+    }
+    onValueChange?.(nextValue);
+  }
+
+  function handleKeyDown(event: ReactKeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      void ctx.submitChat();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      ctx.closeDialog();
+    } else if (
+      voiceShortcut === "tab" &&
+      event.key === "Tab" &&
+      !event.shiftKey &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.altKey
+    ) {
+      event.preventDefault();
+      if (ctx.isListening) {
+        ctx.stopListening();
+      } else {
+        ctx.startListening();
+      }
+    }
+    onKeyDown?.(event);
+  }
+
+  return (
+    <textarea
+      ref={inputRef}
+      rows={rows}
+      value={value}
+      onChange={handleChange}
+      onKeyDown={handleKeyDown}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      placeholder={placeholder}
+      aria-label="AI chat input"
+      className={className}
+      style={style}
+    />
+  );
+}
+
+export function AICommandClarification({
+  message = "Which one did you mean?",
+  onSelect,
+  className,
+  style,
+  itemClassName,
+  itemStyle,
+}: AICommandClarificationProps) {
+  const ctx = useAICommand();
+  if (!ctx.candidates || ctx.candidates.length === 0) return null;
+  return (
+    <div role="group" aria-label="Clarification" className={className} style={style}>
+      <p style={{ margin: "0 0 8px" }}>{message}</p>
+      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+        {ctx.candidates.map((item) => (
+          <li key={item.id} style={{ margin: "4px 0" }}>
+            <button
+              type="button"
+              className={itemClassName}
+              style={itemStyle}
+              onClick={() => {
+                if (onSelect) {
+                  onSelect(item);
+                } else {
+                  void ctx.selectCandidate(item);
+                }
+              }}
+            >
+              {item.value}
+              {item.description ? ` — ${item.description}` : ""}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function AICommandNoMatch({
+  message = "Sorry, I couldn't find anything. Try rephrasing, or contact support.",
+  rephraseLabel,
+  contactSupportLabel = "Contact support",
+  onContactSupport,
+  className,
+  style,
+}: AICommandNoMatchProps) {
+  const ctx = useAICommand();
+  const lastMessage = ctx.chatMessages[ctx.chatMessages.length - 1];
+  const isNoMatch =
+    lastMessage?.role === "assistant" &&
+    (!lastMessage.candidates || lastMessage.candidates.length === 0) &&
+    !lastMessage.pendingItemId;
+  if (!isNoMatch) return null;
+
+  const supportHandler = onContactSupport ?? ctx.onContactSupport;
+
+  return (
+    <div role="status" className={className} style={style}>
+      <p style={{ margin: 0 }}>{message}</p>
+      <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+        {rephraseLabel ? <span>{rephraseLabel}</span> : null}
+        {supportHandler ? (
+          <button type="button" onClick={supportHandler}>
+            {contactSupportLabel}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export const AICommand = {
   Root: AICommandRoot,
   Dialog: AICommandDialog,
@@ -301,4 +536,10 @@ export const AICommand = {
   Error: AICommandError,
   VoiceButton: AICommandVoiceButton,
   Confirmation: AICommandConfirmation,
+  ModeToggle: AICommandModeToggle,
+  Chat: AICommandChat,
+  ChatMessage: AICommandChatMessage,
+  ChatInput: AICommandChatInput,
+  Clarification: AICommandClarification,
+  NoMatch: AICommandNoMatch,
 };

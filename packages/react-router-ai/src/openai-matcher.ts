@@ -1,4 +1,4 @@
-import type { AICommandItem, AICommandMatcher } from "./types";
+import type { AICommandItem, AICommandMatcher, AICommandMatcherResult } from "./types";
 
 export type OpenAICommandMatcherFetch = (
   input: RequestInfo | URL,
@@ -31,6 +31,12 @@ type ChatCompletionResponse = {
   }>;
 };
 
+type ResolveIntentArgs = {
+  matches?: Array<{ commandId: string | null; confidence?: number } | string | null>;
+  message?: string | null;
+  needsApproval?: boolean | null;
+};
+
 function serializeItem(item: AICommandItem) {
   return {
     id: item.id,
@@ -60,6 +66,21 @@ function createDynamicRequestContext(query: string, pageContext?: string) {
 
 function getCommandIds(items: readonly AICommandItem[]) {
   return items.map((item) => item.id);
+}
+
+function normalizeMatches(raw: ResolveIntentArgs["matches"]): Array<string | null> {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((entry) => {
+      if (entry === null) return null;
+      if (typeof entry === "string") return entry;
+      if (typeof entry === "object" && entry !== null && "commandId" in entry) {
+        const id = (entry as { commandId?: unknown }).commandId;
+        return typeof id === "string" ? id : null;
+      }
+      return null;
+    })
+    .filter((value, index, arr): value is string | null => arr.indexOf(value) === index);
 }
 
 export function createOpenAICommandMatcher(
@@ -113,9 +134,11 @@ export function createOpenAICommandMatcher(
           {
             role: "system",
             content: [
-              "Select exactly one app command for the user query.",
-              "Return the id of the command that best matches the user's intent.",
-              "If none of the commands clearly fit, return null for commandId.",
+              "Resolve the user's query against the provided app commands.",
+              "Return between 0 and N matching command ids in `matches`, ordered by relevance.",
+              "Return 1 command when the user clearly wants one action; return 2+ when the intent is ambiguous between commands; return 0 when nothing fits.",
+              "Set `needsApproval` to true if the action is risky and should be confirmed before running.",
+              "Use `message` to clarify or explain, addressed to the user.",
             ].join("\n"),
           },
           {
@@ -131,25 +154,26 @@ export function createOpenAICommandMatcher(
           {
             type: "function",
             function: {
-              name: "select_command",
-              description: "Return the best matching command for the user request, or null.",
+              name: "resolve_intent",
+              description:
+                "Resolve the user query into zero, one, or more candidate commands. Use needsApproval when the action is risky.",
               parameters: {
                 type: "object",
                 additionalProperties: false,
                 properties: {
-                  commandId: {
-                    anyOf: [
-                      {
-                        type: "string",
-                        enum: commandIds,
-                      },
-                      {
-                        type: "null",
-                      },
-                    ],
+                  matches: {
+                    type: "array",
+                    items: {
+                      anyOf: [
+                        { type: "string", enum: commandIds },
+                        { type: "null" },
+                      ],
+                    },
                   },
+                  message: { type: ["string", "null"] },
+                  needsApproval: { type: ["boolean", "null"] },
                 },
-                required: ["commandId"],
+                required: ["matches"],
               },
             },
           },
@@ -157,7 +181,7 @@ export function createOpenAICommandMatcher(
         tool_choice: {
           type: "function",
           function: {
-            name: "select_command",
+            name: "resolve_intent",
           },
         },
       }),
@@ -171,14 +195,46 @@ export function createOpenAICommandMatcher(
     const rawArguments = data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
     if (!rawArguments) return null;
 
-    let parsed: { commandId?: string | null };
+    let parsed: ResolveIntentArgs;
     try {
-      parsed = JSON.parse(rawArguments) as { commandId?: string | null };
+      parsed = JSON.parse(rawArguments) as ResolveIntentArgs;
     } catch {
       return null;
     }
-    if (!parsed.commandId) return null;
 
-    return items.find((item) => item.id === parsed.commandId) ?? null;
+    const ids = normalizeMatches(parsed.matches).filter((value): value is string => Boolean(value));
+    const matchedItems = ids
+      .map((id) => items.find((item) => item.id === id))
+      .filter((item): item is AICommandItem => Boolean(item));
+
+    if (matchedItems.length === 0) {
+      const noMatchMessage =
+        typeof parsed.message === "string" && parsed.message.trim()
+          ? parsed.message
+          : undefined;
+      const noMatchResult: AICommandMatcherResult = { kind: "no-match", message: noMatchMessage };
+      return noMatchResult;
+    }
+
+    if (matchedItems.length === 1) {
+      const executeResult: AICommandMatcherResult = {
+        kind: "execute",
+        item: matchedItems[0]!,
+        ...(parsed.needsApproval === true ? { needsApproval: true } : {}),
+        ...(typeof parsed.message === "string" && parsed.message.trim()
+          ? { message: parsed.message }
+          : {}),
+      };
+      return executeResult;
+    }
+
+    const clarifyResult: AICommandMatcherResult = {
+      kind: "clarify",
+      candidates: matchedItems,
+      ...(typeof parsed.message === "string" && parsed.message.trim()
+        ? { message: parsed.message }
+        : {}),
+    };
+    return clarifyResult;
   };
 }

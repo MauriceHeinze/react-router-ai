@@ -9,15 +9,19 @@ import {
   type PropsWithChildren,
   type RefObject,
 } from "react";
-import { matchItems } from "./matcher";
+import { matchItems, resolveIntent } from "./matcher";
 import { rankCommandItems } from "./local-matcher";
 import { createSpeechRecognizer } from "./speech";
 import { useCommandRegistry, useRegisteredItems } from "./registry";
 import type {
+  AICommandChatMessageData,
   AICommandContextValue,
   AICommandDialogController,
   AICommandItem,
   AICommandMatch,
+  AICommandMatcher,
+  AICommandMatcherResult,
+  AICommandMode,
   AICommandRootProps,
 } from "./types";
 
@@ -31,16 +35,34 @@ export function useAICommand(): AICommandContextValue {
   return context;
 }
 
+let chatMessageCounter = 0;
+function createChatMessageId() {
+  chatMessageCounter += 1;
+  return `rra-chat-${chatMessageCounter}`;
+}
+
+function toConfirmationMessage(item: AICommandItem) {
+  return typeof item.confirmation === "string"
+    ? item.confirmation
+    : `Confirm "${item.value}"?`;
+}
+
 export function AICommandRoot({
   children,
   matcher,
   threshold = 0.45,
   maxMatcherCandidates,
   maxVisibleItems,
+  onContactSupport,
+  initialMode = "search",
 }: PropsWithChildren<AICommandRootProps>) {
   const registry = useCommandRegistry();
   const items = useRegisteredItems(registry);
   const [query, setQueryState] = useState("");
+  const [mode, setModeState] = useState<AICommandMode>(initialMode);
+  const [chatMessages, setChatMessages] = useState<AICommandChatMessageData[]>([]);
+  const [chatInput, setChatInputState] = useState("");
+  const [candidates, setCandidates] = useState<AICommandItem[] | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isListening, setIsListening] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,8 +73,18 @@ export function AICommandRoot({
 
   const queryRef = useRef(query);
   queryRef.current = query;
-  const matcherRef = useRef(matcher);
+  const chatInputRef = useRef(chatInput);
+  chatInputRef.current = chatInput;
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const matcherRef = useRef<AICommandMatcher | undefined>(matcher);
   matcherRef.current = matcher;
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  const thresholdRef = useRef(threshold);
+  thresholdRef.current = threshold;
+  const maxMatcherCandidatesRef = useRef(maxMatcherCandidates);
+  maxMatcherCandidatesRef.current = maxMatcherCandidates;
 
   const filteredItems = useMemo(() => {
     const rankedItems = rankCommandItems(query, items);
@@ -85,18 +117,26 @@ export function AICommandRoot({
     dialogRef.current?.setOpen(false);
   }, []);
 
-  const executeMatch = useCallback(async (match: AICommandMatch) => {
-    setError(null);
-
-    if (match.item.confirmation) {
-      setPendingConfirmation(match);
-      openDialog();
-      return;
-    }
-
-    setPendingConfirmation(null);
-    await match.item.onSelect();
-  }, [openDialog]);
+  const executeItem = useCallback(
+    async (item: AICommandItem, confirmationMessage?: string) => {
+      setError(null);
+      const needsConfirmation = Boolean(item.confirmation) || Boolean(confirmationMessage);
+      if (needsConfirmation) {
+        const match: AICommandMatch = {
+          item,
+          query: queryRef.current.trim() || chatInputRef.current.trim(),
+          confidence: 1,
+          source: "matcher",
+        };
+        setPendingConfirmation(match);
+        openDialog();
+        return;
+      }
+      setPendingConfirmation(null);
+      await item.onSelect();
+    },
+    [openDialog],
+  );
 
   const submitQuery = useCallback(
     async (nextQuery?: string): Promise<AICommandItem | null> => {
@@ -112,9 +152,9 @@ export function AICommandRoot({
       setPendingConfirmation(null);
 
       try {
-        const match = await matchItems(trimmed, items, {
-          threshold,
-          maxMatcherCandidates,
+        const match = await matchItems(trimmed, itemsRef.current, {
+          threshold: thresholdRef.current,
+          maxMatcherCandidates: maxMatcherCandidatesRef.current,
         });
         setIsSubmitting(false);
 
@@ -123,7 +163,7 @@ export function AICommandRoot({
           return null;
         }
 
-        await executeMatch(match);
+        await executeItem(match.item);
         return match.item;
       } catch (err) {
         setIsSubmitting(false);
@@ -131,7 +171,7 @@ export function AICommandRoot({
         return null;
       }
     },
-    [items, threshold, maxMatcherCandidates, executeMatch],
+    [executeItem],
   );
 
   const submitMatcherQuery = useCallback(
@@ -148,10 +188,10 @@ export function AICommandRoot({
       setPendingConfirmation(null);
 
       try {
-        const match = await matchItems(trimmed, items, {
+        const match = await matchItems(trimmed, itemsRef.current, {
           matcher: matcherRef.current,
-          threshold,
-          maxMatcherCandidates,
+          threshold: thresholdRef.current,
+          maxMatcherCandidates: maxMatcherCandidatesRef.current,
           forceMatcher: true,
         });
         setIsSubmitting(false);
@@ -161,7 +201,7 @@ export function AICommandRoot({
           return null;
         }
 
-        await executeMatch(match);
+        await executeItem(match.item);
         return match.item;
       } catch (err) {
         setIsSubmitting(false);
@@ -169,7 +209,7 @@ export function AICommandRoot({
         return null;
       }
     },
-    [items, threshold, maxMatcherCandidates, executeMatch],
+    [executeItem],
   );
 
   const selectItem = useCallback(
@@ -180,9 +220,16 @@ export function AICommandRoot({
         confidence: 1,
         source: "local",
       };
-      await executeMatch(match);
+      setError(null);
+      if (item.confirmation) {
+        setPendingConfirmation(match);
+        openDialog();
+        return;
+      }
+      setPendingConfirmation(null);
+      await item.onSelect();
     },
-    [executeMatch],
+    [openDialog],
   );
 
   const confirmPending = useCallback(async () => {
@@ -200,6 +247,140 @@ export function AICommandRoot({
     setQueryState(value);
     setError(null);
   }, []);
+
+  const setChatInput = useCallback((value: string) => {
+    setChatInputState(value);
+    setError(null);
+  }, []);
+
+  const clearCandidates = useCallback(() => {
+    setCandidates(null);
+  }, []);
+
+  const selectCandidate = useCallback(
+    async (item: AICommandItem) => {
+      await executeItem(item);
+      setCandidates(null);
+    },
+    [executeItem],
+  );
+
+  const appendChatMessage = useCallback((message: AICommandChatMessageData) => {
+    setChatMessages((current) => [...current, message]);
+  }, []);
+
+  const submitChat = useCallback(
+    async (nextMessage?: string) => {
+      const trimmed = (nextMessage ?? chatInputRef.current).trim();
+      if (!trimmed) return;
+
+      const userMessage: AICommandChatMessageData = {
+        id: createChatMessageId(),
+        role: "user",
+        content: trimmed,
+      };
+      appendChatMessage(userMessage);
+      setChatInputState("");
+      setError(null);
+      setCandidates(null);
+      setIsSubmitting(true);
+
+      try {
+        const result: AICommandMatcherResult = await resolveIntent(trimmed, itemsRef.current, {
+          matcher: matcherRef.current,
+          maxMatcherCandidates: maxMatcherCandidatesRef.current,
+        });
+        setIsSubmitting(false);
+
+        if (!result) {
+          const assistantMessage: AICommandChatMessageData = {
+            id: createChatMessageId(),
+            role: "assistant",
+            content: "Sorry, I couldn't find anything. Try rephrasing, or contact support.",
+          };
+          appendChatMessage(assistantMessage);
+          return;
+        }
+
+        if (result.kind === "no-match") {
+          const assistantMessage: AICommandChatMessageData = {
+            id: createChatMessageId(),
+            role: "assistant",
+            content:
+              result.message?.trim() ||
+              "Sorry, I couldn't find anything. Try rephrasing, or contact support.",
+          };
+          appendChatMessage(assistantMessage);
+          return;
+        }
+
+        if (result.kind === "clarify") {
+          const clarificationMessage: AICommandChatMessageData = {
+            id: createChatMessageId(),
+            role: "assistant",
+            content: result.message?.trim() || "Which one did you mean?",
+            candidates: result.candidates,
+          };
+          appendChatMessage(clarificationMessage);
+          setCandidates(result.candidates);
+          return;
+        }
+
+        const item = result.item;
+        const confirmationMessage = result.needsApproval
+          ? toConfirmationMessage(item)
+          : undefined;
+
+        const assistantMessage: AICommandChatMessageData = {
+          id: createChatMessageId(),
+          role: "assistant",
+          content: result.message?.trim() || `Running "${item.value}".`,
+          pendingItemId: result.needsApproval ? item.id : undefined,
+        };
+        appendChatMessage(assistantMessage);
+        await executeItem(item, confirmationMessage);
+      } catch (err) {
+        setIsSubmitting(false);
+        const message = err instanceof Error ? err.message : "AI command failed.";
+        setError(message);
+        const assistantMessage: AICommandChatMessageData = {
+          id: createChatMessageId(),
+          role: "assistant",
+          content: message,
+        };
+        appendChatMessage(assistantMessage);
+      }
+    },
+    [appendChatMessage, executeItem],
+  );
+
+  const switchMode = useCallback(
+    (next: AICommandMode) => {
+      if (next === modeRef.current) return;
+      if (next === "ai") {
+        const seeded = queryRef.current.trim();
+        if (seeded) {
+          setChatInputState(seeded);
+        }
+      } else {
+        const seeded = chatInputRef.current.trim();
+        if (seeded) {
+          setQueryState(seeded);
+        }
+      }
+      setModeState(next);
+      setError(null);
+      setCandidates(null);
+    },
+    [],
+  );
+
+  const setMode = useCallback(
+    (next: AICommandMode) => {
+      switchMode(next);
+    },
+    [switchMode],
+  );
 
   const startListening = useCallback(() => {
     if (!recognizerRef.current) {
@@ -224,6 +405,11 @@ export function AICommandRoot({
   useEffect(() => {
     recognizerRef.current = createSpeechRecognizer({
       onResult: (transcript) => {
+        if (modeRef.current === "ai") {
+          setChatInputState(transcript);
+          setError(null);
+          return;
+        }
         setQueryState(transcript);
         void submitMatcherQuery(transcript);
       },
@@ -265,6 +451,17 @@ export function AICommandRoot({
     confirmPending,
     cancelPending,
     registerItem: registry.register,
+    mode,
+    setMode,
+    switchMode,
+    chatMessages,
+    chatInput,
+    setChatInput,
+    submitChat,
+    candidates,
+    selectCandidate,
+    clearCandidates,
+    onContactSupport,
   };
 
   return (

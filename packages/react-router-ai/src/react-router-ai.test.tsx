@@ -191,9 +191,12 @@ describe("matchItems", () => {
 
   it("prefers the matcher result over the local best match", async () => {
     const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
-      id: "b",
-      value: "Open billing settings",
-      onSelect: vi.fn(),
+      kind: "execute",
+      item: {
+        id: "b",
+        value: "Open billing settings",
+        onSelect: vi.fn(),
+      },
     });
     const items: AICommandItem[] = [
       { id: "a", value: "Open settings", onSelect: vi.fn() },
@@ -539,9 +542,12 @@ describe("AICommand custom matcher", () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
-      id: "matched",
-      value: "Matched command",
-      onSelect,
+      kind: "execute",
+      item: {
+        id: "matched",
+        value: "Matched command",
+        onSelect,
+      },
     });
 
     render(
@@ -685,9 +691,12 @@ describe("AICommand custom matcher", () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
-      id: "billing.support",
-      value: "Open billing support",
-      onSelect,
+      kind: "execute",
+      item: {
+        id: "billing.support",
+        value: "Open billing support",
+        onSelect,
+      },
     });
 
     render(
@@ -759,9 +768,12 @@ describe("AICommand voice button", () => {
       current: { onresult: ((event: SpeechRecognitionEvent) => void) | null } | null;
     } = { current: null };
     const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
-      id: "invoice.ai",
-      value: "Create invoice with AI",
-      onSelect: aiSelect,
+      kind: "execute",
+      item: {
+        id: "invoice.ai",
+        value: "Create invoice with AI",
+        onSelect: aiSelect,
+      },
     });
 
     const Recognition = vi.fn().mockImplementation(() => {
@@ -1082,7 +1094,11 @@ describe("createOpenAICommandMatcher", () => {
               tool_calls: [
                 {
                   function: {
-                    arguments: JSON.stringify({ commandId: "settings.billing.open" }),
+                    arguments: JSON.stringify({
+                      matches: ["settings.billing.open"],
+                      message: null,
+                      needsApproval: null,
+                    }),
                   },
                 },
               ],
@@ -1110,19 +1126,22 @@ describe("createOpenAICommandMatcher", () => {
     ];
     const result = await matcher("go to billing", items);
 
-    expect(result?.id).toBe("settings.billing.open");
+    expect(result?.kind).toBe("execute");
+    if (result?.kind === "execute") {
+      expect(result.item.id).toBe("settings.billing.open");
+    }
     const init = fetchMock.mock.calls[0]?.[1];
     const body = init?.body ? JSON.parse(String(init.body)) : null;
     const headers = init?.headers as Record<string, string> | undefined;
     expect(body?.model).toBe("gpt-5-nano");
     expect(body?.reasoning_effort).toBe("minimal");
-    expect(body?.messages?.[0]?.content).not.toContain("Current page:");
-    expect(body?.messages?.[0]?.content).toContain("return null for commandId");
+    expect(body?.messages?.[0]?.content).toContain("Resolve the user's query");
     expect(body?.messages?.[1]?.content).toContain("Available commands:");
     expect(body?.messages?.[2]?.content).toBe(
       "current_page: Settings > Billing (/settings/billing)\nquery: go to billing",
     );
-    expect(body?.tools?.[0]?.function?.parameters?.properties?.commandId?.anyOf).toBeTruthy();
+    expect(body?.tools?.[0]?.function?.name).toBe("resolve_intent");
+    expect(body?.tools?.[0]?.function?.parameters?.properties?.matches).toBeTruthy();
     expect(headers?.Authorization).toBe("Bearer test-key");
     expect(headers?.["OpenAI-Organization"]).toBe("org_123");
     expect(headers?.["OpenAI-Project"]).toBe("proj_123");
@@ -1148,7 +1167,7 @@ describe("createOpenAICommandMatcher", () => {
     expect(result).toBeNull();
   });
 
-  it("returns null when the model explicitly declines to match a command", async () => {
+  it("returns a no-match result when the model explicitly declines to match a command", async () => {
     const matcher = createOpenAICommandMatcher({
       apiKey: "test-key",
       endpoint: "https://example.com/v1/chat/completions",
@@ -1162,7 +1181,10 @@ describe("createOpenAICommandMatcher", () => {
               tool_calls: [
                 {
                   function: {
-                    arguments: JSON.stringify({ commandId: null }),
+                    arguments: JSON.stringify({
+                      matches: [null],
+                      message: "Sorry, I couldn't find anything.",
+                    }),
                   },
                 },
               ],
@@ -1176,7 +1198,90 @@ describe("createOpenAICommandMatcher", () => {
 
     const items: AICommandItem[] = [{ id: "a", value: "A", onSelect: vi.fn() }];
     const result = await matcher("test", items);
-    expect(result).toBeNull();
+    expect(result?.kind).toBe("no-match");
+    if (result?.kind === "no-match") {
+      expect(result.message).toBe("Sorry, I couldn't find anything.");
+    }
+  });
+
+  it("returns a clarify result when the model returns multiple command ids", async () => {
+    const matcher = createOpenAICommandMatcher({
+      apiKey: "test-key",
+      endpoint: "https://example.com/v1/chat/completions",
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              tool_calls: [
+                {
+                  function: {
+                    arguments: JSON.stringify({
+                      matches: ["a", "b"],
+                      message: "Which one did you mean?",
+                    }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const items: AICommandItem[] = [
+      { id: "a", value: "Alpha", onSelect: vi.fn() },
+      { id: "b", value: "Beta", onSelect: vi.fn() },
+    ];
+    const result = await matcher("a or b", items);
+    expect(result?.kind).toBe("clarify");
+    if (result?.kind === "clarify") {
+      expect(result.candidates).toHaveLength(2);
+      expect(result.message).toBe("Which one did you mean?");
+    }
+  });
+
+  it("flags needsApproval on an execute result when the model requests it", async () => {
+    const matcher = createOpenAICommandMatcher({
+      apiKey: "test-key",
+      endpoint: "https://example.com/v1/chat/completions",
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              tool_calls: [
+                {
+                  function: {
+                    arguments: JSON.stringify({
+                      matches: ["a"],
+                      needsApproval: true,
+                      message: "About to run A.",
+                    }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const items: AICommandItem[] = [{ id: "a", value: "A", onSelect: vi.fn() }];
+    const result = await matcher("run a", items);
+    expect(result?.kind).toBe("execute");
+    if (result?.kind === "execute") {
+      expect(result.needsApproval).toBe(true);
+      expect(result.message).toBe("About to run A.");
+    }
   });
 
   it("returns null when the model returns invalid JSON", async () => {
@@ -1218,6 +1323,269 @@ describe("createOpenAICommandMatcher", () => {
 
     const items: AICommandItem[] = [{ id: "a", value: "A", onSelect: vi.fn() }];
     await expect(matcher("test", items)).rejects.toThrow("OpenAI API key is missing.");
+  });
+});
+
+describe("AICommand mode toggle and AI chat", () => {
+  function ChatProbe() {
+    const ctx = useAICommand();
+    return (
+      <>
+        <button type="button" onClick={() => ctx.switchMode("ai")}>
+          switch-to-ai
+        </button>
+        <button type="button" onClick={() => ctx.switchMode("search")}>
+          switch-to-search
+        </button>
+        <button type="button" onClick={() => void ctx.submitChat("hello")}>
+          send-chat
+        </button>
+        <span data-testid="mode">{ctx.mode}</span>
+        <span data-testid="chat-input">{ctx.chatInput}</span>
+        <span data-testid="chat-count">{ctx.chatMessages.length}</span>
+        <AICommand.Chat>
+          {ctx.chatMessages.map((message) => (
+            <AICommand.ChatMessage key={message.id} message={message} />
+          ))}
+        </AICommand.Chat>
+        <AICommand.Clarification />
+        <AICommand.NoMatch />
+      </>
+    );
+  }
+
+  it("seeds the chat input from the search query when switching to AI mode", async () => {
+    const user = userEvent.setup();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue(null);
+    render(
+      <AICommandRoot matcher={matcher}>
+        <AICommand.Dialog open>
+          <AICommand.Input autoFocus />
+          <AICommand.List />
+          <ChatProbe />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    await user.type(screen.getByLabelText("Command query"), "open billing");
+    await user.click(screen.getByRole("button", { name: "switch-to-ai" }));
+
+    expect(screen.getByTestId("mode").textContent).toBe("ai");
+    expect(screen.getByTestId("chat-input").textContent).toBe("open billing");
+  });
+
+  it("seeds the search query from the chat input when switching back to search mode", async () => {
+    const user = userEvent.setup();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue(null);
+    render(
+      <AICommandRoot matcher={matcher} initialMode="ai">
+        <AICommand.Dialog open>
+          <AICommand.Input />
+          <AICommand.List />
+          <ChatProbe />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    const ctx = screen.getByTestId("chat-input");
+    expect(ctx.textContent).toBe("");
+    await user.click(screen.getByRole("button", { name: "send-chat" }));
+
+    await waitFor(() => expect(screen.getByTestId("chat-count").textContent).toBe("2"));
+  });
+
+  it("runs the matched command when the chat matcher returns execute", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
+      kind: "execute",
+      item: { id: "billing.open", value: "Open billing", onSelect },
+    });
+
+    render(
+      <AICommandRoot matcher={matcher} initialMode="ai">
+        <AICommand.Dialog open>
+          <AICommand.ChatInput autoFocus />
+          <ChatProbe />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    await user.type(screen.getByLabelText("AI chat input"), "open billing");
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId("chat-count").textContent).toBe("2"));
+  });
+
+  it("renders clarification candidates and executes the chosen one", async () => {
+    const user = userEvent.setup();
+    const first = vi.fn();
+    const second = vi.fn();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
+      kind: "clarify",
+      candidates: [
+        { id: "first", value: "First command", onSelect: first },
+        { id: "second", value: "Second command", onSelect: second },
+      ],
+    });
+
+    render(
+      <AICommandRoot matcher={matcher} initialMode="ai">
+        <AICommand.Dialog open>
+          <AICommand.ChatInput autoFocus />
+          <ChatProbe />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    await user.type(screen.getByLabelText("AI chat input"), "command");
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => expect(screen.getAllByRole("button", { name: /First command/ }).length).toBeGreaterThan(0));
+    const candidate = screen.getAllByRole("button", { name: /First command/ })[0]!;
+    await user.click(candidate);
+
+    await waitFor(() => expect(first).toHaveBeenCalledTimes(1));
+    expect(second).not.toHaveBeenCalled();
+  });
+
+  it("gates an execute result behind the approval flow when needsApproval is set", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
+      kind: "execute",
+      item: { id: "delete", value: "Delete account", onSelect },
+      needsApproval: true,
+      message: "About to delete your account.",
+    });
+
+    render(
+      <AICommandRoot matcher={matcher} initialMode="ai">
+        <AICommand.Dialog open>
+          <AICommand.ChatInput autoFocus />
+          <AICommand.Confirmation />
+          <ChatProbe />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    await user.type(screen.getByLabelText("AI chat input"), "delete my account");
+    await user.keyboard("{Enter}");
+
+    expect(await screen.findByText('Confirm "Delete account"?')).toBeTruthy();
+    expect(onSelect).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Confirm" }));
+
+    await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
+  });
+
+  it("renders the no-match state with a contact support button when onContactSupport is provided", async () => {
+    const user = userEvent.setup();
+    const support = vi.fn();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({ kind: "no-match" });
+
+    render(
+      <AICommandRoot matcher={matcher} initialMode="ai" onContactSupport={support}>
+        <AICommand.Dialog open>
+          <AICommand.ChatInput autoFocus />
+          <ChatProbe />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    await user.type(screen.getByLabelText("AI chat input"), "xyz");
+    await user.keyboard("{Enter}");
+
+    const supportButton = await screen.findByRole("button", { name: "Contact support" });
+    await user.click(supportButton);
+
+    expect(support).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not render the contact support button when no callback is provided", async () => {
+    const user = userEvent.setup();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({ kind: "no-match" });
+
+    render(
+      <AICommandRoot matcher={matcher} initialMode="ai">
+        <AICommand.Dialog open>
+          <AICommand.ChatInput autoFocus />
+          <ChatProbe />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    await user.type(screen.getByLabelText("AI chat input"), "xyz");
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => expect(screen.getByTestId("chat-count").textContent).toBe("2"));
+    expect(screen.queryByRole("button", { name: "Contact support" })).toBeNull();
+  });
+
+  it("fills the chat input without submitting when the mic fires in AI mode", async () => {
+    const user = userEvent.setup();
+    const recognitionInstance: {
+      current: { onresult: ((event: SpeechRecognitionEvent) => void) | null } | null;
+    } = { current: null };
+    const matcher = vi.fn<AICommandMatcher>();
+
+    const Recognition = vi.fn().mockImplementation(() => {
+      const recognition = {
+        lang: "",
+        interimResults: false,
+        continuous: false,
+        onresult: null as ((event: SpeechRecognitionEvent) => void) | null,
+        onerror: null,
+        onend: null,
+        start: vi.fn(),
+        stop: vi.fn(),
+      };
+      recognitionInstance.current = recognition;
+      return recognition;
+    });
+    window.SpeechRecognition = Recognition as unknown as typeof window.SpeechRecognition;
+    window.webkitSpeechRecognition = Recognition as unknown as typeof window.webkitSpeechRecognition;
+
+    render(
+      <AICommandRoot matcher={matcher} initialMode="ai">
+        <AICommand.Dialog open>
+          <AICommand.ChatInput autoFocus voiceShortcut="tab" />
+          <ChatProbe />
+        </AICommand.Dialog>
+        <AICommand.VoiceButton />
+      </AICommandRoot>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Use voice" }));
+
+    const fakeEvent = {
+      results: {
+        length: 1,
+        0: {
+          isFinal: true,
+          length: 1,
+          0: { transcript: "open billing" },
+        },
+      },
+    } as unknown as SpeechRecognitionEvent;
+    recognitionInstance.current?.onresult?.(fakeEvent);
+
+    await waitFor(() => expect(screen.getByTestId("chat-input").textContent).toBe("open billing"));
+    expect(matcher).not.toHaveBeenCalled();
+    expect(screen.getByTestId("chat-count").textContent).toBe("0");
+  });
+});
+
+describe("rankCommandItems fuzzy matching", () => {
+  it("tolerates minor typos via Fuse fuzzy matching", () => {
+    const items: AICommandItem[] = [
+      { id: "a", value: "Open settings", onSelect: vi.fn() },
+    ];
+    const ranked = rankCommandItems("opem settings", items);
+    expect(ranked[0]?.id).toBe("a");
+    expect(ranked[0]?.confidence).toBeGreaterThan(0);
   });
 });
 

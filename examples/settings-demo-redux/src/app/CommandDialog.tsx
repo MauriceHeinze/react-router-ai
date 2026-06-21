@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { AICommand, useAICommand, type AICommandItem } from 'react-router-ai'
-import { CloseIcon, SearchIcon, MicrophoneIcon, MicOrbIcon } from '../shared/ui/Icons.tsx'
+import { CloseIcon, SearchIcon, MicrophoneIcon } from '../shared/ui/Icons.tsx'
 import './CommandDialog.css'
 
 type CommandDialogProps = {
@@ -10,139 +10,64 @@ type CommandDialogProps = {
 }
 
 export default function CommandDialog({ open, onOpenChange, items }: CommandDialogProps) {
-  const { error, hasMatcher, isListening, isSubmitting, query, stopListening, submitMatcherQuery } =
-    useAICommand()
+  const ctx = useAICommand()
+  const { isListening, mode, onContactSupport } = ctx
 
   useEffect(() => {
     if (!open && isListening) {
-      stopListening()
+      ctx.stopListening()
     }
-  }, [isListening, open, stopListening])
+  }, [ctx, isListening, open])
 
   return (
     <AICommand.Dialog open={open} onOpenChange={onOpenChange}>
       <div className="command-dialog-overlay" onClick={() => onOpenChange(false)}>
         <div
           className="command-dialog"
-          data-mic-mode={isListening ? 'true' : 'false'}
+          data-mode={mode}
           onClick={(event) => event.stopPropagation()}
         >
-          {isListening ? (
-            <div className="command-dialog-mic-shell">
-              <div className="command-dialog-mic-topbar">
-                <span className="command-dialog-mic-handle" aria-hidden="true" />
-                <div className="command-dialog-mic-topbar-actions">
-                  <button className="command-dialog-more" type="button" aria-label="More options">
-                    <span />
-                    <span />
-                    <span />
-                  </button>
-                  <button
-                    className="command-dialog-close"
-                    type="button"
-                    onClick={() => onOpenChange(false)}
-                    aria-label="Close"
-                    title="Close (Esc)"
-                  >
-                    <CloseIcon className="command-dialog-close-icon" />
-                  </button>
-                </div>
-              </div>
+          <div className="command-dialog-header">
+            <AICommand.ModeToggle
+              className="command-dialog-mode-toggle"
+              searchLabel="Search"
+              aiLabel="AI"
+            />
+            <button
+              className="command-dialog-close"
+              type="button"
+              onClick={() => onOpenChange(false)}
+              aria-label="Close"
+              title="Close (Esc)"
+            >
+              <CloseIcon className="command-dialog-close-icon" />
+            </button>
+          </div>
 
-              <div className="command-dialog-mic-body">
-                <div className="command-dialog-mic-copy">
-                  <h2 className="command-dialog-mic-title">Listening...</h2>
-                  <p className="command-dialog-mic-subtitle">Speak now</p>
-                </div>
-
-                <div className="command-dialog-mic-stage" aria-hidden="true">
-                  <div className="command-dialog-mic-glow" />
-                  <div className="command-dialog-waveform command-dialog-waveform-left">
-                    <span className="command-dialog-wave-bar command-dialog-wave-bar-1" />
-                    <span className="command-dialog-wave-bar command-dialog-wave-bar-2" />
-                    <span className="command-dialog-wave-bar command-dialog-wave-bar-3" />
-                    <span className="command-dialog-wave-bar command-dialog-wave-bar-4" />
-                    <span className="command-dialog-wave-bar command-dialog-wave-bar-5" />
-                  </div>
-                  <div className="command-dialog-mic-orb">
-                    <MicOrbIcon className="command-dialog-mic-orb-icon" />
-                  </div>
-                  <div className="command-dialog-waveform command-dialog-waveform-right">
-                    <span className="command-dialog-wave-bar command-dialog-wave-bar-5" />
-                    <span className="command-dialog-wave-bar command-dialog-wave-bar-4" />
-                    <span className="command-dialog-wave-bar command-dialog-wave-bar-3" />
-                    <span className="command-dialog-wave-bar command-dialog-wave-bar-2" />
-                    <span className="command-dialog-wave-bar command-dialog-wave-bar-1" />
-                  </div>
-                </div>
-
-                <button className="command-dialog-mic-cancel" type="button" onClick={stopListening}>
-                  Cancel
-                  <CloseIcon className="command-dialog-mic-cancel-icon" />
-                </button>
-
-                <div className="command-dialog-mic-shortcuts" aria-hidden="true">
-                  <span className="command-dialog-mic-shortcut">
-                    <span className="command-dialog-mic-keycap">Esc</span>
-                    <span>Stop or cancel</span>
-                  </span>
-                  <span className="command-dialog-mic-shortcut">
-                    <span className="command-dialog-mic-keycap">Click mic</span>
-                    <span>Start over</span>
-                  </span>
-                </div>
-
-                <p className="command-dialog-mic-disclaimer">
-                  Voice AI can make mistakes. Please double-check important info.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="command-dialog-header">
+          {mode === 'search' ? (
+            <div className="command-dialog-search">
+              <div className="command-dialog-search-row">
                 <SearchIcon className="command-dialog-search-icon" />
                 <AICommand.Input
                   autoFocus
                   voiceShortcut="tab"
-                  placeholder="Search settings or ask to do something..."
+                  placeholder="Search settings..."
                   className="command-dialog-input"
                 />
-                <AICommand.VoiceButton className="command-dialog-voice-button" title="Mic mode (Tab)">
+                <AICommand.VoiceButton className="command-dialog-voice-button" title="Mic (Tab)">
                   <MicrophoneIcon className="command-dialog-voice-icon" />
                 </AICommand.VoiceButton>
-                <button
-                  className="command-dialog-close"
-                  type="button"
-                  onClick={() => onOpenChange(false)}
-                  aria-label="Close"
-                  title="Close (Esc)"
-                >
-                  <CloseIcon className="command-dialog-close-icon" />
-                </button>
               </div>
 
               <div className="command-dialog-body">
                 <AICommand.Loading className="command-dialog-loader">
                   <span className="command-dialog-spinner" />
-                  <span>Matching your request...</span>
+                  <span>Searching...</span>
                 </AICommand.Loading>
 
                 <AICommand.Error className="command-dialog-error" />
 
                 <AICommand.Confirmation className="command-dialog-confirmation" />
-
-                {hasMatcher && query.trim() ? (
-                  <button
-                    type="button"
-                    className="command-dialog-item command-dialog-item-ai"
-                    onClick={() => void submitMatcherQuery()}
-                  >
-                    <span className="command-dialog-item-value">Ask AI</span>
-                    <span className="command-dialog-item-description">
-                      Send &quot;{query.trim()}&quot; to the language model.
-                    </span>
-                  </button>
-                ) : null}
 
                 <AICommand.List className="command-dialog-list">
                   {items.map((item) => (
@@ -163,11 +88,9 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                   ))}
                 </AICommand.List>
 
-                {!hasMatcher || !query.trim() ? (
-                  <AICommand.Empty className="command-dialog-empty">
-                    No matching command.
-                  </AICommand.Empty>
-                ) : null}
+                <AICommand.Empty className="command-dialog-empty">
+                  No matching command.
+                </AICommand.Empty>
 
                 <div className="command-dialog-actions">
                   <div className="command-dialog-shortcuts" aria-hidden="true">
@@ -177,16 +100,54 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                     <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Esc</span> Close</span>
                   </div>
                 </div>
-
-                <span className="command-dialog-hint">
-                  {isSubmitting
-                    ? 'Working...'
-                    : error
-                      ? 'Try another phrase, ask AI, or press Tab to use the mic.'
-                      : 'Press Enter to run the top match, or click Ask AI.'}
-                </span>
               </div>
-            </>
+            </div>
+          ) : (
+            <div className="command-dialog-ai">
+              <AICommand.Chat className="command-dialog-chat">
+                {ctx.chatMessages.map((message) => (
+                  <AICommand.ChatMessage
+                    key={message.id}
+                    message={message}
+                    className="command-dialog-chat-message"
+                  />
+                ))}
+                <AICommand.Loading className="command-dialog-loader">
+                  <span className="command-dialog-spinner" />
+                  <span>Thinking...</span>
+                </AICommand.Loading>
+                <AICommand.Error className="command-dialog-error" />
+                <AICommand.Confirmation className="command-dialog-confirmation" />
+                <AICommand.Clarification
+                  className="command-dialog-clarification"
+                  itemClassName="command-dialog-clarification-item"
+                />
+                <AICommand.NoMatch
+                  className="command-dialog-no-match"
+                  onContactSupport={onContactSupport}
+                />
+              </AICommand.Chat>
+
+              <div className="command-dialog-chat-input-row">
+                <AICommand.VoiceButton className="command-dialog-voice-button" title="Mic (Tab)">
+                  <MicrophoneIcon className="command-dialog-voice-icon" />
+                </AICommand.VoiceButton>
+                <AICommand.ChatInput
+                  autoFocus
+                  voiceShortcut="tab"
+                  placeholder="Ask AI to do something..."
+                  className="command-dialog-chat-input"
+                />
+              </div>
+
+              <div className="command-dialog-actions">
+                <div className="command-dialog-shortcuts" aria-hidden="true">
+                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Tab</span> Mic</span>
+                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Enter</span> Send</span>
+                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Esc</span> Close</span>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>

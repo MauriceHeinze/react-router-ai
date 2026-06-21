@@ -8,10 +8,11 @@ speech/text -> match/rank -> typed command -> app-owned execution
 
 The library owns:
 
-- Speech and text input.
+- Speech and text input (search field + AI chat input).
+- The search/AI mode toggle and dialog shell.
 - Matching, ranking, ambiguity handling, and optional LLM fallback.
-- Command palette and voice button UI.
-- Typed command metadata and confirmation flow.
+- Command palette, voice button, chat window, clarification, no-match, and confirmation UI.
+- Typed command metadata and the approval gate.
 
 The app owns:
 
@@ -23,114 +24,118 @@ The app owns:
 
 ## Stable Public Surface
 
-```ts
-defineVoiceCommands(commands)
+```tsx
+<AICommand.Root
+  matcher={matcher}
+  onContactSupport={handleSupport}
+  maxVisibleItems={8}
+  maxMatcherCandidates={50}
+  initialMode="search"
+/>
 ```
 
-Defines explicit app commands.
+Provides matching, execution, voice input, mode state, chat state, candidate state, and local command registration.
 
-```ts
-defineVoiceFieldCommands(fields, options?)
-```
-
-Defines settings-style field controls and compiles them into explicit app commands.
+`matcher` is an `AICommandMatcher` that resolves a user query into one of `execute`, `clarify`, or `no-match` (see below). For OpenAI Chat Completions integrations, use `createOpenAICommandMatcher(...)`.
 
 ```tsx
-<VoiceProvider commands={commands} />
+<AICommand.Dialog />
+<AICommand.ModeToggle />
+<AICommand.Input />
+<AICommand.List />
+<AICommand.Item />
+<AICommand.Empty />
+<AICommand.Loading />
+<AICommand.Error />
+<AICommand.VoiceButton />
+<AICommand.Confirmation />
+<AICommand.Chat />
+<AICommand.ChatMessage />
+<AICommand.ChatInput />
+<AICommand.Clarification />
+<AICommand.NoMatch />
 ```
 
-Provides matching, execution, voice input, and local command registration.
+Headless UI primitives with `className`/`style` pass-through. The host app owns the styling; the library only adds minimal inline layout styles where required for behavior (e.g. confirmation buttons, chat candidate lists).
 
-`llmFallback.match(query, commands)` can replace the built-in browser `LanguageModel` fallback with an app-owned remote matcher.
+## Modes
 
-Both the built-in fallback and custom matchers can receive explicit page context from the host app. Pass a string such as `Settings > Billing (/settings/billing)` via `llmFallback.pageContext` or your own matcher options so the model can see the current page without the library inferring it.
+The dialog has two modes controlled by `AICommand.ModeToggle`:
 
-For OpenAI Chat Completions integrations, the package can provide that callback via `createOpenAICommandMatcher(...)`, which defaults to `gpt-5-nano` with `reasoning_effort: "minimal"`, accepts page context as a string or callback, and can return no match when nothing clearly fits.
-
-```ts
-useVoiceCommand(command)
-```
-
-Registers a mounted component-local command with the nearest provider.
-
-```tsx
-<VoiceWidget />
-```
-
-Self-contained floating assistant with an orb trigger and command dialog.
-
-```tsx
-<VoiceCommandPalette />
-<VoiceButton />
-```
-
-Lower-level UI primitives for text and voice input when you need a custom layout.
+- **Search mode** uses Fuse.js fuzzy matching over the registered command catalog. Typing filters and ranks; Enter runs the top match; the mic fills the search field and submits.
+- **AI mode** is a chat window. Each user message is sent (single-shot, no conversation history) to the configured matcher. The library renders the assistant response, including inline candidate buttons when the matcher returns `clarify`. Switching from search to AI seeds the chat input with the current search query; switching back seeds the search query from the chat input. In AI mode, the mic fills the chat input without submitting.
 
 ## Command Shape
 
 ```ts
 {
   id: string
-  title: string
+  value: string
+  keywords?: readonly string[]
   description?: string
-  phrases?: string[]
-  parameters?: {
-    [key: string]: {
-      label: string
-      description?: string
-      options?: readonly string[]
-      type?: "string" | "number" | "boolean"
-    }
-  }
+  disabled?: boolean
   confirmation?: boolean | string
-  read?: () => unknown
-  run: (args, context) => void | Promise<void>
+  onSelect: () => void | Promise<void>
 }
 ```
+
+`onSelect` is app-owned: it can `setState`, `dispatch`, `navigate`, call services, or anything else. `confirmation` pauses risky commands until the user confirms in `AICommand.Confirmation`.
+
+## AI Matcher Result
+
+The `AICommandMatcher` returns a discriminated result so the library can drive clarify/execute/no-match without guessing:
+
+```ts
+type AICommandMatcherResult =
+  | { kind: "execute"; item: AICommandItem; needsApproval?: boolean; message?: string }
+  | { kind: "clarify"; candidates: AICommandItem[]; message?: string }
+  | { kind: "no-match"; message?: string }
+  | null
+```
+
+- **execute** (one match): runs `item.onSelect()`. If `needsApproval` or `item.confirmation` is set, the library shows the confirmation flow first.
+- **clarify** (multiple matches): renders `AICommand.Clarification` and attaches the candidates to the assistant chat message. Selecting a candidate runs the approval/execute flow.
+- **no-match** (zero matches): renders `AICommand.NoMatch` with a rephrase prompt and an optional "Contact support" button when `onContactSupport` is provided to `AICommand.Root`.
+
+This is a **breaking change** from the previous matcher contract, which returned a single `AICommandItem | null`. Existing matchers must be updated to return the new discriminated shape.
+
+## Matching Rules
+
+- Search mode uses Fuse.js fuzzy matching as the first pass (keys: `value`, `keywords`, `description`).
+- AI mode sends the user's message to the matcher directly; Fuse is not consulted.
+- When the matcher returns multiple matches, the library shows candidates instead of guessing.
+- When the matcher returns zero matches, the library shows a no-match state with a rephrase prompt and optional support contact.
+- Risky actions are gated by `confirmation` on the command, or by `needsApproval` on the matcher result.
 
 ## Example
 
 ```tsx
-const themeOptions = ["light", "dark", "system"] as const;
-
-const commands = defineVoiceCommands([
+const commands: AICommandItem[] = [
   {
     id: "theme.set",
-    title: "Set theme",
-    description: "Change the application theme.",
-    phrases: ["switch theme", "use light mode", "turn on dark mode"],
-    parameters: {
-      value: {
-        label: "Theme",
-        options: themeOptions,
-      },
-    },
-    read: () => selectTheme(store.getState()),
-    run: ({ value }) => dispatch(settingsActions.setTheme(value)),
+    value: "Set theme",
+    keywords: ["dark mode", "light mode", "appearance"],
+    onSelect: () => dispatch(settingsActions.setTheme("dark")),
   },
   {
     id: "checkout.confirmOrder",
-    title: "Confirm order",
-    phrases: ["place the order", "confirm checkout"],
+    value: "Confirm order",
+    keywords: ["place order", "checkout"],
     confirmation: "Place this order?",
-    run: () => checkoutService.confirmOrder(),
+    onSelect: () => checkoutService.confirmOrder(),
   },
-]);
+];
+
+const matcher = createOpenAICommandMatcher({
+  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+  pageContext: () => "Checkout (/checkout)",
+});
 ```
-
-## Matching Rules
-
-- Fuzzy matching is the first pass.
-- Parameter extraction prefers app-owned option arrays instead of hand-written schemas.
-- Number and boolean parameters can be inferred from the query text.
-- When multiple commands are close, the provider returns candidates instead of guessing.
-- If fuzzy matching misses, the optional built-in `LanguageModel` fallback can return a command id and parameter object.
-- Apps can override the fallback with `llmFallback.match(...)` and call their own LLM provider.
 
 ## Design Constraints
 
 - Commands are explicit and typed.
-- State access only happens through app-owned callbacks like `run` and `read`.
+- State access only happens through app-owned `onSelect` callbacks.
 - No React internals inspection.
 - No Redux slice inference.
 - No DOM-click execution model.
@@ -140,15 +145,12 @@ const commands = defineVoiceCommands([
 
 For simple apps, define a handful of explicit commands near the app shell.
 
-For settings-heavy flows, derive parameter options from the same arrays or config used by the UI.
-
-When the app is primarily controlling fields, prefer `defineVoiceFieldCommands(...)` so the app provides explicit field metadata and the library derives ordinary commands from it.
+For settings-heavy flows, derive commands from the same field metadata used by the UI, keeping `onSelect` as explicit `dispatch`/`setState`/`navigate` calls.
 
 For Redux, keep selectors and actions explicit:
 
 ```ts
-read: () => selectTheme(store.getState())
-run: ({ value }) => dispatch(settingsActions.setTheme(value))
+onSelect: () => dispatch(settingsActions.setTheme(value))
 ```
 
 For complex apps, prefer command modules such as:
@@ -159,4 +161,4 @@ For complex apps, prefer command modules such as:
 - `cartCommands`
 - `checkoutCommands`
 
-The package still exports the legacy intent API as a compatibility layer, but the command API is the primary surface.
+Wire `onContactSupport` on `AICommand.Root` to your support channel (mailto, Intercom, Zendesk, etc.) so the no-match state can offer it without the library owning contact configuration.

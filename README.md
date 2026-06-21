@@ -1,11 +1,11 @@
 # react-router-ai
 
-`react-router-ai` is a React library for mapping free-form text or speech to typed app commands.
+`react-router-ai` is a React library for mapping free-form text or speech to typed app commands, with a built-in search/AI mode toggle and chat-style LLM fallback.
 
-This repo currently ships:
+This repo ships:
 
 - a publishable `react-router-ai` package
-- a settings demo showing how to route users to buried settings pages
+- a Redux settings demo (`examples/settings-demo-redux`) showing integration with the toggle, chat, clarification, and approval flows
 
 See [Voice Control API Design](./docs/voice-control-api.md) for the command-oriented API direction and integration guidance.
 
@@ -13,66 +13,120 @@ See [Voice Control API Design](./docs/voice-control-api.md) for the command-orie
 
 ```tsx
 import {
-  VoiceProvider,
-  VoiceCommandPalette,
-  VoiceButton,
-  VoiceWidget,
-  defineVoiceFieldCommands,
-  defineVoiceCommands,
+  AICommand,
+  AICommandRoot,
+  createOpenAICommandMatcher,
+  type AICommandItem,
 } from "react-router-ai";
 
-const themeOptions = ["light", "dark", "system"] as const;
-
-const commands = defineVoiceCommands([
+const commands: AICommandItem[] = [
   {
     id: "theme.set",
-    title: "Set theme",
-    phrases: ["switch theme", "use dark mode", "use light mode"],
-    parameters: {
-      value: {
-        label: "Theme",
-        options: themeOptions,
-      },
-    },
-    run: ({ value }) => setTheme(value),
+    value: "Set theme",
+    keywords: ["dark mode", "light mode", "appearance"],
+    onSelect: () => setTheme("dark"),
   },
   {
     id: "settings.billing.open",
-    title: "Open billing",
-    phrases: ["open billing", "manage my subscription"],
-    run: () => navigate("/settings/billing"),
+    value: "Open billing",
+    keywords: ["subscription", "invoice"],
+    confirmation: "Switch to billing?",
+    onSelect: () => navigate("/settings/billing"),
   },
-]);
+];
+
+const openAiCommandMatcher = createOpenAICommandMatcher({
+  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+  pageContext: () => `Settings > Billing (/settings/billing)`,
+});
 
 function AppShell() {
   return (
-    <VoiceProvider commands={commands} llmFallback={{ enabled: true }}>
-      <VoiceWidget />
-      <App />
-    </VoiceProvider>
+    <AICommand.Root
+      matcher={openAiCommandMatcher}
+      maxVisibleItems={8}
+      onContactSupport={() => (window.location.href = "mailto:support@example.com")}
+    >
+      <AICommand.Dialog open>
+        <AICommand.ModeToggle />
+        {mode === "search" ? (
+          <>
+            <AICommand.Input autoFocus voiceShortcut="tab" placeholder="Search..." />
+            <AICommand.List>
+              {commands.map((cmd) => (
+                <AICommand.Item key={cmd.id} {...cmd}>
+                  {cmd.value}
+                </AICommand.Item>
+              ))}
+            </AICommand.List>
+            <AICommand.Empty>No matches.</AICommand.Empty>
+          </>
+        ) : (
+          <>
+            <AICommand.Chat>
+              {chatMessages.map((m) => (
+                <AICommand.ChatMessage key={m.id} message={m} />
+              ))}
+              <AICommand.Clarification />
+              <AICommand.NoMatch />
+            </AICommand.Chat>
+            <AICommand.ChatInput voiceShortcut="tab" placeholder="Ask AI..." />
+          </>
+        )}
+        <AICommand.Confirmation />
+        <AICommand.VoiceButton />
+      </AICommand.Dialog>
+    </AICommand.Root>
   );
 }
 ```
 
-`VoiceWidget` is a self-contained floating assistant that includes the orb button and the command dialog shown above. For a custom layout, use the lower-level `VoiceCommandPalette` and `VoiceButton` primitives instead.
-The core model is command-first:
+## Modes
 
-- `run` stays app-owned, so commands can call `setState`, `dispatch`, `navigate`, or service functions directly.
-- `parameters` support option-derived extraction for values like `light`, `dark`, `system`, or numeric quantities.
-- `confirmation` pauses risky commands until the user confirms.
-- `useVoiceCommand(command)` lets mounted components register page-local commands when needed.
+The dialog toggles between two modes via `AICommand.ModeToggle`:
 
-For settings-heavy apps, `defineVoiceFieldCommands(...)` can derive normal commands from explicit field metadata while keeping reads, writes, and navigation app-owned.
+- **Search mode** uses [Fuse.js](https://fusejs.io/) fuzzy matching against the registered `AICommandItem` list. Typing filters and ranks the list; Enter runs the top match.
+- **AI mode** is a chat window. Each user message is sent (single-shot, no conversation history) to the configured `matcher`. Switching from search to AI seeds the chat input with the current search query; switching back seeds the search query from the chat input.
 
-When `llmFallback` is enabled, the library keeps fuzzy matching as the first pass and only tries the browser's built-in `LanguageModel` API if no fuzzy match clears the threshold.
+The mic button and `voiceShortcut="tab"` work in both modes. In **search mode**, a transcript fills the search field and submits. In **AI mode**, the transcript fills the chat input without submitting, so the user can review before sending.
 
-If you want app-owned model routing instead, pass `llmFallback.match(query, commands)`. That callback can send the serialized command catalog to a remote model such as OpenAI `gpt-5-nano` and return one or more `{ commandId, confidence, parameters }` candidates.
+## AI matcher contract
 
-If you want the model to know where the user is, pass `llmFallback.pageContext` or `pageContext` to your own matcher with a string like `Settings > Billing (/settings/billing)`.
+The `AICommandMatcher` returns a discriminated result so the library can drive clarify/execute/no-match without guessing:
 
-The package also exports `createOpenAICommandMatcher(...)` for a first-party OpenAI Chat Completions matcher. It defaults to `gpt-5-nano` with `reasoning_effort: "minimal"`, can receive page context as a string or callback, and can explicitly return no match instead of forcing a guess.
+```ts
+type AICommandMatcherResult =
+  | { kind: "execute"; item: AICommandItem; needsApproval?: boolean; message?: string }
+  | { kind: "clarify"; candidates: AICommandItem[]; message?: string }
+  | { kind: "no-match"; message?: string }
+  | null;
+```
 
-The lower-level `AICommand.Root` also accepts `maxVisibleItems` when you want to cap the number of rendered command results without breaking keyboard navigation.
+- **execute** (one match): runs `item.onSelect()`. If `needsApproval` or `item.confirmation` is set, the library shows `AICommand.Confirmation` first.
+- **clarify** (multiple matches): renders `AICommand.Clarification` with clickable candidates; selecting one runs the approval/execute flow.
+- **no-match** (zero matches): renders `AICommand.NoMatch` with a rephrase prompt and an optional "Contact support" button when `onContactSupport` is provided to `AICommand.Root`.
+
+## Command shape
+
+```ts
+type AICommandItem = {
+  id: string;
+  value: string;
+  keywords?: readonly string[];
+  description?: string;
+  disabled?: boolean;
+  confirmation?: boolean | string;
+  onSelect: () => void | Promise<void>;
+};
+```
+
+`onSelect` stays app-owned, so commands can call `setState`, `dispatch`, `navigate`, or service functions directly. `confirmation` pauses risky commands until the user confirms; the AI matcher can also flag `needsApproval` at resolution time.
+
+## OpenAI matcher
+
+`createOpenAICommandMatcher(...)` is a first-party matcher that calls OpenAI Chat Completions. It defaults to `gpt-5-nano` with `reasoning_effort: "minimal"`, accepts page context as a string or callback, and returns `execute`, `clarify`, or `no-match` based on the model's `matches` array. Pass `pageContext` with a string like `Settings > Billing (/settings/billing)` so the model knows where the user is.
+
+`AICommand.Root` also accepts `maxVisibleItems` to cap the rendered search results without breaking keyboard navigation, and `maxMatcherCandidates` to cap the command catalog sent to the matcher.
 
 ## Development
 

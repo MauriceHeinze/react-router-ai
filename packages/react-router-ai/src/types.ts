@@ -17,10 +17,40 @@ export type AICommandMatch = {
   source: "local" | "matcher";
 };
 
+export type AICommandMatcherResult =
+  | {
+      kind: "execute";
+      item: AICommandItem;
+      needsApproval?: boolean;
+      message?: string;
+    }
+  | {
+      kind: "clarify";
+      candidates: AICommandItem[];
+      message?: string;
+    }
+  | {
+      kind: "no-match";
+      message?: string;
+    }
+  | null;
+
 export type AICommandMatcher = (
   query: string,
   candidates: readonly AICommandItem[],
-) => Promise<AICommandItem | null | undefined>;
+) => Promise<AICommandMatcherResult>;
+
+export type AICommandMode = "search" | "ai";
+
+export type AICommandChatRole = "user" | "assistant";
+
+export type AICommandChatMessageData = {
+  id: string;
+  role: AICommandChatRole;
+  content: string;
+  candidates?: AICommandItem[];
+  pendingItemId?: string;
+};
 
 export type AICommandRootProps = {
   children: ReactNode;
@@ -28,6 +58,8 @@ export type AICommandRootProps = {
   threshold?: number;
   maxMatcherCandidates?: number;
   maxVisibleItems?: number;
+  onContactSupport?: () => void;
+  initialMode?: AICommandMode;
 };
 
 export type AICommandDialogProps = {
@@ -92,6 +124,58 @@ export type AICommandVoiceButtonProps = {
   title?: string;
 };
 
+export type AICommandModeToggleProps = {
+  searchLabel?: string;
+  aiLabel?: string;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export type AICommandChatProps = {
+  children?: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export type AICommandChatMessageProps = {
+  message: AICommandChatMessageData;
+  onSelectCandidate?: (item: AICommandItem) => void;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export type AICommandChatInputProps = {
+  placeholder?: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  voiceShortcut?: "tab";
+  onFocus?: (event: React.FocusEvent<HTMLTextAreaElement>) => void;
+  onBlur?: (event: React.FocusEvent<HTMLTextAreaElement>) => void;
+  autoFocus?: boolean;
+  rows?: number;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export type AICommandClarificationProps = {
+  message?: string;
+  onSelect?: (item: AICommandItem) => void;
+  className?: string;
+  style?: React.CSSProperties;
+  itemClassName?: string;
+  itemStyle?: React.CSSProperties;
+};
+
+export type AICommandNoMatchProps = {
+  message?: string;
+  rephraseLabel?: string;
+  contactSupportLabel?: string;
+  onContactSupport?: () => void;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
 export type AICommandRegistryEntry = {
   id: string;
   getItem: () => AICommandItem;
@@ -131,6 +215,17 @@ export type AICommandContextValue = {
   confirmPending: () => Promise<void>;
   cancelPending: () => void;
   registerItem: (entry: AICommandRegistryEntry) => () => void;
+  mode: AICommandMode;
+  setMode: (mode: AICommandMode) => void;
+  switchMode: (mode: AICommandMode) => void;
+  chatMessages: AICommandChatMessageData[];
+  chatInput: string;
+  setChatInput: (value: string) => void;
+  submitChat: (message?: string) => Promise<void>;
+  candidates: AICommandItem[] | null;
+  selectCandidate: (item: AICommandItem) => Promise<void>;
+  clearCandidates: () => void;
+  onContactSupport?: () => void;
 };
 
 declare global {

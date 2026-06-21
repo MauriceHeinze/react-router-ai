@@ -8,110 +8,6 @@ importers:
 
   .: {}
 
-  examples/settings-demo:
-    dependencies:
-      react:
-        specifier: ^19.2.6
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.6
-        version: 19.2.7(react@19.2.7)
-      react-router-ai:
-        specifier: workspace:*
-        version: link:../../packages/react-router-ai
-      react-router-dom:
-        specifier: ^7.9.5
-        version: 7.18.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-    devDependencies:
-      '@eslint/js':
-        specifier: ^10.0.1
-        version: 10.0.1(eslint@10.5.0)
-      '@types/node':
-        specifier: ^24.12.3
-        version: 24.13.2
-      '@types/react':
-        specifier: ^19.2.14
-        version: 19.2.17
-      '@types/react-dom':
-        specifier: ^19.2.3
-        version: 19.2.3(@types/react@19.2.17)
-      '@vitejs/plugin-react':
-        specifier: ^6.0.1
-        version: 6.0.2(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.7))
-      eslint:
-        specifier: ^10.3.0
-        version: 10.5.0
-      eslint-plugin-react-hooks:
-        specifier: ^7.1.1
-        version: 7.1.1(eslint@10.5.0)
-      eslint-plugin-react-refresh:
-        specifier: ^0.5.2
-        version: 0.5.3(eslint@10.5.0)
-      globals:
-        specifier: ^17.6.0
-        version: 17.6.0
-      typescript:
-        specifier: ~6.0.2
-        version: 6.0.3
-      typescript-eslint:
-        specifier: ^8.59.2
-        version: 8.61.1(eslint@10.5.0)(typescript@6.0.3)
-      vite:
-        specifier: ^8.0.12
-        version: 8.0.16(@types/node@24.13.2)(esbuild@0.27.7)
-
-  examples/settings-demo-basic:
-    dependencies:
-      react:
-        specifier: ^19.2.6
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.6
-        version: 19.2.7(react@19.2.7)
-      react-router-ai:
-        specifier: workspace:*
-        version: link:../../packages/react-router-ai
-      react-router-dom:
-        specifier: ^7.9.5
-        version: 7.18.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-    devDependencies:
-      '@eslint/js':
-        specifier: ^10.0.1
-        version: 10.0.1(eslint@10.5.0)
-      '@types/node':
-        specifier: ^24.12.3
-        version: 24.13.2
-      '@types/react':
-        specifier: ^19.2.14
-        version: 19.2.17
-      '@types/react-dom':
-        specifier: ^19.2.3
-        version: 19.2.3(@types/react@19.2.17)
-      '@vitejs/plugin-react':
-        specifier: ^6.0.1
-        version: 6.0.2(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.7))
-      eslint:
-        specifier: ^10.3.0
-        version: 10.5.0
-      eslint-plugin-react-hooks:
-        specifier: ^7.1.1
-        version: 7.1.1(eslint@10.5.0)
-      eslint-plugin-react-refresh:
-        specifier: ^0.5.2
-        version: 0.5.3(eslint@10.5.0)
-      globals:
-        specifier: ^17.6.0
-        version: 17.6.0
-      typescript:
-        specifier: ~6.0.2
-        version: 6.0.3
-      typescript-eslint:
-        specifier: ^8.59.2
-        version: 8.61.1(eslint@10.5.0)(typescript@6.0.3)
-      vite:
-        specifier: ^8.0.12
-        version: 8.0.16(@types/node@24.13.2)(esbuild@0.27.7)
-
   examples/settings-demo-redux:
     dependencies:
       '@reduxjs/toolkit':
@@ -171,6 +67,10 @@ importers:
         version: 8.0.16(@types/node@24.13.2)(esbuild@0.27.7)
 
   packages/react-router-ai:
+    dependencies:
+      fuse.js:
+        specifier: ^7.1.0
+        version: 7.4.2
     devDependencies:
       '@testing-library/react':
         specifier: ^16.3.0
@@ -1249,6 +1149,10 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
+  fuse.js@7.4.2:
+    resolution: {integrity: sha512-LVbzjD4WA6UP5B1UnP8wuaXJiLnqMdM/E4fiJXTJ5haJ5b/MBNsK29h2fm6swEoQaVQjvYFWKLE2RanyZIoRVQ==}
+    engines: {node: '>=10'}
+
   gensync@1.0.0-beta.2:
     resolution: {integrity: sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==}
     engines: {node: '>=6.9.0'}
@@ -1650,8 +1554,8 @@ packages:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
     hasBin: true
 
-  semver@7.8.4:
-    resolution: {integrity: sha512-rUCObTnP32Q08R2uuIrt7r9PlEonuTmtuXYcW6s5kjdlj3xbnwe+21yXptAUYcMAABLkYYTtnmzb3w3EDZfueA==}
+  semver@7.8.5:
+    resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -2585,7 +2489,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 8.61.1
       debug: 4.4.3
       minimatch: 10.2.5
-      semver: 7.8.4
+      semver: 7.8.5
       tinyglobby: 0.2.17
       ts-api-utils: 2.5.0(typescript@6.0.3)
       typescript: 6.0.3
@@ -2934,6 +2838,8 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  fuse.js@7.4.2: {}
 
   gensync@1.0.0-beta.2: {}
 
@@ -3311,7 +3217,7 @@ snapshots:
 
   semver@6.3.1: {}
 
-  semver@7.8.4: {}
+  semver@7.8.5: {}
 
   set-cookie-parser@2.7.2: {}
 

@@ -12,17 +12,14 @@
 
 .command-dialog {
   width: min(560px, 100%);
+  max-height: min(640px, calc(100vh - 32px));
   overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 32px;
+  border-radius: 24px;
   background: rgba(255, 255, 255, 0.98);
   box-shadow: 0 24px 80px rgba(15, 23, 42, 0.18);
-}
-
-.command-dialog[data-mic-mode='true'] {
-  border-color: rgba(20, 33, 61, 0.06);
-  background: rgba(255, 255, 255, 0.99);
-  box-shadow: 0 32px 90px rgba(20, 33, 61, 0.14);
+  display: flex;
+  flex-direction: column;
 }
 
 .theme-dark .command-dialog {
@@ -31,393 +28,98 @@
   box-shadow: 0 24px 80px rgba(2, 6, 23, 0.45);
 }
 
-.theme-dark .command-dialog[data-mic-mode='true'] {
-  border-color: rgba(96, 165, 250, 0.12);
-  background: rgba(15, 23, 42, 0.98);
-  box-shadow: 0 32px 90px rgba(2, 6, 23, 0.4);
-}
-
-.command-dialog-mic-shell {
-  min-height: min(720px, calc(100vh - 32px));
-  display: flex;
-  flex-direction: column;
-}
-
-.command-dialog-mic-topbar {
-  position: relative;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 20px 20px 0;
-}
-
-.command-dialog-mic-handle {
-  position: absolute;
-  left: 50%;
-  top: 14px;
-  transform: translateX(-50%);
-  width: 42px;
-  height: 5px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.12);
-}
-
-.theme-dark .command-dialog-mic-handle {
-  background: rgba(148, 163, 184, 0.24);
-}
-
-.command-dialog-mic-topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.command-dialog-mic-topbar-actions .command-dialog-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #64748b;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.command-dialog-mic-topbar-actions .command-dialog-close:hover {
-  background: rgba(15, 23, 42, 0.06);
-  color: #0f172a;
-}
-
-.theme-dark .command-dialog-mic-topbar-actions .command-dialog-close {
-  color: #94a3b8;
-}
-
-.theme-dark .command-dialog-mic-topbar-actions .command-dialog-close:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f8fafc;
-}
-
-.command-dialog-more {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #64748b;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.command-dialog-more:hover {
-  background: rgba(15, 23, 42, 0.06);
-  color: #0f172a;
-}
-
-.command-dialog-more span {
-  width: 3px;
-  height: 3px;
-  border-radius: 999px;
-  background: currentColor;
-}
-
-.theme-dark .command-dialog-more {
-  color: #94a3b8;
-}
-
-.theme-dark .command-dialog-more:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f8fafc;
-}
-
-.command-dialog-mic-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 36px 28px 32px;
-  text-align: center;
-}
-
-.command-dialog-mic-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.command-dialog-mic-title {
-  margin: 0;
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.theme-dark .command-dialog-mic-title {
-  color: #f8fafc;
-}
-
-.command-dialog-mic-subtitle {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 400;
-  color: #64748b;
-}
-
-.theme-dark .command-dialog-mic-subtitle {
-  color: #94a3b8;
-}
-
-.command-dialog-mic-stage {
-  position: relative;
-  width: min(100%, 420px);
-  min-height: 220px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.command-dialog-mic-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 180px;
-  height: 180px;
-  transform: translate(-50%, -50%);
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(147, 197, 253, 0.45) 0%, rgba(191, 219, 254, 0.18) 50%, transparent 72%);
-  filter: blur(22px);
-}
-
-.theme-dark .command-dialog-mic-glow {
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.35) 0%, rgba(37, 99, 235, 0.14) 50%, transparent 72%);
-}
-
-.command-dialog-mic-orb {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 88px;
-  height: 88px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #7aa7f5 0%, #a5b8f9 100%);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.35),
-    0 10px 40px rgba(96, 165, 250, 0.35),
-    0 0 60px rgba(147, 197, 253, 0.3);
-  animation: command-dialog-orb-pulse 2.4s ease-in-out infinite;
-}
-
-.command-dialog-mic-orb-icon {
-  position: relative;
-  z-index: 1;
-  width: 32px;
-  height: 32px;
-  color: #ffffff;
-}
-
-@keyframes command-dialog-orb-pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.04);
-  }
-}
-
-.command-dialog-waveform {
-  position: absolute;
-  top: 50%;
-  width: calc(50% - 58px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transform: translateY(-50%);
-}
-
-.command-dialog-waveform-left {
-  left: 0;
-}
-
-.command-dialog-waveform-right {
-  right: 0;
-}
-
-.command-dialog-wave-bar {
-  flex-shrink: 0;
-  width: 5px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #7aa7f5 0%, #93c5fd 100%);
-  animation: command-dialog-wave-breathe 1.2s ease-in-out infinite;
-}
-
-.command-dialog-wave-bar-1 {
-  height: 14px;
-  animation-delay: 0s;
-}
-
-.command-dialog-wave-bar-2 {
-  height: 28px;
-  animation-delay: 0.1s;
-}
-
-.command-dialog-wave-bar-3 {
-  height: 48px;
-  animation-delay: 0.2s;
-}
-
-.command-dialog-wave-bar-4 {
-  height: 22px;
-  animation-delay: 0.3s;
-}
-
-.command-dialog-wave-bar-5 {
-  height: 12px;
-  animation-delay: 0.4s;
-}
-
-@keyframes command-dialog-wave-breathe {
-  0%, 100% {
-    opacity: 0.55;
-    transform: scaleY(0.92);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scaleY(1.08);
-  }
-}
-
-.theme-dark .command-dialog-wave-bar {
-  background: linear-gradient(180deg, #60a5fa 0%, #93c5fd 100%);
-}
-
-.command-dialog-mic-cancel {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: 999px;
-  background: #ffffff;
-  color: #0f172a;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
-}
-
-.command-dialog-mic-cancel:hover {
-  background: #f8fafc;
-  border-color: rgba(15, 23, 42, 0.16);
-  transform: translateY(-1px);
-}
-
-.command-dialog-mic-cancel-icon {
-  width: 14px;
-  height: 14px;
-}
-
-.theme-dark .command-dialog-mic-cancel {
-  border-color: rgba(148, 163, 184, 0.16);
-  background: rgba(30, 41, 59, 0.8);
-  color: #f8fafc;
-}
-
-.theme-dark .command-dialog-mic-cancel:hover {
-  background: rgba(30, 41, 59, 0.95);
-  border-color: rgba(148, 163, 184, 0.26);
-}
-
-.command-dialog-mic-shortcuts {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-}
-
-.command-dialog-mic-shortcut {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: 999px;
-  background: #ffffff;
-  color: #475569;
-  font-size: 0.9rem;
-  font-weight: 400;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.command-dialog-mic-keycap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 20px;
-  padding: 0 6px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: 6px;
-  background: #f8fafc;
-  color: #0f172a;
-  font-size: 0.8rem;
-  font-weight: 500;
-  line-height: 1;
-}
-
-.theme-dark .command-dialog-mic-shortcut {
-  border-color: rgba(148, 163, 184, 0.16);
-  background: rgba(30, 41, 59, 0.8);
-  color: #cbd5e1;
-}
-
-.theme-dark .command-dialog-mic-keycap {
-  border-color: rgba(148, 163, 184, 0.18);
-  background: rgba(15, 23, 42, 0.7);
-  color: #f8fafc;
-}
-
-.command-dialog-mic-disclaimer {
-  margin: 0;
-  max-width: 380px;
-  font-size: 0.85rem;
-  line-height: 1.5;
-  color: #94a3b8;
-}
-
-.theme-dark .command-dialog-mic-disclaimer {
-  color: #64748b;
-}
-
 .command-dialog-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  padding: 16px 18px;
+  padding: 12px 14px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
 
-.command-dialog-search-icon,
+.command-dialog-mode-toggle {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.16);
+}
+
+.command-dialog-mode-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.command-dialog-mode-toggle button[aria-selected='true'] {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.theme-dark .command-dialog-mode-toggle {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.theme-dark .command-dialog-mode-toggle button {
+  color: #94a3b8;
+}
+
+.theme-dark .command-dialog-mode-toggle button[aria-selected='true'] {
+  background: rgba(30, 41, 59, 0.95);
+  color: #f8fafc;
+}
+
+.command-dialog-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 10px;
+  background: rgba(248, 250, 252, 0.9);
+  color: #334155;
+  cursor: pointer;
+}
+
+.command-dialog-close:hover {
+  background: #f1f5f9;
+}
+
+.theme-dark .command-dialog-close {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+}
+
 .command-dialog-close-icon,
+.command-dialog-search-icon,
 .command-dialog-voice-icon {
   width: 18px;
   height: 18px;
+}
+
+.command-dialog-search {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.command-dialog-search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .command-dialog-search-icon {
@@ -444,31 +146,19 @@
   color: #94a3b8;
 }
 
-.command-dialog-close,
 .command-dialog-voice-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  gap: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 10px;
   background: rgba(248, 250, 252, 0.9);
   color: #334155;
   cursor: pointer;
-}
-
-.command-dialog-close {
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-}
-
-.command-dialog-voice-button {
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
 }
 
 .command-dialog-voice-button[aria-pressed='true'] {
@@ -477,7 +167,6 @@
   color: #0f172a;
 }
 
-.theme-dark .command-dialog-close,
 .theme-dark .command-dialog-voice-button {
   border-color: rgba(148, 163, 184, 0.18);
   background: rgba(30, 41, 59, 0.9);
@@ -490,22 +179,18 @@
   color: #e0f2fe;
 }
 
-.command-dialog-voice-button svg {
-  transition: transform 0.18s ease;
-}
-
-.command-dialog-voice-button[aria-pressed='true'] svg {
-  transform: scale(1.08);
-}
-
 .command-dialog-body {
   padding: 14px 18px 18px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .command-dialog-loader,
 .command-dialog-error,
 .command-dialog-confirmation,
-.command-dialog-empty {
+.command-dialog-empty,
+.command-dialog-no-match {
   margin-bottom: 12px;
   padding: 12px 14px;
   border-radius: 12px;
@@ -576,21 +261,6 @@
   cursor: pointer;
 }
 
-.command-dialog-item-ai {
-  width: 100%;
-  margin-bottom: 8px;
-  text-align: left;
-  background:
-    linear-gradient(135deg, rgba(219, 234, 254, 0.94) 0%, rgba(239, 246, 255, 0.98) 100%);
-  border-color: rgba(59, 130, 246, 0.28);
-}
-
-.command-dialog-item-ai:hover {
-  border-color: rgba(37, 99, 235, 0.4);
-  background:
-    linear-gradient(135deg, rgba(191, 219, 254, 0.95) 0%, rgba(224, 242, 254, 0.98) 100%);
-}
-
 .command-dialog-item[aria-selected='true'] {
   border-color: rgba(59, 130, 246, 0.48);
   background: rgba(239, 246, 255, 0.94);
@@ -599,18 +269,6 @@
 .theme-dark .command-dialog-item {
   background: rgba(15, 23, 42, 0.7);
   border-color: rgba(148, 163, 184, 0.16);
-}
-
-.theme-dark .command-dialog-item-ai {
-  background:
-    linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.96) 100%);
-  border-color: rgba(96, 165, 250, 0.3);
-}
-
-.theme-dark .command-dialog-item-ai:hover {
-  border-color: rgba(125, 211, 252, 0.42);
-  background:
-    linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 1) 100%);
 }
 
 .theme-dark .command-dialog-item[aria-selected='true'] {
@@ -634,10 +292,179 @@
   color: #94a3b8;
 }
 
+.command-dialog-ai {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.command-dialog-chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.command-dialog-chat-message {
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-width: 85%;
+}
+
+.command-dialog-chat-message[data-role='user'] {
+  align-self: flex-end;
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+  border-bottom-right-radius: 4px;
+}
+
+.command-dialog-chat-message[data-role='assistant'] {
+  align-self: flex-start;
+  background: rgba(148, 163, 184, 0.16);
+  color: #0f172a;
+  border-bottom-left-radius: 4px;
+}
+
+.theme-dark .command-dialog-chat-message[data-role='user'] {
+  background: rgba(59, 130, 246, 0.22);
+  color: #bfdbfe;
+}
+
+.theme-dark .command-dialog-chat-message[data-role='assistant'] {
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+}
+
+.command-dialog-chat-message ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.command-dialog-chat-message button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f172a;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.theme-dark .command-dialog-chat-message button {
+  background: rgba(15, 23, 42, 0.9);
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+.command-dialog-clarification {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(254, 249, 195, 0.6);
+  color: #854d0e;
+}
+
+.theme-dark .command-dialog-clarification {
+  background: rgba(113, 63, 18, 0.3);
+  color: #fde68a;
+}
+
+.command-dialog-clarification ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.command-dialog-clarification-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.theme-dark .command-dialog-clarification-item {
+  background: rgba(15, 23, 42, 0.9);
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+.command-dialog-no-match {
+  background: rgba(254, 226, 226, 0.5);
+  color: #991b1b;
+}
+
+.theme-dark .command-dialog-no-match {
+  background: rgba(127, 29, 29, 0.25);
+  color: #fecaca;
+}
+
+.command-dialog-no-match button {
+  padding: 6px 12px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.command-dialog-chat-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 12px 18px 14px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.command-dialog-chat-input {
+  flex: 1;
+  resize: none;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-family: inherit;
+  line-height: 1.45;
+  outline: 0;
+}
+
+.command-dialog-chat-input:focus {
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.theme-dark .command-dialog-chat-input {
+  background: rgba(15, 23, 42, 0.85);
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
 .command-dialog-actions {
   display: flex;
   justify-content: center;
-  margin-top: 14px;
+  padding: 0 18px 12px;
 }
 
 .command-dialog-shortcuts {
@@ -680,104 +507,22 @@
   background: rgba(30, 41, 59, 0.92);
 }
 
-.command-dialog-hint {
-  display: block;
-  margin-top: 10px;
-  font-size: 0.85rem;
-  text-align: center;
-}
-
 @media (max-width: 640px) {
-  .command-dialog-mic-shell {
-    min-height: calc(100vh - 32px);
-  }
-
-  .command-dialog-mic-body {
-    padding: 34px 18px 22px;
-  }
-
-  .command-dialog-mic-title {
-    font-size: 2.25rem;
-  }
-
-  .command-dialog-mic-subtitle {
-    font-size: 1rem;
-  }
-
-  .command-dialog-mic-stage {
-    min-height: 260px;
-  }
-
   .command-dialog {
-    border-radius: 26px;
-  }
-
-  .command-dialog-mic-body {
-    padding: 24px 20px 24px;
-  }
-
-  .command-dialog-mic-title {
-    font-size: 1.6rem;
-  }
-
-  .command-dialog-mic-subtitle {
-    font-size: 0.95rem;
-  }
-
-  .command-dialog-mic-stage {
-    min-height: 180px;
-  }
-
-  .command-dialog-mic-orb {
-    width: 76px;
-    height: 76px;
-  }
-
-  .command-dialog-mic-orb-icon {
-    width: 28px;
-    height: 28px;
-  }
-
-  .command-dialog-waveform {
-    gap: 5px;
-    width: calc(50% - 48px);
-  }
-
-  .command-dialog-wave-bar-1 {
-    height: 12px;
-  }
-
-  .command-dialog-wave-bar-2 {
-    height: 24px;
-  }
-
-  .command-dialog-wave-bar-3 {
-    height: 40px;
-  }
-
-  .command-dialog-wave-bar-4 {
-    height: 18px;
-  }
-
-  .command-dialog-wave-bar-5 {
-    height: 10px;
-  }
-
-  .command-dialog-mic-shortcuts {
-    gap: 8px;
-  }
-
-  .command-dialog-mic-shortcut {
-    padding: 7px 12px;
-    font-size: 0.85rem;
+    border-radius: 20px;
   }
 
   .command-dialog-header {
     gap: 10px;
-    padding: 14px 16px;
+    padding: 10px 12px;
   }
 
-  .command-dialog-body {
-    padding: 12px 16px 16px;
+  .command-dialog-body,
+  .command-dialog-chat {
+    padding: 12px 14px;
+  }
+
+  .command-dialog-chat-input-row {
+    padding: 10px 14px 12px;
   }
 }

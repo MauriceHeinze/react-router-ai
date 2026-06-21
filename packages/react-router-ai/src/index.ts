@@ -1,6 +1,10 @@
 export { AICommandRoot, useAICommand } from "./controller";
 export {
   AICommand,
+  AICommandChat,
+  AICommandChatInput,
+  AICommandChatMessage,
+  AICommandClarification,
   AICommandConfirmation,
   AICommandDialog,
   AICommandEmpty,
@@ -8,6 +12,8 @@ export {
   AICommandInput,
   AICommandList,
   AICommandLoading,
+  AICommandModeToggle,
+  AICommandNoMatch,
   AICommandVoiceButton,
 } from "./ai-command";
 export { createOpenAICommandMatcher } from "./openai-matcher";
@@ -15,9 +21,17 @@ export type {
   OpenAICommandMatcherFetch,
   OpenAICommandMatcherOptions,
 } from "./openai-matcher";
-export { matchItems } from "./matcher";
+export { matchItems, resolveIntent } from "./matcher";
+export type { MatchItemsOptions, ResolveIntentOptions } from "./matcher";
 export { rankCommandItems } from "./local-matcher";
+export type { ScoredCommandItem } from "./local-matcher";
 export type {
+  AICommandChatInputProps,
+  AICommandChatMessageData,
+  AICommandChatMessageProps,
+  AICommandChatProps,
+  AICommandChatRole,
+  AICommandClarificationProps,
   AICommandConfirmationProps,
   AICommandContextValue,
   AICommandDialogProps,
@@ -28,8 +42,12 @@ export type {
   AICommandItemProps,
   AICommandListProps,
   AICommandLoadingProps,
-  AICommandMatch,
   AICommandMatcher,
+  AICommandMatcherResult,
+  AICommandMode,
+  AICommandModeToggleProps,
+  AICommandNoMatchProps,
   AICommandRootProps,
   AICommandVoiceButtonProps,
+  AICommandMatch,
 } from "./types";
