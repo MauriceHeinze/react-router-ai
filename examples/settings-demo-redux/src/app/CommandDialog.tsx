@@ -11,7 +11,7 @@ type CommandDialogProps = {
 
 export default function CommandDialog({ open, onOpenChange, items }: CommandDialogProps) {
   const ctx = useAICommand()
-  const { isListening, liveTranscript, mode, onContactSupport } = ctx
+  const { clearChatMessages, isListening, liveTranscript, mode, onContactSupport, stopListening } = ctx
   const voiceStatus = ctx.isSubmitting
     ? 'Sending your request to OpenAI...'
     : isListening
@@ -20,15 +20,15 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
 
   useEffect(() => {
     if (!open && isListening) {
-      ctx.stopListening()
+      stopListening()
     }
-  }, [ctx, isListening, open])
+  }, [isListening, open, stopListening])
 
   useEffect(() => {
     if (mode === 'voice') {
-      ctx.clearChatMessages()
+      clearChatMessages()
     }
-  }, [ctx, mode])
+  }, [clearChatMessages, mode])
 
   return (
     <AICommand.Dialog open={open} onOpenChange={onOpenChange}>
