@@ -86,6 +86,11 @@ export function AICommandRoot({
   thresholdRef.current = threshold;
   const maxMatcherCandidatesRef = useRef(maxMatcherCandidates);
   maxMatcherCandidatesRef.current = maxMatcherCandidates;
+  const liveTranscriptRef = useRef(liveTranscript);
+  liveTranscriptRef.current = liveTranscript;
+  const isSubmittingRef = useRef(isSubmitting);
+  isSubmittingRef.current = isSubmitting;
+  const hasPendingVoiceSubmitRef = useRef(false);
 
   const filteredItems = useMemo(() => {
     const rankedItems = rankCommandItems(query, items);
@@ -281,6 +286,8 @@ export function AICommandRoot({
     }
     setError(null);
     setLiveTranscript("");
+    liveTranscriptRef.current = "";
+    hasPendingVoiceSubmitRef.current = false;
     try {
       recognizerRef.current.start();
       setIsListening(true);
@@ -437,10 +444,14 @@ export function AICommandRoot({
   useEffect(() => {
     recognizerRef.current = createSpeechRecognizer({
       onInterimResult: (transcript) => {
+        liveTranscriptRef.current = transcript;
         setLiveTranscript(transcript);
+        hasPendingVoiceSubmitRef.current = transcript.trim().length > 0;
       },
       onResult: (transcript) => {
+        liveTranscriptRef.current = transcript;
         setLiveTranscript(transcript);
+        hasPendingVoiceSubmitRef.current = false;
         if (modeRef.current === "voice") {
           setChatInputState(transcript);
           setError(null);
@@ -462,6 +473,18 @@ export function AICommandRoot({
       },
       onEnd: () => {
         setIsListening(false);
+        const transcript = liveTranscriptRef.current.trim();
+        if (
+          modeRef.current === "voice" &&
+          hasPendingVoiceSubmitRef.current &&
+          transcript &&
+          !isSubmittingRef.current
+        ) {
+          hasPendingVoiceSubmitRef.current = false;
+          setError(null);
+          setChatInputState(transcript);
+          void submitChat(transcript, true);
+        }
       },
     });
 

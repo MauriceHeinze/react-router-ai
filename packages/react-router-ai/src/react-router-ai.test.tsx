@@ -1820,6 +1820,67 @@ describe("AICommand voice panel behavior", () => {
     expect(matcher).not.toHaveBeenCalled();
   });
 
+  it("submits the last captured voice transcript when recognition ends without a final result", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue({
+      kind: "execute",
+      item: { id: "billing", value: "Open billing", onSelect },
+    });
+    const recognitionInstance: {
+      current: {
+        onresult: ((event: SpeechRecognitionEvent) => void) | null;
+        onend: (() => void) | null;
+      } | null;
+    } = { current: null };
+
+    const Recognition = vi.fn().mockImplementation(() => {
+      const recognition = {
+        lang: "",
+        interimResults: false,
+        continuous: false,
+        onresult: null as ((event: SpeechRecognitionEvent) => void) | null,
+        onerror: null,
+        onend: null as (() => void) | null,
+        start: vi.fn(),
+        stop: vi.fn(),
+      };
+      recognitionInstance.current = recognition;
+      return recognition;
+    });
+    window.SpeechRecognition = Recognition as unknown as typeof window.SpeechRecognition;
+    window.webkitSpeechRecognition = Recognition as unknown as typeof window.webkitSpeechRecognition;
+
+    render(
+      <AICommandRoot matcher={matcher}>
+        <AICommand.Dialog open>
+          <AICommand.Input />
+          <AICommand.List />
+          <ModeProbe />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "switch-to-voice" }));
+    await waitFor(() => expect(screen.getByTestId("mode").textContent).toBe("voice"));
+
+    recognitionInstance.current?.onresult?.({
+      results: {
+        length: 1,
+        0: {
+          isFinal: false,
+          length: 1,
+          0: { transcript: "open billing" },
+        },
+      },
+    } as unknown as SpeechRecognitionEvent);
+
+    recognitionInstance.current?.onend?.();
+
+    await waitFor(() => expect(matcher).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
+  });
+
   it("executes directly when voice mode gets a single candidate", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
