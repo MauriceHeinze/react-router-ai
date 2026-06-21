@@ -306,7 +306,7 @@ export function AICommandRoot({
       setIsListening(true);
     } catch {
       setIsListening(false);
-      setError("Voice input failed. Keep typing instead.");
+      setError("Voice input could not start. Check microphone permissions and browser support.");
     }
   }, []);
 

@@ -260,6 +260,21 @@ export interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
 }
 
+export interface SpeechRecognitionErrorEvent extends Event {
+  error?:
+    | "aborted"
+    | "audio-capture"
+    | "bad-grammar"
+    | "language-not-supported"
+    | "network"
+    | "no-speech"
+    | "not-allowed"
+    | "phrases-not-supported"
+    | "service-not-allowed"
+    | string;
+  message?: string;
+}
+
 export interface SpeechRecognitionResultList {
   readonly length: number;
   [index: number]: SpeechRecognitionResult;
@@ -279,7 +294,7 @@ export interface SpeechRecognitionInstance extends EventTarget {
   interimResults: boolean;
   lang: string;
   onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: Event) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
   onend: (() => void) | null;
   start: () => void;
   stop: () => void;

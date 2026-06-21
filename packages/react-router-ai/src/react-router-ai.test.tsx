@@ -913,7 +913,11 @@ describe("AICommand voice button", () => {
 
     await user.click(screen.getByRole("button", { name: "Use voice" }));
 
-    expect(await screen.findByText("Voice input failed. Keep typing instead.")).toBeTruthy();
+    expect(
+      await screen.findByText(
+        "Voice input could not start. Check microphone permissions and browser support.",
+      ),
+    ).toBeTruthy();
   });
 
   it("toggles listening off when the voice button is clicked again", async () => {
@@ -993,9 +997,15 @@ describe("AICommand voice button", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Use voice" }));
-    recognitionInstance.current?.onerror?.(new Event("error"));
+    recognitionInstance.current?.onerror?.(
+      Object.assign(new Event("error"), { error: "not-allowed" }),
+    );
 
-    expect(await screen.findByText("Voice input failed. Keep typing instead.")).toBeTruthy();
+    expect(
+      await screen.findByText(
+        "Microphone access was blocked. Check browser permissions and try again.",
+      ),
+    ).toBeTruthy();
   });
 
   it("returns the voice button to the idle state when recognition ends", async () => {

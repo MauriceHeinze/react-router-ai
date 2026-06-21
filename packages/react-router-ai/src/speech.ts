@@ -1,4 +1,4 @@
-import type { SpeechRecognitionInstance } from "./types";
+import type { SpeechRecognitionErrorEvent, SpeechRecognitionInstance } from "./types";
 
 export type SpeechRecognizer = {
   start: () => void;
@@ -17,6 +17,26 @@ export type CreateSpeechRecognizerOptions = {
 function getRecognitionConstructor() {
   if (typeof window === "undefined") return null;
   return window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null;
+}
+
+function getSpeechRecognitionErrorMessage(event: SpeechRecognitionErrorEvent) {
+  switch (event.error) {
+    case "not-allowed":
+    case "service-not-allowed":
+      return "Microphone access was blocked. Check browser permissions and try again.";
+    case "audio-capture":
+      return "No microphone was found. Check your audio input and try again.";
+    case "no-speech":
+      return "No speech was detected. Try speaking again.";
+    case "network":
+      return "Voice input failed because the speech service was unreachable.";
+    case "language-not-supported":
+      return "Voice input is not available for the current language.";
+    case "aborted":
+      return "Voice input was interrupted. Try again.";
+    default:
+      return "Voice input failed. Check microphone permissions and browser support.";
+  }
 }
 
 export function createSpeechRecognizer(
@@ -54,8 +74,8 @@ export function createSpeechRecognizer(
     }
   };
 
-  recognition.onerror = () => {
-    options.onError("Voice input failed. Keep typing instead.");
+  recognition.onerror = (event) => {
+    options.onError(getSpeechRecognitionErrorMessage(event));
   };
 
   recognition.onend = () => {
