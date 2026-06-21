@@ -48,7 +48,7 @@ function AppShell() {
       onContactSupport={() => (window.location.href = "mailto:support@example.com")}
     >
       <AICommand.Dialog open>
-        <AICommand.ModeToggle />
+        <AICommand.ModeHeader />
         {mode === "search" ? (
           <>
             <AICommand.Input autoFocus modeShortcut="tab" micShortcut="ctrl+m" placeholder="Search..." />
@@ -61,16 +61,27 @@ function AppShell() {
             </AICommand.List>
             <AICommand.Empty>No matches.</AICommand.Empty>
           </>
-        ) : (
+        ) : mode === "ai" ? (
           <>
             <AICommand.Chat>
               {chatMessages.map((m) => (
-                <AICommand.ChatMessage key={m.id} message={m} />
+                <AICommand.ChatMessage key={m.id} message={m} userLabel="Your Request" />
               ))}
               <AICommand.Clarification />
               <AICommand.NoMatch />
             </AICommand.Chat>
             <AICommand.ChatInput modeShortcut="tab" micShortcut="ctrl+m" placeholder="Ask AI..." />
+          </>
+        ) : (
+          <>
+            <AICommand.Chat>
+              {chatMessages.map((m) => (
+                <AICommand.ChatMessage key={m.id} message={m} userLabel="Your Request" />
+              ))}
+              <AICommand.Clarification />
+              <AICommand.NoMatch />
+            </AICommand.Chat>
+            <AICommand.VoiceWaveform />
           </>
         )}
         <AICommand.Confirmation />
@@ -83,12 +94,13 @@ function AppShell() {
 
 ## Modes
 
-The dialog toggles between two modes via `AICommand.ModeToggle`:
+The dialog cycles through three modes via `AICommand.ModeHeader` (or `modeShortcut="tab"`):
 
-- **Search mode** uses [Fuse.js](https://fusejs.io/) fuzzy matching against the registered `AICommandItem` list. Typing filters and ranks the list; Enter runs the top match.
-- **AI mode** is a chat window. Each user message is sent (single-shot, no conversation history) to the configured `matcher`. Switching from search to AI seeds the chat input with the current search query; switching back seeds the search query from the chat input.
+- **Classic Search** uses [Fuse.js](https://fusejs.io/) fuzzy matching against the registered `AICommandItem` list. Typing filters and ranks the list; Enter runs the top match.
+- **Text Chat** is a chat window. Each user message is sent (single-shot, no conversation history) to the configured `matcher`. Switching from search to text chat seeds the chat input with the current search query; switching back seeds the search query from the chat input.
+- **Voice Chat** shows a waveform visualization while listening. Activating the mic from text chat automatically enters voice chat; when the transcript is received, it fills the chat input and returns to text chat.
 
-The mic button and `micShortcut="ctrl+m"` work in both modes. **Tab** (`modeShortcut="tab"`) switches between search and AI mode. In **search mode**, a transcript fills the search field and submits. In **AI mode**, the transcript fills the chat input without submitting, so the user can review before sending.
+**Tab** (`modeShortcut="tab"`) cycles through the three modes. **Ctrl+M** (`micShortcut="ctrl+m"`) toggles the mic. In **search mode**, a transcript fills the search field and submits. In **text chat / voice chat**, the transcript fills the chat input without submitting, so the user can review before sending.
 
 ## AI matcher contract
 

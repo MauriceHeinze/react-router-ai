@@ -40,7 +40,7 @@ Provides matching, execution, voice input, mode state, chat state, candidate sta
 
 ```tsx
 <AICommand.Dialog />
-<AICommand.ModeToggle />
+<AICommand.ModeHeader />
 <AICommand.Input />
 <AICommand.List />
 <AICommand.Item />
@@ -54,16 +54,18 @@ Provides matching, execution, voice input, mode state, chat state, candidate sta
 <AICommand.ChatInput />
 <AICommand.Clarification />
 <AICommand.NoMatch />
+<AICommand.VoiceWaveform />
 ```
 
 Headless UI primitives with `className`/`style` pass-through. The host app owns the styling; the library only adds minimal inline layout styles where required for behavior (e.g. confirmation buttons, chat candidate lists).
 
 ## Modes
 
-The dialog has two modes controlled by `AICommand.ModeToggle`:
+The dialog has three modes controlled by `AICommand.ModeHeader`:
 
 - **Search mode** uses Fuse.js fuzzy matching over the registered command catalog. Typing filters and ranks; Enter runs the top match; the mic fills the search field and submits.
-- **AI mode** is a chat window. Each user message is sent (single-shot, no conversation history) to the configured matcher. The library renders the assistant response, including inline candidate buttons when the matcher returns `clarify`. Switching from search to AI seeds the chat input with the current search query; switching back seeds the search query from the chat input. In AI mode, the mic fills the chat input without submitting.
+- **Text Chat** is a chat window. Each user message is sent (single-shot, no conversation history) to the configured matcher. The library renders the assistant response, including inline candidate buttons when the matcher returns `clarify`. Switching from search to text chat seeds the chat input with the current search query; switching back seeds the search query from the chat input.
+- **Voice Chat** shows a waveform visualization while listening. Activating the mic from text chat automatically enters voice chat; when the transcript is received, it fills the chat input and returns to text chat. The user can also switch to voice chat via Tab to see the waveform UI without auto-starting listening.
 
 ## Command Shape
 

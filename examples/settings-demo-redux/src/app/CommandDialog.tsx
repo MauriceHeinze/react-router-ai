@@ -22,16 +22,15 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
   return (
     <AICommand.Dialog open={open} onOpenChange={onOpenChange}>
       <div className="command-dialog-overlay" onClick={() => onOpenChange(false)}>
-        <div
-          className="command-dialog"
-          data-mode={mode}
-          onClick={(event) => event.stopPropagation()}
-        >
+        <div className="command-dialog" onClick={(event) => event.stopPropagation()}>
           <div className="command-dialog-header">
-            <AICommand.ModeToggle
-              className="command-dialog-mode-toggle"
-              searchLabel="Search"
-              aiLabel="AI"
+            <AICommand.ModeHeader
+              className="command-dialog-mode-header"
+              searchLabel="Classic Search"
+              aiLabel="Text Chat"
+              voiceLabel="Voice Chat"
+              switchLabel="Switch Mode"
+              switchKeycap="Tab"
             />
             <button
               className="command-dialog-close"
@@ -46,7 +45,7 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
 
           {mode === 'search' ? (
             <div className="command-dialog-search">
-              <div className="command-dialog-search-row">
+              <div className="command-dialog-search-input-wrap">
                 <SearchIcon className="command-dialog-search-icon" />
                 <AICommand.Input
                   autoFocus
@@ -55,9 +54,6 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                   placeholder="Search settings..."
                   className="command-dialog-input"
                 />
-                <AICommand.VoiceButton className="command-dialog-voice-button" title="Mic (Tab)">
-                  <MicrophoneIcon className="command-dialog-voice-icon" />
-                </AICommand.VoiceButton>
               </div>
 
               <div className="command-dialog-body">
@@ -94,10 +90,8 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                 </AICommand.Empty>
               </div>
 
-              <div className="command-dialog-actions">
+              <div className="command-dialog-footer">
                 <div className="command-dialog-shortcuts" aria-hidden="true">
-                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Tab</span> Mode</span>
-                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Ctrl M</span> Mic</span>
                   <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Enter</span> Run</span>
                   <span className="command-dialog-shortcut"><span className="command-dialog-keycap">↑↓</span> Move</span>
                   <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Esc</span> Close</span>
@@ -105,12 +99,13 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
               </div>
             </div>
           ) : (
-            <div className="command-dialog-ai">
+            <div className="command-dialog-chat-panel">
               <AICommand.Chat className="command-dialog-chat">
                 {ctx.chatMessages.map((message) => (
                   <AICommand.ChatMessage
                     key={message.id}
                     message={message}
+                    userLabel="Your Request"
                     className="command-dialog-chat-message"
                   />
                 ))}
@@ -122,6 +117,7 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                 <AICommand.Confirmation className="command-dialog-confirmation" />
                 <AICommand.Clarification
                   className="command-dialog-clarification"
+                  message="Did you mean?"
                   itemClassName="command-dialog-clarification-item"
                 />
                 <AICommand.NoMatch
@@ -130,24 +126,41 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                 />
               </AICommand.Chat>
 
-              <div className="command-dialog-chat-input-row">
-                <AICommand.VoiceButton className="command-dialog-voice-button" title="Mic (Tab)">
-                  <MicrophoneIcon className="command-dialog-voice-icon" />
-                </AICommand.VoiceButton>
-                <AICommand.ChatInput
-                  autoFocus
-                  modeShortcut="tab"
-                  micShortcut="ctrl+m"
-                  placeholder="Ask AI to do something..."
-                  className="command-dialog-chat-input"
-                />
-              </div>
+              {mode === 'ai' ? (
+                <div className="command-dialog-chat-input-wrap">
+                  <AICommand.ChatInput
+                    autoFocus
+                    modeShortcut="tab"
+                    micShortcut="ctrl+m"
+                    placeholder="Ask AI to do something..."
+                    className="command-dialog-chat-input"
+                  />
+                  <AICommand.VoiceButton
+                    className="command-dialog-chat-mic"
+                    title="Mic (Ctrl+M)"
+                  >
+                    <MicrophoneIcon className="command-dialog-mic-icon" />
+                  </AICommand.VoiceButton>
+                </div>
+              ) : (
+                <div className="command-dialog-voice-wrap">
+                  <AICommand.VoiceWaveform
+                    barCount={50}
+                    className="command-dialog-waveform"
+                  />
+                  <AICommand.VoiceButton
+                    className="command-dialog-chat-mic"
+                    title="Stop listening"
+                  >
+                    <MicrophoneIcon className="command-dialog-mic-icon" />
+                  </AICommand.VoiceButton>
+                </div>
+              )}
 
-              <div className="command-dialog-actions">
+              <div className="command-dialog-footer">
                 <div className="command-dialog-shortcuts" aria-hidden="true">
-                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Tab</span> Mode</span>
-                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Ctrl M</span> Mic</span>
-                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Enter</span> Send</span>
+                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Enter</span> Send Message</span>
+                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">↑↓</span> Move</span>
                   <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Esc</span> Close</span>
                 </div>
               </div>

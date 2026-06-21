@@ -40,7 +40,7 @@ export type AICommandMatcher = (
   candidates: readonly AICommandItem[],
 ) => Promise<AICommandMatcherResult>;
 
-export type AICommandMode = "search" | "ai";
+export type AICommandMode = "search" | "ai" | "voice";
 
 export type AICommandChatRole = "user" | "assistant";
 
@@ -125,9 +125,12 @@ export type AICommandVoiceButtonProps = {
   title?: string;
 };
 
-export type AICommandModeToggleProps = {
+export type AICommandModeHeaderProps = {
   searchLabel?: string;
   aiLabel?: string;
+  voiceLabel?: string;
+  switchLabel?: string;
+  switchKeycap?: string;
   className?: string;
   style?: React.CSSProperties;
 };
@@ -141,6 +144,13 @@ export type AICommandChatProps = {
 export type AICommandChatMessageProps = {
   message: AICommandChatMessageData;
   onSelectCandidate?: (item: AICommandItem) => void;
+  userLabel?: string;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export type AICommandVoiceWaveformProps = {
+  barCount?: number;
   className?: string;
   style?: React.CSSProperties;
 };

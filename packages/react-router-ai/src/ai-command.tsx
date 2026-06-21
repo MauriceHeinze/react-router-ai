@@ -21,9 +21,10 @@ import type {
   AICommandItemProps,
   AICommandListProps,
   AICommandLoadingProps,
-  AICommandModeToggleProps,
+  AICommandModeHeaderProps,
   AICommandNoMatchProps,
   AICommandVoiceButtonProps,
+  AICommandVoiceWaveformProps,
 } from "./types";
 
 export function AICommandDialog({
@@ -136,7 +137,10 @@ export function AICommandInput({
       !event.altKey
     ) {
       event.preventDefault();
-      ctx.switchMode(ctx.mode === "search" ? "ai" : "search");
+      const modes = ["search", "ai", "voice"] as const;
+      const idx = modes.indexOf(ctx.mode);
+      const next = modes[(idx + 1) % modes.length];
+      ctx.switchMode(next);
     } else if (
       micShortcut === "ctrl+m" &&
       (event.key === "m" || event.key === "M") &&
@@ -307,30 +311,83 @@ export function AICommandConfirmation({ className, style }: AICommandConfirmatio
   );
 }
 
-export function AICommandModeToggle({
-  searchLabel = "Search",
-  aiLabel = "AI",
+export function AICommandModeHeader({
+  searchLabel = "Classic Search",
+  aiLabel = "Text Chat",
+  voiceLabel = "Voice Chat",
+  switchLabel = "Switch Mode",
+  switchKeycap = "Tab",
   className,
   style,
-}: AICommandModeToggleProps) {
+}: AICommandModeHeaderProps) {
   const ctx = useAICommand();
+  const modes = ["search", "ai", "voice"] as const;
+  const labels: Record<(typeof modes)[number], string> = {
+    search: searchLabel,
+    ai: aiLabel,
+    voice: voiceLabel,
+  };
+
   return (
-    <div role="tablist" aria-label="Input mode" className={className} style={style}>
+    <div className={className} style={style}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", gap: 4 }} aria-hidden="true">
+          {modes.map((m) => (
+            <span
+              key={m}
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: ctx.mode === m ? "#3b82f6" : "#cbd5e1",
+                transition: "background 0.2s ease",
+              }}
+            />
+          ))}
+        </div>
+        <span style={{ fontWeight: 600, fontSize: "0.95rem" }}>
+          {labels[ctx.mode]}
+        </span>
+      </div>
       <button
         type="button"
-        role="tab"
-        aria-selected={ctx.mode === "search"}
-        onClick={() => ctx.switchMode("search")}
+        onClick={() => {
+          const idx = modes.indexOf(ctx.mode);
+          const next = modes[(idx + 1) % modes.length];
+          ctx.switchMode(next);
+        }}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          border: 0,
+          background: "transparent",
+          color: "#64748b",
+          fontSize: "0.8rem",
+          cursor: "pointer",
+          padding: 0,
+        }}
       >
-        {searchLabel}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={ctx.mode === "ai"}
-        onClick={() => ctx.switchMode("ai")}
-      >
-        {aiLabel}
+        {switchLabel}
+        <kbd
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minWidth: 24,
+            height: 20,
+            padding: "0 6px",
+            border: "1px solid rgba(148, 163, 184, 0.3)",
+            borderRadius: 6,
+            background: "rgba(248, 250, 252, 0.9)",
+            fontSize: "0.7rem",
+            fontWeight: 600,
+            fontFamily: "inherit",
+            color: "inherit",
+          }}
+        >
+          {switchKeycap}
+        </kbd>
       </button>
     </div>
   );
@@ -355,6 +412,7 @@ export function AICommandChat({ children, className, style }: PropsWithChildren<
 export function AICommandChatMessage({
   message,
   onSelectCandidate,
+  userLabel = "Your Request",
   className,
   style,
 }: AICommandChatMessageProps) {
@@ -374,6 +432,9 @@ export function AICommandChatMessage({
       className={className}
       style={style}
     >
+      {isUser && userLabel ? (
+        <p style={{ margin: "0 0 4px", fontWeight: 600, fontSize: "0.9rem" }}>{userLabel}</p>
+      ) : null}
       <p style={{ margin: 0 }}>{message.content}</p>
       {message.candidates && message.candidates.length > 0 ? (
         <ul style={{ listStyle: "none", padding: 0, margin: "8px 0 0" }}>
@@ -440,7 +501,10 @@ export function AICommandChatInput({
       !event.altKey
     ) {
       event.preventDefault();
-      ctx.switchMode(ctx.mode === "search" ? "ai" : "search");
+      const modes = ["search", "ai", "voice"] as const;
+      const idx = modes.indexOf(ctx.mode);
+      const next = modes[(idx + 1) % modes.length];
+      ctx.switchMode(next);
     } else if (
       micShortcut === "ctrl+m" &&
       (event.key === "m" || event.key === "M") &&
@@ -514,6 +578,42 @@ export function AICommandClarification({
   );
 }
 
+export function AICommandVoiceWaveform({
+  barCount = 40,
+  className,
+  style,
+}: AICommandVoiceWaveformProps) {
+  return (
+    <div
+      className={className}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 3,
+        ...style,
+      }}
+      aria-label="Voice waveform"
+      aria-busy="true"
+    >
+      {Array.from({ length: barCount }, (_, i) => (
+        <span
+          key={i}
+          data-index={i}
+          style={{
+            display: "inline-block",
+            width: 3,
+            borderRadius: 999,
+            background: "currentColor",
+            height: 8,
+            transition: "height 0.15s ease",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function AICommandNoMatch({
   message = "Sorry, I couldn't find anything. Try rephrasing, or contact support.",
   rephraseLabel,
@@ -558,10 +658,11 @@ export const AICommand = {
   Error: AICommandError,
   VoiceButton: AICommandVoiceButton,
   Confirmation: AICommandConfirmation,
-  ModeToggle: AICommandModeToggle,
+  ModeHeader: AICommandModeHeader,
   Chat: AICommandChat,
   ChatMessage: AICommandChatMessage,
   ChatInput: AICommandChatInput,
   Clarification: AICommandClarification,
   NoMatch: AICommandNoMatch,
+  VoiceWaveform: AICommandVoiceWaveform,
 };

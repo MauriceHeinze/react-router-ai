@@ -357,17 +357,29 @@ export function AICommandRoot({
   const switchMode = useCallback(
     (next: AICommandMode) => {
       if (next === modeRef.current) return;
-      if (next === "ai") {
-        const seeded = queryRef.current.trim();
-        if (seeded) {
-          setChatInputState(seeded);
+      const prev = modeRef.current;
+
+      if (next === "voice") {
+        if (prev === "search") {
+          const seeded = queryRef.current.trim();
+          if (seeded) {
+            setChatInputState(seeded);
+          }
         }
-      } else {
+      } else if (next === "ai") {
+        if (prev === "search") {
+          const seeded = queryRef.current.trim();
+          if (seeded) {
+            setChatInputState(seeded);
+          }
+        }
+      } else if (next === "search") {
         const seeded = chatInputRef.current.trim();
         if (seeded) {
           setQueryState(seeded);
         }
       }
+
       setModeState(next);
       setError(null);
       setCandidates(null);
@@ -391,6 +403,9 @@ export function AICommandRoot({
     try {
       recognizerRef.current.start();
       setIsListening(true);
+      if (modeRef.current === "ai") {
+        setModeState("voice");
+      }
     } catch {
       setIsListening(false);
       setError("Voice input failed. Keep typing instead.");
@@ -405,6 +420,13 @@ export function AICommandRoot({
   useEffect(() => {
     recognizerRef.current = createSpeechRecognizer({
       onResult: (transcript) => {
+        if (modeRef.current === "voice") {
+          setChatInputState(transcript);
+          setError(null);
+          setIsListening(false);
+          setModeState("ai");
+          return;
+        }
         if (modeRef.current === "ai") {
           setChatInputState(transcript);
           setError(null);
@@ -416,9 +438,15 @@ export function AICommandRoot({
       onError: (message) => {
         setError(message);
         setIsListening(false);
+        if (modeRef.current === "voice") {
+          setModeState("ai");
+        }
       },
       onEnd: () => {
         setIsListening(false);
+        if (modeRef.current === "voice") {
+          setModeState("ai");
+        }
       },
     });
 

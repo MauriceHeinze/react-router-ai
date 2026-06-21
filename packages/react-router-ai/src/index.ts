@@ -12,9 +12,10 @@ export {
   AICommandInput,
   AICommandList,
   AICommandLoading,
-  AICommandModeToggle,
+  AICommandModeHeader,
   AICommandNoMatch,
   AICommandVoiceButton,
+  AICommandVoiceWaveform,
 } from "./ai-command";
 export { createOpenAICommandMatcher } from "./openai-matcher";
 export type {
@@ -45,9 +46,10 @@ export type {
   AICommandMatcher,
   AICommandMatcherResult,
   AICommandMode,
-  AICommandModeToggleProps,
+  AICommandModeHeaderProps,
   AICommandNoMatchProps,
   AICommandRootProps,
   AICommandVoiceButtonProps,
+  AICommandVoiceWaveformProps,
   AICommandMatch,
 } from "./types";
