@@ -3,9 +3,8 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("react-audio-visualize", () => ({
+vi.mock("./live-audio-visualizer", () => ({
   LiveAudioVisualizer: () => null,
-  AudioVisualizer: () => null,
 }));
 
 import {
