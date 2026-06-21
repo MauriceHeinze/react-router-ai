@@ -225,7 +225,7 @@ export type AICommandContextValue = {
   activeIndex: number;
   setActiveIndex: Dispatch<SetStateAction<number>>;
   isListening: boolean;
-  volume: number;
+  mediaRecorder: MediaRecorder | null;
   isSubmitting: boolean;
   error: string | null;
   pendingConfirmation: AICommandMatch | null;

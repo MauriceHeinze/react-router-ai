@@ -7,6 +7,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PropsWithChildren,
 } from "react";
+import { LiveAudioVisualizer } from "react-audio-visualize";
 import { AICommandRoot, useAICommand } from "./controller";
 import type {
   AICommandChatEmptyPromptProps,
@@ -626,56 +627,21 @@ export function AICommandVoiceWaveform({
   style,
 }: AICommandVoiceWaveformProps) {
   const ctx = useAICommand();
-  const [bars, setBars] = useState<number[]>([]);
-  const volumeRef = useRef(ctx.volume);
-  volumeRef.current = ctx.volume;
-  const maxBars = 120;
-
-  useEffect(() => {
-    if (!ctx.isListening) {
-      setBars([]);
-      return;
-    }
-    const interval = setInterval(() => {
-      const vol = volumeRef.current || 0.15;
-      const h = Math.max(3, Math.round(Math.random() * 28 * vol));
-      setBars((prev) => {
-        const next = [...prev, h];
-        if (next.length > maxBars) return next.slice(-maxBars);
-        return next;
-      });
-    }, 50);
-    return () => clearInterval(interval);
-  }, [ctx.isListening]);
-
   if (!ctx.isListening) return null;
 
   return (
-    <div
-      className={className}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1,
-        ...style,
-      }}
-      aria-label="Voice waveform"
-      aria-busy="true"
-    >
-      {bars.map((h, i) => (
-        <span
-          key={i}
-          style={{
-            display: "inline-block",
-            width: 2,
-            borderRadius: 999,
-            background: "currentColor",
-            height: h,
-            opacity: 0.3 + (i / bars.length) * 0.7,
-            flexShrink: 0,
-          }}
+    <div className={className} style={style} aria-label="Voice waveform" aria-busy="true">
+      {ctx.mediaRecorder ? (
+        <LiveAudioVisualizer
+          mediaRecorder={ctx.mediaRecorder}
+          width="100%"
+          height={40}
+          barWidth={2}
+          gap={1}
+          barColor="currentColor"
+          backgroundColor="transparent"
         />
-      ))}
+      ) : null}
     </div>
   );
 }

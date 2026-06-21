@@ -27,7 +27,8 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
-    "fuse.js": "^7.1.0"
+    "fuse.js": "^7.1.0",
+    "react-audio-visualize": "1.2.0"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",

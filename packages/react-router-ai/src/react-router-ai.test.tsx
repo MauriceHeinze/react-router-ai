@@ -2,6 +2,12 @@ import { useState } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("react-audio-visualize", () => ({
+  LiveAudioVisualizer: () => null,
+  AudioVisualizer: () => null,
+}));
+
 import {
   AICommand,
   AICommandRoot,
