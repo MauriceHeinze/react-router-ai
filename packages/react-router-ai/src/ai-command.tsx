@@ -7,7 +7,6 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PropsWithChildren,
 } from "react";
-import { LiveAudioVisualizer } from "react-audio-visualize";
 import { AICommandRoot, useAICommand } from "./controller";
 import type {
   AICommandChatEmptyPromptProps,
@@ -628,6 +627,98 @@ export function AICommandChatEmptyPrompt({
   );
 }
 
+function VoiceWaveformCanvas({ mediaRecorder }: { mediaRecorder: MediaRecorder }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    let stream: MediaStream;
+    try {
+      stream = mediaRecorder.stream;
+    } catch {
+      return;
+    }
+
+    if (!stream.active) return;
+
+    let audioCtx: AudioContext | null = null;
+    try {
+      audioCtx = new AudioContext();
+    } catch {
+      return;
+    }
+
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    analyser.smoothingTimeConstant = 0.4;
+    let source: MediaStreamAudioSourceNode | null = null;
+    try {
+      source = audioCtx.createMediaStreamSource(stream);
+      source.connect(analyser);
+    } catch {
+      audioCtx.close();
+      return;
+    }
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      source.disconnect();
+      audioCtx.close();
+      return;
+    }
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    function draw() {
+      animRef.current = requestAnimationFrame(draw);
+      analyser.getByteFrequencyData(dataArray);
+
+      const { width, height } = canvas!;
+      ctx!.clearRect(0, 0, width, height);
+
+      const barCount = bufferLength;
+      const totalWidth = width;
+      const barWidth = Math.max(1, (totalWidth / barCount) * 0.7);
+      const gap = Math.max(0, (totalWidth / barCount) * 0.3);
+
+      for (let i = 0; i < barCount; i++) {
+        const barHeight = Math.max(1, (dataArray[i] / 255) * height);
+        const x = i * (barWidth + gap);
+        ctx!.fillStyle = "currentColor";
+        ctx!.fillRect(x, height - barHeight, barWidth, barHeight);
+      }
+    }
+
+    draw();
+
+    return () => {
+      if (animRef.current !== null) {
+        cancelAnimationFrame(animRef.current);
+        animRef.current = null;
+      }
+      try {
+        source!.disconnect();
+      } catch {
+        // already disconnected
+      }
+      audioCtx!.close();
+    };
+  }, [mediaRecorder]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={200}
+      height={40}
+      style={{ width: "100%", height: 40, display: "block" }}
+    />
+  );
+}
+
 export function AICommandVoiceWaveform({
   className,
   style,
@@ -638,15 +729,7 @@ export function AICommandVoiceWaveform({
   return (
     <div className={className} style={style} aria-label="Voice waveform" aria-busy="true">
       {ctx.mediaRecorder ? (
-        <LiveAudioVisualizer
-          mediaRecorder={ctx.mediaRecorder}
-          width="100%"
-          height={40}
-          barWidth={2}
-          gap={1}
-          barColor="currentColor"
-          backgroundColor="transparent"
-        />
+        <VoiceWaveformCanvas mediaRecorder={ctx.mediaRecorder} />
       ) : null}
     </div>
   );
