@@ -344,7 +344,11 @@ export function AICommandRoot({
   }, [startAudioAnalysis]);
 
   const stopListening = useCallback(() => {
-    recognizerRef.current?.stop();
+    try {
+      recognizerRef.current?.stop();
+    } catch {
+      // recognizer may already be stopped
+    }
     isListeningRef.current = false;
     setIsListening(false);
     stopAudioAnalysis();

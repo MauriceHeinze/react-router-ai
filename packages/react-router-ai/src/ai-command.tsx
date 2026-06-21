@@ -57,10 +57,10 @@ export function AICommandDialog({
   }, [ctx.dialogRef, open, setOpen]);
 
   useEffect(() => {
-    if (!open && ctx.isListening) {
+    if (!open) {
       ctx.stopListening();
     }
-  }, [open, ctx.isListening, ctx.stopListening]);
+  }, [open, ctx.stopListening]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
