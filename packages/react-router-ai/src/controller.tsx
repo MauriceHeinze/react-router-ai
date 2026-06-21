@@ -347,20 +347,26 @@ export function AICommandRoot({
     }
   }, []);
 
+  const isListeningRef = useRef(isListening);
+  isListeningRef.current = isListening;
+
   const startListening = useCallback(() => {
     if (!recognizerRef.current) {
       setError("Voice input is not available in this browser.");
       return;
     }
+    if (isListeningRef.current) return;
     setError(null);
     setLiveTranscript("");
     liveTranscriptRef.current = "";
     hasPendingVoiceSubmitRef.current = false;
     try {
       recognizerRef.current.start();
+      isListeningRef.current = true;
       setIsListening(true);
       void startAudioAnalysis();
     } catch {
+      isListeningRef.current = false;
       setIsListening(false);
       setError("Voice input could not start. Check microphone permissions and browser support.");
     }
@@ -368,6 +374,7 @@ export function AICommandRoot({
 
   const stopListening = useCallback(() => {
     recognizerRef.current?.stop();
+    isListeningRef.current = false;
     setIsListening(false);
     stopAudioAnalysis();
   }, [stopAudioAnalysis]);
@@ -533,6 +540,7 @@ export function AICommandRoot({
         if (modeRef.current === "voice") {
           setChatInputState(transcript);
           setError(null);
+          isListeningRef.current = false;
           setIsListening(false);
           void submitChat(transcript, true);
           return;
@@ -547,9 +555,11 @@ export function AICommandRoot({
       },
       onError: (message) => {
         setError(message);
+        isListeningRef.current = false;
         setIsListening(false);
       },
       onEnd: () => {
+        isListeningRef.current = false;
         setIsListening(false);
         const transcript = liveTranscriptRef.current.trim();
         if (
@@ -576,8 +586,10 @@ export function AICommandRoot({
   useEffect(() => {
     if (mode === "voice") {
       startListening();
+    } else if (isListeningRef.current) {
+      stopListening();
     }
-  }, [mode, startListening]);
+  }, [mode, startListening, stopListening]);
 
   const value: AICommandContextValue = {
     query,

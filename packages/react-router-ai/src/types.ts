@@ -188,6 +188,12 @@ export type AICommandNoMatchProps = {
   style?: React.CSSProperties;
 };
 
+export type AICommandChatEmptyPromptProps = {
+  children?: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
 export type AICommandVoiceEmptyPromptProps = {
   children?: ReactNode;
   className?: string;

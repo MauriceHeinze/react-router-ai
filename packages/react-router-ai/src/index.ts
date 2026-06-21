@@ -27,6 +27,7 @@ export type { MatchItemsOptions, ResolveIntentOptions } from "./matcher";
 export { findDirectCommandMatch, rankCommandItems } from "./local-matcher";
 export type { ScoredCommandItem } from "./local-matcher";
 export type {
+  AICommandChatEmptyPromptProps,
   AICommandChatInputProps,
   AICommandChatMessageData,
   AICommandChatMessageProps,

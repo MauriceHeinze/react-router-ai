@@ -9,6 +9,7 @@ import {
 } from "react";
 import { AICommandRoot, useAICommand } from "./controller";
 import type {
+  AICommandChatEmptyPromptProps,
   AICommandChatInputProps,
   AICommandChatMessageProps,
   AICommandChatProps,
@@ -606,8 +607,22 @@ export function AICommandVoiceEmptyPrompt({
   );
 }
 
+export function AICommandChatEmptyPrompt({
+  children,
+  className,
+  style,
+}: PropsWithChildren<AICommandChatEmptyPromptProps>) {
+  const ctx = useAICommand();
+  if (ctx.mode === "search" || ctx.chatMessages.length > 0 || ctx.isSubmitting) return null;
+  return (
+    <div className={className} style={style}>
+      {children}
+    </div>
+  );
+}
+
 export function AICommandVoiceWaveform({
-  barCount = 40,
+  barCount = 160,
   className,
   style,
 }: AICommandVoiceWaveformProps) {
@@ -707,4 +722,5 @@ export const AICommand = {
   NoMatch: AICommandNoMatch,
   VoiceWaveform: AICommandVoiceWaveform,
   VoiceEmptyPrompt: AICommandVoiceEmptyPrompt,
+  ChatEmptyPrompt: AICommandChatEmptyPrompt,
 };

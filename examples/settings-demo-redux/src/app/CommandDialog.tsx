@@ -243,9 +243,9 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
               <AICommand.Chat
                 className={`command-dialog-chat ${isVoiceMode && ctx.chatMessages.length === 0 ? 'command-dialog-chat-voice-empty' : ''}`}
               >
-                <AICommand.VoiceEmptyPrompt className="command-dialog-voice-prompt">
+                <AICommand.ChatEmptyPrompt className="command-dialog-voice-prompt">
                   <h2>What are you looking for?</h2>
-                </AICommand.VoiceEmptyPrompt>
+                </AICommand.ChatEmptyPrompt>
                 {ctx.chatMessages.map((message) => (
                   <AICommand.ChatMessage
                     key={message.id}
