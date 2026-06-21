@@ -123,6 +123,15 @@ export function AICommandRoot({
     dialogRef.current?.setOpen(false);
   }, []);
 
+  const resetChatStateAfterExecution = useCallback(() => {
+    setChatMessages([]);
+    setCandidates(null);
+    setChatInputState("");
+    setLiveTranscript("");
+    liveTranscriptRef.current = "";
+    setError(null);
+  }, []);
+
   const executeItem = useCallback(
     async (item: AICommandItem, confirmationMessage?: string) => {
       setError(null);
@@ -136,12 +145,14 @@ export function AICommandRoot({
         };
         setPendingConfirmation(match);
         openDialog();
-        return;
+        return false;
       }
       setPendingConfirmation(null);
       await item.onSelect();
+      resetChatStateAfterExecution();
+      return true;
     },
-    [openDialog],
+    [openDialog, resetChatStateAfterExecution],
   );
 
   const submitQuery = useCallback(
@@ -234,8 +245,9 @@ export function AICommandRoot({
       }
       setPendingConfirmation(null);
       await item.onSelect();
+      resetChatStateAfterExecution();
     },
-    [openDialog],
+    [openDialog, resetChatStateAfterExecution],
   );
 
   const confirmPending = useCallback(async () => {
@@ -243,7 +255,8 @@ export function AICommandRoot({
     const match = pendingConfirmation;
     setPendingConfirmation(null);
     await match.item.onSelect();
-  }, [pendingConfirmation]);
+    resetChatStateAfterExecution();
+  }, [pendingConfirmation, resetChatStateAfterExecution]);
 
   const cancelPending = useCallback(() => {
     setPendingConfirmation(null);
@@ -376,14 +389,15 @@ export function AICommandRoot({
         const confirmationMessage = result.needsApproval
           ? toConfirmationMessage(item)
           : undefined;
-
-        const assistantMessage: AICommandChatMessageData = {
-          id: createChatMessageId(),
-          role: "assistant",
-          content: result.message?.trim() || `Running "${item.value}".`,
-          pendingItemId: result.needsApproval ? item.id : undefined,
-        };
-        appendChatMessage(assistantMessage);
+        if (confirmationMessage) {
+          const assistantMessage: AICommandChatMessageData = {
+            id: createChatMessageId(),
+            role: "assistant",
+            content: result.message?.trim() || `Running "${item.value}".`,
+            pendingItemId: item.id,
+          };
+          appendChatMessage(assistantMessage);
+        }
         await executeItem(item, confirmationMessage);
       } catch (err) {
         setIsSubmitting(false);

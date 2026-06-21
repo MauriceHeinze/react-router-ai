@@ -1441,7 +1441,7 @@ describe("AICommand mode toggle and AI chat", () => {
     await user.keyboard("{Enter}");
 
     await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByTestId("chat-count").textContent).toBe("2"));
+    await waitFor(() => expect(screen.getByTestId("chat-count").textContent).toBe("0"));
   });
 
   it("renders clarification candidates and executes the chosen one", async () => {
@@ -1473,6 +1473,7 @@ describe("AICommand mode toggle and AI chat", () => {
     await user.click(candidate);
 
     await waitFor(() => expect(first).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId("chat-count").textContent).toBe("0"));
     expect(second).not.toHaveBeenCalled();
   });
 
@@ -1505,6 +1506,7 @@ describe("AICommand mode toggle and AI chat", () => {
     await user.click(screen.getByRole("button", { name: "Confirm" }));
 
     await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId("chat-count").textContent).toBe("0"));
   });
 
   it("renders the no-match state with a contact support button when onContactSupport is provided", async () => {
@@ -1765,7 +1767,7 @@ describe("AICommand voice panel behavior", () => {
     await waitFor(() => expect(matcher).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
     expect(screen.getByTestId("mode").textContent).toBe("voice");
-    expect(screen.getByTestId("live-transcript").textContent).toBe("open billing");
+    expect(screen.getByTestId("live-transcript").textContent).toBe("");
   });
 
   it("shows interim speech text before the final transcript is submitted", async () => {
