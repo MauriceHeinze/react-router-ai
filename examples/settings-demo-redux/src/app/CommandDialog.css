@@ -6,7 +6,9 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: #f3f3f4;
+  background: rgba(243, 243, 244, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .command-dialog {
@@ -287,7 +289,7 @@
   border-radius: 14px;
   font-size: 0.9rem;
   line-height: 1.5;
-  max-width: 58%;
+  max-width: 75%;
 }
 
 .command-dialog-chat-message[data-role='user'] {
@@ -295,6 +297,7 @@
   border: 1px solid #8eb2ff;
   background: #eef4ff;
   color: #2f3137;
+  width: min(75%);
 }
 
 .command-dialog-chat-message[data-role='user'] p:first-child {
@@ -313,7 +316,7 @@
 }
 
 .command-dialog-clarification {
-  width: min(240px, 58%);
+  width: min(75%);
   padding: 0;
   color: #2f3137;
 }
@@ -410,8 +413,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border: 0;
   border-radius: 8px;
@@ -434,8 +437,8 @@
 }
 
 .command-dialog-voice-mic {
-  width: 20px;
-  height: 20px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   background: #a9c3ff;
   color: #ffffff;
@@ -453,8 +456,8 @@
 }
 
 .command-dialog-voice-mic .command-dialog-mic-icon {
-  width: 11px;
-  height: 11px;
+  width: 16px;
+  height: 16px;
 }
 
 .command-dialog-audio-wave {

@@ -73,7 +73,7 @@ function VoiceAudioWave({ active }: { active: boolean }) {
           width="100%"
           height={46}
           barWidth={4}
-          gap={4}
+          gap={1}
           rounded={8}
           barColor="#9bb8ff"
           secondaryBarColor="#d7e2ff"
@@ -115,9 +115,17 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
   }, [clearChatMessages, mode])
 
   useEffect(() => {
-    if (!open || !isVoiceMode) return
+    if (!open) return
 
-    function handleVoiceKeyDown(event: KeyboardEvent) {
+    function handleGlobalKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !event.defaultPrevented) {
+        event.preventDefault()
+        onOpenChange(false)
+        return
+      }
+
+      if (!isVoiceMode) return
+
       if (
         event.key !== ' ' ||
         event.defaultPrevented ||
@@ -136,9 +144,9 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
       }
     }
 
-    window.addEventListener('keydown', handleVoiceKeyDown)
-    return () => window.removeEventListener('keydown', handleVoiceKeyDown)
-  }, [isListening, isVoiceMode, open, startListening, stopListening])
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [isListening, isVoiceMode, open, onOpenChange, startListening, stopListening])
 
   return (
     <AICommand.Dialog open={open} onOpenChange={onOpenChange}>
