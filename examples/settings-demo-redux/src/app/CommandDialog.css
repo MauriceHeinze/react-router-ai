@@ -78,7 +78,7 @@
   margin: 0 16px 10px;
   padding: 10px 14px;
   border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 999px;
+  border-radius: 12px;
   background: #ffffff;
 }
 
@@ -105,7 +105,7 @@
 }
 
 .command-dialog-body {
-  padding: 0 16px;
+  padding: 0 16px 16px;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
@@ -167,7 +167,7 @@
   gap: 3px;
   padding: 12px 14px;
   border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 14px;
+  border-radius: 12px;
   background: #ffffff;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
@@ -178,8 +178,7 @@
 }
 
 .command-dialog-item[aria-selected='true'] {
-  border-color: rgba(59, 130, 246, 0.35);
-  border-left: 3px solid #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.45);
   background: rgba(239, 246, 255, 0.65);
 }
 
@@ -217,7 +216,7 @@
 
 .command-dialog-chat-message {
   padding: 10px 14px;
-  border-radius: 18px;
+  border-radius: 12px;
   font-size: 0.9rem;
   line-height: 1.5;
   max-width: 88%;
@@ -272,7 +271,7 @@
   gap: 3px;
   padding: 12px 14px;
   border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 14px;
+  border-radius: 12px;
   background: #ffffff;
   font-size: 0.9rem;
   cursor: pointer;
@@ -299,7 +298,7 @@
   margin: 0 16px 8px;
   padding: 8px 14px;
   border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 999px;
+  border-radius: 12px;
   background: #ffffff;
 }
 
@@ -330,7 +329,7 @@
   height: 28px;
   padding: 0;
   border: 0;
-  border-radius: 50%;
+  border-radius: 8px;
   background: transparent;
   color: #94a3b8;
   cursor: pointer;

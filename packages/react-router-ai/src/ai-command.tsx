@@ -216,7 +216,7 @@ export function AICommandItem({
       aria-disabled={disabled}
       onClick={() => void ctx.selectItem(itemRef.current)}
       className={className}
-      style={style}
+      style={{ order: index, ...style }}
     >
       {children}
     </div>
