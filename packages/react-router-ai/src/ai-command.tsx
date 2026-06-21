@@ -622,7 +622,7 @@ export function AICommandChatEmptyPrompt({
 }
 
 export function AICommandVoiceWaveform({
-  barCount = 160,
+  barCount = 500,
   className,
   style,
 }: AICommandVoiceWaveformProps) {
@@ -656,7 +656,7 @@ export function AICommandVoiceWaveform({
             data-index={i}
             style={{
               display: "inline-block",
-              width: 3,
+              width: 1,
               borderRadius: 999,
               background: "currentColor",
               height,
