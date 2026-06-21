@@ -219,6 +219,7 @@ export type AICommandContextValue = {
   activeIndex: number;
   setActiveIndex: Dispatch<SetStateAction<number>>;
   isListening: boolean;
+  volume: number;
   isSubmitting: boolean;
   error: string | null;
   pendingConfirmation: AICommandMatch | null;

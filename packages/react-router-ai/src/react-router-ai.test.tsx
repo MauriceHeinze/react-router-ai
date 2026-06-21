@@ -790,7 +790,7 @@ describe("AICommand voice button", () => {
     await user.click(screen.getByRole("button", { name: "Use voice" }));
 
     expect(start).toHaveBeenCalledTimes(1);
-    expect(await screen.findByRole("button", { name: "Listening..." })).toBeTruthy();
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Use voice" })).toBeNull());
   });
 
   it("submits a transcript through the matcher and executes the AI-selected command", async () => {
@@ -920,7 +920,7 @@ describe("AICommand voice button", () => {
     ).toBeTruthy();
   });
 
-  it("toggles listening off when the voice button is clicked again", async () => {
+  it("hides the voice button while listening and shows it again after stopping", async () => {
     const user = userEvent.setup();
     const stop = vi.fn();
     const Recognition = vi.fn().mockImplementation(() => ({
@@ -936,6 +936,15 @@ describe("AICommand voice button", () => {
     window.SpeechRecognition = Recognition as unknown as typeof window.SpeechRecognition;
     window.webkitSpeechRecognition = Recognition as unknown as typeof window.webkitSpeechRecognition;
 
+    function StopButton() {
+      const ctx = useAICommand();
+      return (
+        <button type="button" onClick={() => ctx.stopListening()}>
+          Stop listening
+        </button>
+      );
+    }
+
     render(
       <AICommandRoot>
         <AICommand.Dialog open>
@@ -944,18 +953,17 @@ describe("AICommand voice button", () => {
           <AICommand.Error />
         </AICommand.Dialog>
         <AICommand.VoiceButton />
+        <StopButton />
       </AICommandRoot>,
     );
 
     await user.click(screen.getByRole("button", { name: "Use voice" }));
-    await screen.findByRole("button", { name: "Listening..." });
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Use voice" })).toBeNull());
 
-    await user.click(screen.getByRole("button", { name: "Listening..." }));
+    await user.click(screen.getByRole("button", { name: "Stop listening" }));
 
     expect(stop).toHaveBeenCalledTimes(1);
-    await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Listening..." })).toBeNull(),
-    );
+    await waitFor(() => expect(screen.getByRole("button", { name: "Use voice" })).toBeTruthy());
   });
 
   it("reports a controlled error when recognition emits an error", async () => {
@@ -1047,14 +1055,11 @@ describe("AICommand voice button", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Use voice" }));
-    await screen.findByRole("button", { name: "Listening..." });
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Use voice" })).toBeNull());
 
     recognitionInstance.current?.onend?.();
 
-    await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Listening..." })).toBeNull(),
-    );
-    expect(screen.getByRole("button", { name: "Use voice" })).toBeTruthy();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Use voice" })).toBeTruthy());
   });
 
   it("starts listening when AICommand.Input uses the ctrl+m mic shortcut", async () => {
@@ -1087,7 +1092,7 @@ describe("AICommand voice button", () => {
     await user.keyboard("{Control>}m{/Control}");
 
     expect(start).toHaveBeenCalledTimes(1);
-    expect(await screen.findByRole("button", { name: "Listening..." })).toBeTruthy();
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Use voice" })).toBeNull());
   });
 
   it("stops listening when Ctrl+M is pressed again with the AICommand.Input mic shortcut", async () => {
@@ -1118,7 +1123,6 @@ describe("AICommand voice button", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Use voice" }));
-    await screen.findByRole("button", { name: "Listening..." });
     await user.click(screen.getByLabelText("Command query"));
     await user.keyboard("{Control>}m{/Control}");
 

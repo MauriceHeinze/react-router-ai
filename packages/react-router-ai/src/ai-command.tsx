@@ -282,24 +282,21 @@ export function AICommandVoiceButton({
   style,
 }: PropsWithChildren<AICommandVoiceButtonProps>) {
   const ctx = useAICommand();
+  if (ctx.isListening) return null;
 
   return (
     <button
       type="button"
-      aria-pressed={ctx.isListening}
+      aria-pressed={false}
       title={title}
       onClick={(event) => {
         onClick?.(event);
-        if (ctx.isListening) {
-          ctx.stopListening();
-        } else {
-          ctx.startListening();
-        }
+        ctx.startListening();
       }}
       className={className}
       style={style}
     >
-      {children ?? (ctx.isListening ? "Listening..." : "Use voice")}
+      {children ?? "Use voice"}
     </button>
   );
 }
@@ -635,7 +632,8 @@ export function AICommandVoiceWaveform({
       {Array.from({ length: barCount }, (_, i) => {
         const phase = (i / Math.max(barCount - 1, 1)) * Math.PI * (hasTranscript ? 4 : 2.5);
         const shape = 0.3 + Math.abs(Math.sin(phase)) * 0.7;
-        const height = minHeight + (maxHeight - minHeight) * shape;
+        const baseHeight = minHeight + (maxHeight - minHeight) * shape;
+        const height = baseHeight * (0.3 + ctx.volume * 0.7);
 
         return (
           <span

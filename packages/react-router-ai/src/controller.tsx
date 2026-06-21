@@ -66,11 +66,16 @@ export function AICommandRoot({
   const [activeIndex, setActiveIndex] = useState(0);
   const [isListening, setIsListening] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState("");
+  const [volume, setVolume] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingConfirmation, setPendingConfirmation] = useState<AICommandMatch | null>(null);
   const dialogRef = useRef<AICommandDialogController | null>(null);
   const recognizerRef = useRef<ReturnType<typeof createSpeechRecognizer> | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   const queryRef = useRef(query);
   queryRef.current = query;
@@ -292,6 +297,56 @@ export function AICommandRoot({
     setChatMessages([]);
   }, []);
 
+  const stopAudioAnalysis = useCallback(() => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      audioStreamRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+    setVolume(0);
+  }, []);
+
+  const startAudioAnalysis = useCallback(async () => {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
+      const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyserRef.current = analyser;
+      source.connect(analyser);
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      const updateVolume = () => {
+        if (!analyserRef.current) return;
+        analyserRef.current.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i += 1) {
+          sum += dataArray[i]!;
+        }
+        const average = sum / dataArray.length;
+        setVolume(Math.min(1, average / 128));
+        rafRef.current = requestAnimationFrame(updateVolume);
+      };
+
+      rafRef.current = requestAnimationFrame(updateVolume);
+    } catch {
+      // Audio analysis is optional; speech recognition still works.
+    }
+  }, []);
+
   const startListening = useCallback(() => {
     if (!recognizerRef.current) {
       setError("Voice input is not available in this browser.");
@@ -304,16 +359,18 @@ export function AICommandRoot({
     try {
       recognizerRef.current.start();
       setIsListening(true);
+      void startAudioAnalysis();
     } catch {
       setIsListening(false);
       setError("Voice input could not start. Check microphone permissions and browser support.");
     }
-  }, []);
+  }, [startAudioAnalysis]);
 
   const stopListening = useCallback(() => {
     recognizerRef.current?.stop();
     setIsListening(false);
-  }, []);
+    stopAudioAnalysis();
+  }, [stopAudioAnalysis]);
 
   const submitChat = useCallback(
     async (nextMessage?: string, isVoice = false) => {
@@ -512,8 +569,9 @@ export function AICommandRoot({
     return () => {
       recognizerRef.current?.cleanup();
       recognizerRef.current = null;
+      stopAudioAnalysis();
     };
-  }, [submitMatcherQuery, submitChat]);
+  }, [submitMatcherQuery, submitChat, stopAudioAnalysis]);
 
   useEffect(() => {
     if (mode === "voice") {
@@ -530,6 +588,7 @@ export function AICommandRoot({
     activeIndex,
     setActiveIndex,
     isListening,
+    volume,
     isSubmitting,
     error,
     pendingConfirmation,
