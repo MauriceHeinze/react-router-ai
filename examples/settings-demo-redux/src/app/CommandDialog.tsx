@@ -34,6 +34,25 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
     <AICommand.Dialog open={open} onOpenChange={onOpenChange}>
       <div className="command-dialog-overlay" onClick={() => onOpenChange(false)}>
         <div className="command-dialog" onClick={(event) => event.stopPropagation()}>
+          {mode !== 'search' ? (
+            <div className="command-dialog-registry" aria-hidden="true">
+              <AICommand.List>
+                {items.map((item) => (
+                  <AICommand.Item
+                    key={item.id}
+                    {...item}
+                    onSelect={async () => {
+                      await item.onSelect()
+                      onOpenChange(false)
+                    }}
+                  >
+                    {item.value}
+                  </AICommand.Item>
+                ))}
+              </AICommand.List>
+            </div>
+          ) : null}
+
           <div className="command-dialog-header">
             <AICommand.ModeHeader
               className="command-dialog-mode-header"
