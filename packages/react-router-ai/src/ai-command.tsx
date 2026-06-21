@@ -638,7 +638,7 @@ export function AICommandVoiceWaveform({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        gap: 1,
+        gap: 0,
         ...style,
       }}
       aria-label="Voice waveform"
