@@ -630,7 +630,7 @@ export function AICommandVoiceWaveform({
       aria-busy="true"
     >
       {Array.from({ length: barCount }, (_, i) => {
-        const phase = (i / Math.max(barCount - 1, 1)) * Math.PI * (hasTranscript ? 4 : 2.5);
+        const phase = (i / Math.max(barCount - 1, 1)) * Math.PI * (hasTranscript ? 8 : 5);
         const shape = 0.3 + Math.abs(Math.sin(phase)) * 0.7;
         const baseHeight = minHeight + (maxHeight - minHeight) * shape;
         const height = baseHeight * (0.3 + ctx.volume * 0.7);
