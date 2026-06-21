@@ -293,6 +293,7 @@
 
 .command-dialog-chat-message[data-role='assistant'] {
   align-self: flex-start;
+  margin-left: -4px;
   background: rgba(148, 163, 184, 0.12);
   color: #0f172a;
   border-bottom-left-radius: 4px;

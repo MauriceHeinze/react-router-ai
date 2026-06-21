@@ -362,7 +362,7 @@ export function AICommandModeHeader({
             />
           ))}
         </div>
-        <span style={{ fontWeight: 600, fontSize: "0.95rem" }}>
+        <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "#64748b" }}>
           {labels[ctx.mode]}
         </span>
       </div>
