@@ -622,50 +622,60 @@ export function AICommandChatEmptyPrompt({
 }
 
 export function AICommandVoiceWaveform({
-  barCount = 500,
   className,
   style,
 }: AICommandVoiceWaveformProps) {
   const ctx = useAICommand();
+  const [bars, setBars] = useState<number[]>([]);
+  const volumeRef = useRef(ctx.volume);
+  volumeRef.current = ctx.volume;
+  const maxBars = 120;
+
+  useEffect(() => {
+    if (!ctx.isListening) {
+      setBars([]);
+      return;
+    }
+    const interval = setInterval(() => {
+      const vol = volumeRef.current || 0.15;
+      const h = Math.max(3, Math.round(Math.random() * 28 * vol));
+      setBars((prev) => {
+        const next = [...prev, h];
+        if (next.length > maxBars) return next.slice(-maxBars);
+        return next;
+      });
+    }, 50);
+    return () => clearInterval(interval);
+  }, [ctx.isListening]);
+
   if (!ctx.isListening) return null;
-  const hasTranscript = ctx.liveTranscript.trim().length > 0;
-  const minHeight = hasTranscript ? 10 : 6;
-  const maxHeight = hasTranscript ? 30 : 18;
+
   return (
     <div
       className={className}
       style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
-        gap: 0,
+        gap: 1,
         ...style,
       }}
       aria-label="Voice waveform"
       aria-busy="true"
     >
-      {Array.from({ length: barCount }, (_, i) => {
-        const phase = (i / Math.max(barCount - 1, 1)) * Math.PI * (hasTranscript ? 24 : 16);
-        const shape = 0.3 + Math.abs(Math.sin(phase)) * 0.7;
-        const baseHeight = minHeight + (maxHeight - minHeight) * shape;
-        const height = baseHeight * (0.3 + ctx.volume * 0.7);
-
-        return (
-          <span
-            key={i}
-            data-index={i}
-            style={{
-              display: "inline-block",
-              width: 1,
-              borderRadius: 999,
-              background: "currentColor",
-              height,
-              opacity: hasTranscript ? 1 : 0.6,
-              transition: "height 0.16s ease, opacity 0.16s ease",
-            }}
-          />
-        );
-      })}
+      {bars.map((h, i) => (
+        <span
+          key={i}
+          style={{
+            display: "inline-block",
+            width: 2,
+            borderRadius: 999,
+            background: "currentColor",
+            height: h,
+            opacity: 0.3 + (i / bars.length) * 0.7,
+            flexShrink: 0,
+          }}
+        />
+      ))}
     </div>
   );
 }
