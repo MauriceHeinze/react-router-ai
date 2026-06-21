@@ -65,11 +65,6 @@ function VoiceAudioWave({ active }: { active: boolean }) {
 
   return (
     <div className="command-dialog-audio-wave" aria-label="Live microphone waveform">
-      <div className="command-dialog-audio-wave-placeholder" aria-hidden="true">
-        {Array.from({ length: 64 }, (_, index) => (
-          <span key={index} />
-        ))}
-      </div>
       {source ? (
         <AudioWave
           source={source}
@@ -90,7 +85,13 @@ function VoiceAudioWave({ active }: { active: boolean }) {
           showPlaceholderBackground={false}
           fullscreen
         />
-      ) : null}
+      ) : (
+        <div className="command-dialog-audio-wave-placeholder" aria-hidden="true">
+          {Array.from({ length: 64 }, (_, index) => (
+            <span key={index} />
+          ))}
+        </div>
+      )}
       {errorMessage ? <span className="command-dialog-audio-wave-error">{errorMessage}</span> : null}
     </div>
   )
