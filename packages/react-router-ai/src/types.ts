@@ -73,7 +73,8 @@ export type AICommandInputProps = {
   value?: string;
   onValueChange?: (value: string) => void;
   onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-  voiceShortcut?: "tab";
+  modeShortcut?: "tab";
+  micShortcut?: "ctrl+m";
   onFocus?: (event: React.FocusEvent<HTMLInputElement>) => void;
   onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
   autoFocus?: boolean;
@@ -149,7 +150,8 @@ export type AICommandChatInputProps = {
   value?: string;
   onValueChange?: (value: string) => void;
   onKeyDown?: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  voiceShortcut?: "tab";
+  modeShortcut?: "tab";
+  micShortcut?: "ctrl+m";
   onFocus?: (event: React.FocusEvent<HTMLTextAreaElement>) => void;
   onBlur?: (event: React.FocusEvent<HTMLTextAreaElement>) => void;
   autoFocus?: boolean;

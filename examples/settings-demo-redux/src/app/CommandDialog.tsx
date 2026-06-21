@@ -50,7 +50,8 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                 <SearchIcon className="command-dialog-search-icon" />
                 <AICommand.Input
                   autoFocus
-                  voiceShortcut="tab"
+                  modeShortcut="tab"
+                  micShortcut="ctrl+m"
                   placeholder="Search settings..."
                   className="command-dialog-input"
                 />
@@ -91,14 +92,15 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                 <AICommand.Empty className="command-dialog-empty">
                   No matching command.
                 </AICommand.Empty>
+              </div>
 
-                <div className="command-dialog-actions">
-                  <div className="command-dialog-shortcuts" aria-hidden="true">
-                    <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Tab</span> Mic</span>
-                    <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Enter</span> Run</span>
-                    <span className="command-dialog-shortcut"><span className="command-dialog-keycap">↑↓</span> Move</span>
-                    <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Esc</span> Close</span>
-                  </div>
+              <div className="command-dialog-actions">
+                <div className="command-dialog-shortcuts" aria-hidden="true">
+                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Tab</span> Mode</span>
+                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Ctrl M</span> Mic</span>
+                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Enter</span> Run</span>
+                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">↑↓</span> Move</span>
+                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Esc</span> Close</span>
                 </div>
               </div>
             </div>
@@ -134,7 +136,8 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                 </AICommand.VoiceButton>
                 <AICommand.ChatInput
                   autoFocus
-                  voiceShortcut="tab"
+                  modeShortcut="tab"
+                  micShortcut="ctrl+m"
                   placeholder="Ask AI to do something..."
                   className="command-dialog-chat-input"
                 />
@@ -142,7 +145,8 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
 
               <div className="command-dialog-actions">
                 <div className="command-dialog-shortcuts" aria-hidden="true">
-                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Tab</span> Mic</span>
+                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Tab</span> Mode</span>
+                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Ctrl M</span> Mic</span>
                   <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Enter</span> Send</span>
                   <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Esc</span> Close</span>
                 </div>

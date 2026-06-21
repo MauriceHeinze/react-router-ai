@@ -1013,7 +1013,7 @@ describe("AICommand voice button", () => {
     expect(screen.getByRole("button", { name: "Use voice" })).toBeTruthy();
   });
 
-  it("starts listening when AICommand.Input uses the tab voice shortcut", async () => {
+  it("starts listening when AICommand.Input uses the ctrl+m mic shortcut", async () => {
     const user = userEvent.setup();
     const start = vi.fn();
 
@@ -1033,20 +1033,20 @@ describe("AICommand voice button", () => {
     render(
       <AICommandRoot>
         <AICommand.Dialog open>
-          <AICommand.Input autoFocus voiceShortcut="tab" />
+          <AICommand.Input autoFocus micShortcut="ctrl+m" />
           <AICommand.List />
         </AICommand.Dialog>
         <AICommand.VoiceButton />
       </AICommandRoot>,
     );
 
-    await user.keyboard("{Tab}");
+    await user.keyboard("{Control>}m{/Control}");
 
     expect(start).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole("button", { name: "Listening..." })).toBeTruthy();
   });
 
-  it("stops listening when Tab is pressed again with the AICommand.Input voice shortcut", async () => {
+  it("stops listening when Ctrl+M is pressed again with the AICommand.Input mic shortcut", async () => {
     const user = userEvent.setup();
     const stop = vi.fn();
 
@@ -1066,7 +1066,7 @@ describe("AICommand voice button", () => {
     render(
       <AICommandRoot>
         <AICommand.Dialog open>
-          <AICommand.Input autoFocus voiceShortcut="tab" />
+          <AICommand.Input autoFocus micShortcut="ctrl+m" />
           <AICommand.List />
         </AICommand.Dialog>
         <AICommand.VoiceButton />
@@ -1076,9 +1076,35 @@ describe("AICommand voice button", () => {
     await user.click(screen.getByRole("button", { name: "Use voice" }));
     await screen.findByRole("button", { name: "Listening..." });
     await user.click(screen.getByLabelText("Command query"));
-    await user.keyboard("{Tab}");
+    await user.keyboard("{Control>}m{/Control}");
 
     expect(stop).toHaveBeenCalledTimes(1);
+  });
+
+  it("switches to AI mode when Tab is pressed with modeShortcut='tab'", async () => {
+    const user = userEvent.setup();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue(null);
+
+    function ModeProbe() {
+      const ctx = useAICommand();
+      return <span data-testid="mode">{ctx.mode}</span>;
+    }
+
+    render(
+      <AICommandRoot matcher={matcher}>
+        <AICommand.Dialog open>
+          <AICommand.Input autoFocus modeShortcut="tab" />
+          <AICommand.List />
+          <ModeProbe />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    expect(screen.getByTestId("mode").textContent).toBe("search");
+    await user.type(screen.getByLabelText("Command query"), "hello");
+    await user.keyboard("{Tab}");
+
+    await waitFor(() => expect(screen.getByTestId("mode").textContent).toBe("ai"));
   });
 });
 
@@ -1551,7 +1577,7 @@ describe("AICommand mode toggle and AI chat", () => {
     render(
       <AICommandRoot matcher={matcher} initialMode="ai">
         <AICommand.Dialog open>
-          <AICommand.ChatInput autoFocus voiceShortcut="tab" />
+          <AICommand.ChatInput autoFocus micShortcut="ctrl+m" />
           <ChatProbe />
         </AICommand.Dialog>
         <AICommand.VoiceButton />

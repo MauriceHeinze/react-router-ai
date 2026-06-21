@@ -51,7 +51,7 @@ function AppShell() {
         <AICommand.ModeToggle />
         {mode === "search" ? (
           <>
-            <AICommand.Input autoFocus voiceShortcut="tab" placeholder="Search..." />
+            <AICommand.Input autoFocus modeShortcut="tab" micShortcut="ctrl+m" placeholder="Search..." />
             <AICommand.List>
               {commands.map((cmd) => (
                 <AICommand.Item key={cmd.id} {...cmd}>
@@ -70,7 +70,7 @@ function AppShell() {
               <AICommand.Clarification />
               <AICommand.NoMatch />
             </AICommand.Chat>
-            <AICommand.ChatInput voiceShortcut="tab" placeholder="Ask AI..." />
+            <AICommand.ChatInput modeShortcut="tab" micShortcut="ctrl+m" placeholder="Ask AI..." />
           </>
         )}
         <AICommand.Confirmation />
@@ -88,7 +88,7 @@ The dialog toggles between two modes via `AICommand.ModeToggle`:
 - **Search mode** uses [Fuse.js](https://fusejs.io/) fuzzy matching against the registered `AICommandItem` list. Typing filters and ranks the list; Enter runs the top match.
 - **AI mode** is a chat window. Each user message is sent (single-shot, no conversation history) to the configured `matcher`. Switching from search to AI seeds the chat input with the current search query; switching back seeds the search query from the chat input.
 
-The mic button and `voiceShortcut="tab"` work in both modes. In **search mode**, a transcript fills the search field and submits. In **AI mode**, the transcript fills the chat input without submitting, so the user can review before sending.
+The mic button and `micShortcut="ctrl+m"` work in both modes. **Tab** (`modeShortcut="tab"`) switches between search and AI mode. In **search mode**, a transcript fills the search field and submits. In **AI mode**, the transcript fills the chat input without submitting, so the user can review before sending.
 
 ## AI matcher contract
 

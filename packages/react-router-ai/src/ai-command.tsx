@@ -78,7 +78,8 @@ export function AICommandInput({
   value: controlledValue,
   onValueChange,
   onKeyDown,
-  voiceShortcut,
+  modeShortcut,
+  micShortcut,
   onFocus,
   onBlur,
   autoFocus,
@@ -127,12 +128,22 @@ export function AICommandInput({
       event.preventDefault();
       ctx.closeDialog();
     } else if (
-      voiceShortcut === "tab" &&
+      modeShortcut === "tab" &&
       event.key === "Tab" &&
       !event.shiftKey &&
       !event.metaKey &&
       !event.ctrlKey &&
       !event.altKey
+    ) {
+      event.preventDefault();
+      ctx.switchMode(ctx.mode === "search" ? "ai" : "search");
+    } else if (
+      micShortcut === "ctrl+m" &&
+      (event.key === "m" || event.key === "M") &&
+      event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey &&
+      !event.shiftKey
     ) {
       event.preventDefault();
       if (ctx.isListening) {
@@ -385,7 +396,8 @@ export function AICommandChatInput({
   value: controlledValue,
   onValueChange,
   onKeyDown,
-  voiceShortcut,
+  modeShortcut,
+  micShortcut,
   onFocus,
   onBlur,
   autoFocus,
@@ -420,12 +432,22 @@ export function AICommandChatInput({
       event.preventDefault();
       ctx.closeDialog();
     } else if (
-      voiceShortcut === "tab" &&
+      modeShortcut === "tab" &&
       event.key === "Tab" &&
       !event.shiftKey &&
       !event.metaKey &&
       !event.ctrlKey &&
       !event.altKey
+    ) {
+      event.preventDefault();
+      ctx.switchMode(ctx.mode === "search" ? "ai" : "search");
+    } else if (
+      micShortcut === "ctrl+m" &&
+      (event.key === "m" || event.key === "M") &&
+      event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey &&
+      !event.shiftKey
     ) {
       event.preventDefault();
       if (ctx.isListening) {

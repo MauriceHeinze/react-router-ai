@@ -186,6 +186,14 @@
   min-height: 0;
 }
 
+.command-dialog-actions {
+  display: flex;
+  justify-content: center;
+  padding: 10px 18px 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  flex-shrink: 0;
+}
+
 .command-dialog-loader,
 .command-dialog-error,
 .command-dialog-confirmation,
