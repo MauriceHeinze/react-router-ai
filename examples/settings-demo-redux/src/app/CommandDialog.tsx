@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { AudioWave, useMediaAudio } from '@audiowave/react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AICommand, useAICommand, type AICommandItem } from 'react-router-ai'
 import { CloseIcon, SearchIcon, MicrophoneIcon } from '../shared/ui/Icons.tsx'
 import './CommandDialog.css'
@@ -9,14 +10,96 @@ type CommandDialogProps = {
   items: AICommandItem[]
 }
 
+function VoiceAudioWave({ active }: { active: boolean }) {
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
+  const [streamError, setStreamError] = useState<string | null>(null)
+  const handleAudioError = useCallback((error: Error) => {
+    setStreamError(error.message)
+  }, [])
+  const audioOptions = useMemo(
+    () => ({ source: mediaStream, onError: handleAudioError }),
+    [handleAudioError, mediaStream],
+  )
+  const { source, error } = useMediaAudio(audioOptions)
+  const errorMessage = streamError ?? error?.message
+
+  useEffect(() => {
+    if (!active) {
+      setMediaStream((current) => {
+        current?.getTracks().forEach((track) => track.stop())
+        return null
+      })
+      return
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setStreamError('Microphone visualization is not available in this browser.')
+      return
+    }
+
+    let cancelled = false
+    let stream: MediaStream | null = null
+    setStreamError(null)
+
+    void navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then((nextStream) => {
+        stream = nextStream
+        if (cancelled) {
+          nextStream.getTracks().forEach((track) => track.stop())
+          return
+        }
+        setMediaStream(nextStream)
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Microphone visualization failed.'
+        setStreamError(message)
+      })
+
+    return () => {
+      cancelled = true
+      stream?.getTracks().forEach((track) => track.stop())
+      setMediaStream(null)
+    }
+  }, [active])
+
+  return (
+    <div className="command-dialog-audio-wave" aria-label="Live microphone waveform">
+      <div className="command-dialog-audio-wave-placeholder" aria-hidden="true">
+        {Array.from({ length: 64 }, (_, index) => (
+          <span key={index} />
+        ))}
+      </div>
+      {source ? (
+        <AudioWave
+          source={source}
+          className="command-dialog-audio-wave-renderer"
+          canvasClassName="command-dialog-audio-wave-canvas"
+          width="100%"
+          height={46}
+          barWidth={4}
+          gap={4}
+          rounded={8}
+          barColor="#9bb8ff"
+          secondaryBarColor="#d7e2ff"
+          backgroundColor="transparent"
+          amplitudeMode="adaptive"
+          speed={2}
+          isPaused={!active}
+          showBorder={false}
+          showPlaceholderBackground={false}
+          fullscreen
+        />
+      ) : null}
+      {errorMessage ? <span className="command-dialog-audio-wave-error">{errorMessage}</span> : null}
+    </div>
+  )
+}
+
 export default function CommandDialog({ open, onOpenChange, items }: CommandDialogProps) {
   const ctx = useAICommand()
-  const { clearChatMessages, isListening, liveTranscript, mode, onContactSupport, stopListening } = ctx
-  const voiceStatus = ctx.isSubmitting
-    ? 'Sending your request to OpenAI...'
-    : isListening
-      ? liveTranscript || 'Listening... start speaking'
-      : liveTranscript || 'Waiting for your next request'
+  const { clearChatMessages, isListening, mode, onContactSupport, startListening, stopListening } = ctx
+  const isVoiceMode = mode === 'voice'
 
   useEffect(() => {
     if (!open && isListening) {
@@ -29,6 +112,32 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
       clearChatMessages()
     }
   }, [clearChatMessages, mode])
+
+  useEffect(() => {
+    if (!open || !isVoiceMode) return
+
+    function handleVoiceKeyDown(event: KeyboardEvent) {
+      if (
+        event.key !== ' ' ||
+        event.defaultPrevented ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        event.shiftKey
+      ) {
+        return
+      }
+      event.preventDefault()
+      if (isListening) {
+        stopListening()
+      } else {
+        startListening()
+      }
+    }
+
+    window.addEventListener('keydown', handleVoiceKeyDown)
+    return () => window.removeEventListener('keydown', handleVoiceKeyDown)
+  }, [isListening, isVoiceMode, open, startListening, stopListening])
 
   return (
     <AICommand.Dialog open={open} onOpenChange={onOpenChange}>
@@ -131,7 +240,7 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
           ) : (
             <div className="command-dialog-chat-panel">
               <AICommand.Chat
-                className={`command-dialog-chat ${mode === 'voice' && ctx.chatMessages.length === 0 ? 'command-dialog-chat-voice-empty' : ''}`}
+                className={`command-dialog-chat ${isVoiceMode && ctx.chatMessages.length === 0 ? 'command-dialog-chat-voice-empty' : ''}`}
               >
                 <AICommand.VoiceEmptyPrompt className="command-dialog-voice-prompt">
                   <h2>What are you looking for?</h2>
@@ -144,8 +253,8 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                     className="command-dialog-chat-message"
                   />
                 ))}
-                <AICommand.Loading className="command-dialog-loader">
-                  {mode === 'voice' ? (
+                <AICommand.Loading className={isVoiceMode ? 'command-dialog-voice-thinking' : 'command-dialog-loader'}>
+                  {isVoiceMode ? (
                     <span className="command-dialog-thinking">
                       Thinking
                       <span className="command-dialog-thinking-dots" aria-hidden="true">
@@ -191,27 +300,10 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                   </AICommand.VoiceButton>
                 </div>
               ) : (
-                <div className="command-dialog-voice-wrap">
-                  <div className="command-dialog-voice-display">
-                    <div className="command-dialog-voice-copy">
-                      <span className="command-dialog-voice-label">
-                        {ctx.isSubmitting
-                          ? 'Processing'
-                          : isListening
-                            ? liveTranscript
-                              ? 'Captured so far'
-                              : 'Listening for speech'
-                            : 'Ready'}
-                      </span>
-                      <p className="command-dialog-voice-transcript">{voiceStatus}</p>
-                    </div>
-                    <AICommand.VoiceWaveform
-                      barCount={50}
-                      className="command-dialog-waveform"
-                    />
-                  </div>
+                <div className="command-dialog-voice-controls">
+                  {isListening ? <VoiceAudioWave active={isListening} /> : null}
                   <AICommand.VoiceButton
-                    className="command-dialog-chat-mic"
+                    className="command-dialog-voice-mic"
                     title={isListening ? 'Stop listening' : 'Start listening'}
                   >
                     <MicrophoneIcon className="command-dialog-mic-icon" />
@@ -221,7 +313,13 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
 
               <div className="command-dialog-footer">
                 <div className="command-dialog-shortcuts" aria-hidden="true">
-                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Enter</span> Send Message</span>
+                  {isVoiceMode ? (
+                    <span className="command-dialog-shortcut">
+                      <span className="command-dialog-keycap">Space</span> {isListening ? 'Stop Recording' : 'Record'}
+                    </span>
+                  ) : (
+                    <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Enter</span> Send Message</span>
+                  )}
                   <span className="command-dialog-shortcut"><span className="command-dialog-keycap">↑↓</span> Move</span>
                   <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Esc</span> Close</span>
                 </div>

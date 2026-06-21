@@ -585,8 +585,8 @@ export function AICommandClarification({
                 }
               }}
             >
-              {item.value}
-              {item.description ? ` — ${item.description}` : ""}
+              <span>{item.value}</span>
+              {item.description ? <span>{item.description}</span> : null}
             </button>
           </li>
         ))}
