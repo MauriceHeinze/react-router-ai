@@ -7,7 +7,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PropsWithChildren,
 } from "react";
-import { LiveAudioVisualizer } from "./live-audio-visualizer";
+import { LiveAudioVisualizer } from "react-audio-visualize";
 import { AICommandRoot, useAICommand } from "./controller";
 import type {
   AICommandChatEmptyPromptProps,
