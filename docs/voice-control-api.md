@@ -65,7 +65,7 @@ The dialog has three modes controlled by `AICommand.ModeHeader`:
 
 - **Search mode** uses Fuse.js fuzzy matching over the registered command catalog. Typing filters and ranks; Enter runs the top match; the mic fills the search field and submits.
 - **Text Chat** is a chat window. Each user message is sent (single-shot, no conversation history) to the configured matcher. The library renders the assistant response, including inline candidate buttons when the matcher returns `clarify`. Switching from search to text chat seeds the chat input with the current search query; switching back seeds the search query from the chat input.
-- **Voice Chat** shows a waveform visualization while listening. Activating the mic from text chat automatically enters voice chat; when the transcript is received, it fills the chat input and returns to text chat. The user can also switch to voice chat via Tab to see the waveform UI without auto-starting listening.
+- **Voice Chat** shows a waveform visualization while listening, renders interim speech text as the user talks, and submits the final transcript once the browser's speech recognizer detects a pause. The user can also switch to voice chat via Tab to see the waveform UI without auto-starting listening.
 
 ## Command Shape
 

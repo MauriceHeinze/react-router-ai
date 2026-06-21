@@ -8,6 +8,7 @@ export type SpeechRecognizer = {
 
 export type CreateSpeechRecognizerOptions = {
   onResult: (transcript: string) => void;
+  onInterimResult?: (transcript: string) => void;
   onError: (message: string) => void;
   onEnd?: () => void;
   lang?: string;
@@ -26,13 +27,30 @@ export function createSpeechRecognizer(
 
   const recognition: SpeechRecognitionInstance = new Recognition();
   recognition.lang = options.lang ?? "en-US";
-  recognition.interimResults = false;
+  recognition.interimResults = true;
   recognition.continuous = false;
 
   recognition.onresult = (event) => {
-    const transcript = event.results[0]?.[0]?.transcript?.trim() ?? "";
-    if (transcript) {
-      options.onResult(transcript);
+    let finalTranscript = "";
+    let interimTranscript = "";
+
+    for (let index = 0; index < event.results.length; index += 1) {
+      const result = event.results[index];
+      const transcript = result?.[0]?.transcript?.trim() ?? "";
+      if (!transcript) continue;
+      if (result.isFinal) {
+        finalTranscript = finalTranscript ? `${finalTranscript} ${transcript}` : transcript;
+      } else {
+        interimTranscript = interimTranscript ? `${interimTranscript} ${transcript}` : transcript;
+      }
+    }
+
+    const visibleTranscript = [finalTranscript, interimTranscript].filter(Boolean).join(" ").trim();
+    if (visibleTranscript) {
+      options.onInterimResult?.(visibleTranscript);
+    }
+    if (finalTranscript) {
+      options.onResult(finalTranscript);
     }
   };
 

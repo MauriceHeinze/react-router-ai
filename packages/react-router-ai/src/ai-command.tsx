@@ -616,6 +616,9 @@ export function AICommandVoiceWaveform({
 }: AICommandVoiceWaveformProps) {
   const ctx = useAICommand();
   if (!ctx.isListening) return null;
+  const hasTranscript = ctx.liveTranscript.trim().length > 0;
+  const minHeight = hasTranscript ? 10 : 6;
+  const maxHeight = hasTranscript ? 30 : 18;
   return (
     <div
       className={className}
@@ -629,20 +632,27 @@ export function AICommandVoiceWaveform({
       aria-label="Voice waveform"
       aria-busy="true"
     >
-      {Array.from({ length: barCount }, (_, i) => (
-        <span
-          key={i}
-          data-index={i}
-          style={{
-            display: "inline-block",
-            width: 3,
-            borderRadius: 999,
-            background: "currentColor",
-            height: 8,
-            transition: "height 0.15s ease",
-          }}
-        />
-      ))}
+      {Array.from({ length: barCount }, (_, i) => {
+        const phase = (i / Math.max(barCount - 1, 1)) * Math.PI * (hasTranscript ? 4 : 2.5);
+        const shape = 0.3 + Math.abs(Math.sin(phase)) * 0.7;
+        const height = minHeight + (maxHeight - minHeight) * shape;
+
+        return (
+          <span
+            key={i}
+            data-index={i}
+            style={{
+              display: "inline-block",
+              width: 3,
+              borderRadius: 999,
+              background: "currentColor",
+              height,
+              opacity: hasTranscript ? 1 : 0.6,
+              transition: "height 0.16s ease, opacity 0.16s ease",
+            }}
+          />
+        );
+      })}
     </div>
   );
 }

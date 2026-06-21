@@ -1614,6 +1614,7 @@ describe("AICommand voice panel behavior", () => {
         </button>
         <span data-testid="mode">{ctx.mode}</span>
         <span data-testid="listening">{ctx.isListening ? "yes" : "no"}</span>
+        <span data-testid="live-transcript">{ctx.liveTranscript}</span>
       </>
     );
   }
@@ -1764,6 +1765,59 @@ describe("AICommand voice panel behavior", () => {
     await waitFor(() => expect(matcher).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1));
     expect(screen.getByTestId("mode").textContent).toBe("voice");
+    expect(screen.getByTestId("live-transcript").textContent).toBe("open billing");
+  });
+
+  it("shows interim speech text before the final transcript is submitted", async () => {
+    const user = userEvent.setup();
+    const matcher = vi.fn<AICommandMatcher>().mockResolvedValue(null);
+    const recognitionInstance: {
+      current: { onresult: ((event: SpeechRecognitionEvent) => void) | null } | null;
+    } = { current: null };
+
+    const Recognition = vi.fn().mockImplementation(() => {
+      const recognition = {
+        lang: "",
+        interimResults: false,
+        continuous: false,
+        onresult: null as ((event: SpeechRecognitionEvent) => void) | null,
+        onerror: null,
+        onend: null,
+        start: vi.fn(),
+        stop: vi.fn(),
+      };
+      recognitionInstance.current = recognition;
+      return recognition;
+    });
+    window.SpeechRecognition = Recognition as unknown as typeof window.SpeechRecognition;
+    window.webkitSpeechRecognition = Recognition as unknown as typeof window.webkitSpeechRecognition;
+
+    render(
+      <AICommandRoot matcher={matcher}>
+        <AICommand.Dialog open>
+          <AICommand.Input />
+          <AICommand.List />
+          <ModeProbe />
+        </AICommand.Dialog>
+      </AICommandRoot>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "switch-to-voice" }));
+    await waitFor(() => expect(screen.getByTestId("mode").textContent).toBe("voice"));
+
+    recognitionInstance.current?.onresult?.({
+      results: {
+        length: 1,
+        0: {
+          isFinal: false,
+          length: 1,
+          0: { transcript: "open" },
+        },
+      },
+    } as unknown as SpeechRecognitionEvent);
+
+    await waitFor(() => expect(screen.getByTestId("live-transcript").textContent).toBe("open"));
+    expect(matcher).not.toHaveBeenCalled();
   });
 
   it("executes directly when voice mode gets a single candidate", async () => {

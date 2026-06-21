@@ -236,6 +236,7 @@ export type AICommandContextValue = {
   mode: AICommandMode;
   setMode: (mode: AICommandMode) => void;
   switchMode: (mode: AICommandMode) => void;
+  liveTranscript: string;
   chatMessages: AICommandChatMessageData[];
   chatInput: string;
   setChatInput: (value: string) => void;
@@ -255,6 +256,7 @@ declare global {
 }
 
 export interface SpeechRecognitionEvent extends Event {
+  resultIndex?: number;
   results: SpeechRecognitionResultList;
 }
 

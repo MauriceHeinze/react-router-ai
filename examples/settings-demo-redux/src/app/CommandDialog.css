@@ -353,6 +353,40 @@
   background: #ffffff;
 }
 
+.command-dialog-voice-display {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.command-dialog-voice-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.command-dialog-voice-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+
+.command-dialog-voice-transcript {
+  margin: 0;
+  min-height: 1.4em;
+  color: #0f172a;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .command-dialog-chat-input {
   flex: 1;
   resize: none;
@@ -405,34 +439,13 @@
 .command-dialog-waveform {
   flex: 1;
   color: #60a5fa;
-  height: 32px;
+  height: 34px;
+  align-items: flex-end;
+  justify-content: space-between;
 }
 
 .command-dialog-waveform span {
-  animation: waveform-bounce 0.8s ease-in-out infinite;
-}
-
-.command-dialog-waveform span:nth-child(odd) {
-  animation-duration: 0.6s;
-}
-
-.command-dialog-waveform span:nth-child(3n) {
-  animation-duration: 1s;
-}
-
-.command-dialog-waveform span:nth-child(5n) {
-  animation-duration: 0.7s;
-}
-
-@keyframes waveform-bounce {
-  0%, 100% {
-    height: 6px;
-    opacity: 0.5;
-  }
-  50% {
-    height: 28px;
-    opacity: 1;
-  }
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.06);
 }
 
 .command-dialog-no-match {

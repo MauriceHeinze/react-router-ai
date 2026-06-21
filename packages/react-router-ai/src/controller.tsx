@@ -65,6 +65,7 @@ export function AICommandRoot({
   const [candidates, setCandidates] = useState<AICommandItem[] | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isListening, setIsListening] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingConfirmation, setPendingConfirmation] = useState<AICommandMatch | null>(null);
@@ -279,6 +280,7 @@ export function AICommandRoot({
       return;
     }
     setError(null);
+    setLiveTranscript("");
     try {
       recognizerRef.current.start();
       setIsListening(true);
@@ -434,7 +436,11 @@ export function AICommandRoot({
 
   useEffect(() => {
     recognizerRef.current = createSpeechRecognizer({
+      onInterimResult: (transcript) => {
+        setLiveTranscript(transcript);
+      },
       onResult: (transcript) => {
+        setLiveTranscript(transcript);
         if (modeRef.current === "voice") {
           setChatInputState(transcript);
           setError(null);
@@ -466,10 +472,10 @@ export function AICommandRoot({
   }, [submitMatcherQuery, submitChat]);
 
   useEffect(() => {
-    if (mode === "voice" && !isListening) {
+    if (mode === "voice") {
       startListening();
     }
-  }, [mode, isListening, startListening]);
+  }, [mode, startListening]);
 
   const value: AICommandContextValue = {
     query,
@@ -497,6 +503,7 @@ export function AICommandRoot({
     mode,
     setMode,
     switchMode,
+    liveTranscript,
     chatMessages,
     chatInput,
     setChatInput,

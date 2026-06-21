@@ -11,7 +11,12 @@ type CommandDialogProps = {
 
 export default function CommandDialog({ open, onOpenChange, items }: CommandDialogProps) {
   const ctx = useAICommand()
-  const { isListening, mode, onContactSupport } = ctx
+  const { isListening, liveTranscript, mode, onContactSupport } = ctx
+  const voiceStatus = ctx.isSubmitting
+    ? 'Sending your request to OpenAI...'
+    : isListening
+      ? liveTranscript || 'Listening... start speaking'
+      : liveTranscript || 'Waiting for your next request'
 
   useEffect(() => {
     if (!open && isListening) {
@@ -168,13 +173,27 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                 </div>
               ) : (
                 <div className="command-dialog-voice-wrap">
-                  <AICommand.VoiceWaveform
-                    barCount={50}
-                    className="command-dialog-waveform"
-                  />
+                  <div className="command-dialog-voice-display">
+                    <div className="command-dialog-voice-copy">
+                      <span className="command-dialog-voice-label">
+                        {ctx.isSubmitting
+                          ? 'Processing'
+                          : isListening
+                            ? liveTranscript
+                              ? 'Captured so far'
+                              : 'Listening for speech'
+                            : 'Ready'}
+                      </span>
+                      <p className="command-dialog-voice-transcript">{voiceStatus}</p>
+                    </div>
+                    <AICommand.VoiceWaveform
+                      barCount={50}
+                      className="command-dialog-waveform"
+                    />
+                  </div>
                   <AICommand.VoiceButton
                     className="command-dialog-chat-mic"
-                    title="Stop listening"
+                    title={isListening ? 'Stop listening' : 'Start listening'}
                   >
                     <MicrophoneIcon className="command-dialog-mic-icon" />
                   </AICommand.VoiceButton>
