@@ -58,6 +58,12 @@ export function AICommandDialog({
   }, [ctx.dialogRef, open, setOpen]);
 
   useEffect(() => {
+    if (!open && ctx.isListening) {
+      ctx.stopListening();
+    }
+  }, [open, ctx.isListening, ctx.stopListening]);
+
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
