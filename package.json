@@ -8,5 +8,8 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm --filter react-router-ai test",
     "lint": "pnpm -r lint"
+  },
+  "dependencies": {
+    "weaviate-client": "^3.13.1"
   }
 }

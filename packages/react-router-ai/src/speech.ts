@@ -26,8 +26,8 @@ function getSpeechRecognitionErrorMessage(event: SpeechRecognitionErrorEvent) {
       return "Microphone access was blocked. Check browser permissions and try again.";
     case "audio-capture":
       return "No microphone was found. Check your audio input and try again.";
-    case "no-speech":
-      return "No speech was detected. Try speaking again.";
+    // case "no-speech":
+    //   return "No speech was detected. Try speaking again.";
     case "network":
       return "Voice input failed because the speech service was unreachable.";
     case "language-not-supported":

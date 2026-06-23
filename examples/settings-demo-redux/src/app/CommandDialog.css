@@ -6,9 +6,9 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(243, 243, 244, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(243, 243, 244, 0.7);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 .command-dialog {
