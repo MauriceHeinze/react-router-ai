@@ -17,11 +17,7 @@ export {
   AICommandVoiceButton,
   AICommandVoiceWaveform,
 } from "./ai-command";
-export { createOpenAICommandMatcher } from "./openai-matcher";
-export type {
-  OpenAICommandMatcherFetch,
-  OpenAICommandMatcherOptions,
-} from "./openai-matcher";
+export { createWeaviateCommandMatcher } from "./semantic-command-matcher.ts.ts";
 export { matchItems, resolveIntent } from "./matcher";
 export type { MatchItemsOptions, ResolveIntentOptions } from "./matcher";
 export { findDirectCommandMatch, rankCommandItems } from "./local-matcher";
