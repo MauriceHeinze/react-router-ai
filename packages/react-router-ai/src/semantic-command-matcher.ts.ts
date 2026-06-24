@@ -42,7 +42,7 @@ export function createWeaviateCommandMatcher(options: {
 
   async function queryWeaviateRoutes(command: string, limit = 10): Promise<GraphQlRow[]> {
     const escaped = JSON.stringify(command)
-    const query = `{ Get { Routes(hybrid: { query: ${escaped} }, limit: ${limit}) { command_id label description path actionType section stateKey setValue recordType phrasesKeywords _additional { score explainScore } } } }`
+    const query = `{ Get { Routes(hybrid: { query: ${escaped} }, limit: ${limit}) { commandId label description path actionType section stateKey setValue recordType phrasesKeywords _additional { score explainScore } } } }`
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -189,7 +189,7 @@ export function createWeaviateRouteSearch(options: {
 function buildCsv(objects: GraphQlRow[]): string {
   const rows = objects.map(rowFromGraphQl).join('\n')
   return [
-    'command_id,actionType,section,target,description,phrases',
+    'commandId,actionType,section,target,description,phrases',
     rows,
   ].join('\n')
 }
@@ -206,7 +206,7 @@ function rowFromGraphQl(row: GraphQlRow): string {
   const phrases = stringOrEmpty(row.phrasesKeywords).replaceAll(',', ' | ')
 
   return [
-    cleanCsvText(row.command_id),
+    cleanCsvText(row.commandId),
     cleanCsvText(row.actionType),
     cleanCsvText(row.section),
     cleanCsvText(target),

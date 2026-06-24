@@ -189,7 +189,7 @@ export default function CommandDialog({
             </div>
           ) : null}
 
-          <div className="command-dialog-header">
+          {/* <div className="command-dialog-header">
             <AICommand.ModeHeader
               className="command-dialog-mode-header"
               searchLabel="Classic Search"
@@ -208,7 +208,7 @@ export default function CommandDialog({
             >
               <CloseIcon className="command-dialog-close-icon" />
             </button>
-          </div>
+          </div> */}
 
           {mode === 'search' ? (
             <div className="command-dialog-search">

@@ -240,7 +240,7 @@ export function AICommandItem({
       aria-disabled={disabled}
       onClick={() => void ctx.selectItem(itemRef.current)}
       className={className}
-      style={{ order: index, ...style }}
+      style={{ ...style, order: index }}
     >
       {children}
     </div>
@@ -342,7 +342,8 @@ export function AICommandModeHeader({
   style,
 }: AICommandModeHeaderProps) {
   const ctx = useAICommand();
-  const modes = ["search", "ai", "voice"] as const;
+  // const modes = ["search", "ai", "voice"] as const;
+  const modes = ["search"] as const;
   const labels: Record<(typeof modes)[number], string> = {
     search: searchLabel,
     ai: aiLabel,
@@ -352,7 +353,7 @@ export function AICommandModeHeader({
   return (
     <div className={className} style={style}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ display: "flex", gap: 4 }} aria-hidden="true">
+        {/* <div style={{ display: "flex", gap: 4 }} aria-hidden="true">
           {modes.map((m) => (
             <span
               key={m}
@@ -365,12 +366,12 @@ export function AICommandModeHeader({
               }}
             />
           ))}
-        </div>
-        <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "#64748b" }}>
+        </div> */}
+        {/* <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "#64748b" }}>
           {labels[ctx.mode]}
-        </span>
+        </span> */}
       </div>
-      <button
+      {/* <button
         type="button"
         onClick={() => {
           const idx = modes.indexOf(ctx.mode);
@@ -409,7 +410,7 @@ export function AICommandModeHeader({
         >
           {switchKeycap}
         </kbd>
-      </button>
+      </button> */}
     </div>
   );
 }
@@ -863,10 +864,10 @@ export function AICommandWeaviateRoutes({
 
   return (
     <>
-      {routes.map((item) => (
+      {routes.map((item, index) => (
         <AICommandItem
-          key={item.route}
-          id={`weaviate:${item.route}`}
+          key={`weaviate:${item.route}:${index}`}
+          id={`weaviate:${item.route}:${index}`}
           value={item.label || item.route}
           description={item.description}
           keywords={[query, item.route, item.label, item.description].filter(Boolean)}

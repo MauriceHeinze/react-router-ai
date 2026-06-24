@@ -80,7 +80,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 16px 10px;
+  margin: 16px;
   padding: 10px 14px;
   border: 1px solid rgba(148, 163, 184, 0.3);
   border-radius: 12px;
@@ -594,7 +594,7 @@
 
   .command-dialog-search-input-wrap,
   .command-dialog-chat-input-wrap {
-    margin: 0 12px 8px;
+    margin: 16px;
     padding: 8px 12px;
   }
 

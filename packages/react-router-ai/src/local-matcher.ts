@@ -54,14 +54,20 @@ export function findDirectCommandMatch(
   const activeItems = items.filter((item) => !item.disabled);
   const variants = createQueryVariants(query);
 
-  const exactValueMatches = activeItems.filter((item) => variants.has(normalizeText(item.value)));
+  const exactValueMatches = activeItems.filter((item) =>
+    variants.has(normalizeText(item.value)),
+  );
+
   if (exactValueMatches.length === 1) {
     return { ...exactValueMatches[0], confidence: 1 };
   }
 
   const exactKeywordMatches = activeItems.filter((item) =>
-    (item.keywords ?? []).some((keyword) => variants.has(normalizeText(keyword))),
+    (item.keywords ?? []).some((keyword) =>
+      variants.has(normalizeText(keyword)),
+    ),
   );
+
   if (exactKeywordMatches.length === 1) {
     return { ...exactKeywordMatches[0], confidence: 1 };
   }
@@ -83,11 +89,17 @@ export function rankCommandItems(
   const fuse = buildFuse(activeItems);
   const results = fuse.search(trimmed);
 
+  console.log("fuse triggered for query:", trimmed, "results:", results);
+
   return results
     .map((result) => {
       const fuseScore = typeof result.score === "number" ? result.score : 1;
       const confidence = Math.min(Math.max(1 - fuseScore, 0), 1);
-      return { ...result.item, confidence };
+
+      return {
+        ...result.item,
+        confidence,
+      };
     })
     .filter((item) => item.confidence > 0.05)
     .sort((a, b) => b.confidence - a.confidence);
