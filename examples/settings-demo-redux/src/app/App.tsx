@@ -13,17 +13,24 @@ function AppShell() {
   const dispatch = useAppDispatch()
   const [widgetOpen, setWidgetOpen] = useState(false)
   const theme = useAppSelector((state) => state.settings.theme)
+
+  const weaviateUrl = import.meta.env.DEV
+    ? '/weaviate-api'
+    : (import.meta.env.VITE_WEAVIATE_DATABASE_URL as string)
+
+  const clusterUrl = import.meta.env.VITE_WEAVIATE_DATABASE_URL as string
+  const weaviateApiKey = import.meta.env.VITE_WEAVIATE_API_KEY as string
+  const openAiApiKey = import.meta.env.VITE_OPENAI_API_KEY as string
+
   const matcher = useMemo(
     () =>
       createWeaviateCommandMatcher({
-        weaviateUrl: import.meta.env.DEV
-          ? '/weaviate-api'
-          : import.meta.env.VITE_WEAVIATE_DATABASE_URL as string,
-        clusterUrl: import.meta.env.VITE_WEAVIATE_DATABASE_URL as string,
-        weaviateApiKey: import.meta.env.VITE_WEAVIATE_API_KEY as string,
-        openAiApiKey: import.meta.env.VITE_OPENAI_API_KEY as string,
+        weaviateUrl,
+        clusterUrl,
+        weaviateApiKey,
+        openAiApiKey,
       }),
-    [],
+    [weaviateUrl, clusterUrl, weaviateApiKey, openAiApiKey],
   )
 
   const commands = useMemo(
@@ -35,8 +42,9 @@ function AppShell() {
           setWidgetOpen(false)
         },
       }),
-    [dispatch, navigate]
+    [dispatch, navigate],
   )
+
   const effectiveTheme = theme === 'system' ? 'light' : theme
 
   return (
@@ -61,7 +69,18 @@ function AppShell() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
-        <CommandDialog open={widgetOpen} onOpenChange={setWidgetOpen} items={commands} />
+        <CommandDialog
+          open={widgetOpen}
+          onOpenChange={setWidgetOpen}
+          items={commands}
+          weaviateUrl={weaviateUrl}
+          clusterUrl={clusterUrl}
+          weaviateApiKey={weaviateApiKey}
+          onSelectWeaviateRoute={(route) => {
+            navigate(route)
+            setWidgetOpen(false)
+          }}
+        />
       </AICommand.Root>
     </div>
   )

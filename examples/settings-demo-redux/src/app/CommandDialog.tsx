@@ -8,18 +8,25 @@ type CommandDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   items: AICommandItem[]
+  weaviateUrl: string
+  weaviateApiKey: string
+  clusterUrl?: string
+  onSelectWeaviateRoute: (route: string) => void
 }
 
 function VoiceAudioWave({ active }: { active: boolean }) {
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
   const [streamError, setStreamError] = useState<string | null>(null)
+
   const handleAudioError = useCallback((error: Error) => {
     setStreamError(error.message)
   }, [])
+
   const audioOptions = useMemo(
     () => ({ source: mediaStream, onError: handleAudioError }),
     [handleAudioError, mediaStream],
   )
+
   const { source, error } = useMediaAudio(audioOptions)
   const errorMessage = streamError ?? error?.message
 
@@ -92,12 +99,21 @@ function VoiceAudioWave({ active }: { active: boolean }) {
           ))}
         </div>
       )}
+
       {errorMessage ? <span className="command-dialog-audio-wave-error">{errorMessage}</span> : null}
     </div>
   )
 }
 
-export default function CommandDialog({ open, onOpenChange, items }: CommandDialogProps) {
+export default function CommandDialog({
+  open,
+  onOpenChange,
+  items,
+  weaviateUrl,
+  weaviateApiKey,
+  clusterUrl,
+  onSelectWeaviateRoute,
+}: CommandDialogProps) {
   const ctx = useAICommand()
   const { clearChatMessages, isListening, mode, onContactSupport, startListening, stopListening } = ctx
   const isVoiceMode = mode === 'voice'
@@ -136,7 +152,9 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
       ) {
         return
       }
+
       event.preventDefault()
+
       if (isListening) {
         stopListening()
       } else {
@@ -180,6 +198,7 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
               switchLabel="Switch Mode"
               switchKeycap="Tab"
             />
+
             <button
               className="command-dialog-close"
               type="button"
@@ -195,6 +214,7 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
             <div className="command-dialog-search">
               <div className="command-dialog-search-input-wrap">
                 <SearchIcon className="command-dialog-search-icon" />
+
                 <AICommand.Input
                   autoFocus
                   modeShortcut="tab"
@@ -215,6 +235,32 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                 <AICommand.Confirmation className="command-dialog-confirmation" />
 
                 <AICommand.List className="command-dialog-list">
+                  <AICommand.WeaviateRoutes
+                    weaviateUrl={weaviateUrl}
+                    weaviateApiKey={weaviateApiKey}
+                    clusterUrl={clusterUrl}
+                    limit={8}
+                    debounceMs={200}
+                    minQueryLength={2}
+                    onSelectRoute={(route) => {
+                      onSelectWeaviateRoute(route)
+                      onOpenChange(false)
+                    }}
+                    className="command-dialog-item command-dialog-item-weaviate"
+                    renderItem={(item) => (
+                      <>
+                        <span className="command-dialog-item-value">
+                          {item.label || item.route}
+                        </span>
+                        {item.description ? (
+                          <span className="command-dialog-item-description">
+                            {item.description}
+                          </span>
+                        ) : null}
+                      </>
+                    )}
+                  />
+
                   {items.map((item) => (
                     <AICommand.Item
                       key={item.id}
@@ -240,20 +286,31 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
 
               <div className="command-dialog-footer">
                 <div className="command-dialog-shortcuts" aria-hidden="true">
-                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Enter</span> Run</span>
-                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">↑↓</span> Move</span>
-                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Esc</span> Close</span>
+                  <span className="command-dialog-shortcut">
+                    <span className="command-dialog-keycap">Enter</span> Run
+                  </span>
+                  <span className="command-dialog-shortcut">
+                    <span className="command-dialog-keycap">↑↓</span> Move
+                  </span>
+                  <span className="command-dialog-shortcut">
+                    <span className="command-dialog-keycap">Esc</span> Close
+                  </span>
                 </div>
               </div>
             </div>
           ) : (
             <div className="command-dialog-chat-panel">
               <AICommand.Chat
-                className={`command-dialog-chat ${isVoiceMode && ctx.chatMessages.length === 0 ? 'command-dialog-chat-voice-empty' : ''}`}
+                className={`command-dialog-chat ${
+                  isVoiceMode && ctx.chatMessages.length === 0
+                    ? 'command-dialog-chat-voice-empty'
+                    : ''
+                }`}
               >
                 <AICommand.ChatEmptyPrompt className="command-dialog-voice-prompt">
                   <h2>What are you looking for?</h2>
                 </AICommand.ChatEmptyPrompt>
+
                 {ctx.chatMessages.map((message) => (
                   <AICommand.ChatMessage
                     key={message.id}
@@ -262,7 +319,12 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                     className="command-dialog-chat-message"
                   />
                 ))}
-                <AICommand.Loading className={isVoiceMode ? 'command-dialog-voice-thinking' : 'command-dialog-loader'}>
+
+                <AICommand.Loading
+                  className={
+                    isVoiceMode ? 'command-dialog-voice-thinking' : 'command-dialog-loader'
+                  }
+                >
                   {isVoiceMode ? (
                     <span className="command-dialog-thinking">
                       Thinking
@@ -279,13 +341,17 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                     </>
                   )}
                 </AICommand.Loading>
+
                 <AICommand.Error className="command-dialog-error" />
+
                 <AICommand.Confirmation className="command-dialog-confirmation" />
+
                 <AICommand.Clarification
                   className="command-dialog-clarification"
                   message="Did you mean?"
                   itemClassName="command-dialog-clarification-item"
                 />
+
                 <AICommand.NoMatch
                   className="command-dialog-no-match"
                   onContactSupport={onContactSupport}
@@ -301,6 +367,7 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                     placeholder="Ask AI to do something..."
                     className="command-dialog-chat-input"
                   />
+
                   <AICommand.VoiceButton
                     className="command-dialog-chat-mic"
                     title="Mic (Ctrl+M)"
@@ -311,6 +378,7 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
               ) : (
                 <div className="command-dialog-voice-controls">
                   {isListening ? <VoiceAudioWave active={isListening} /> : null}
+
                   <AICommand.VoiceButton
                     className="command-dialog-voice-mic"
                     title={isListening ? 'Stop listening' : 'Start listening'}
@@ -324,13 +392,22 @@ export default function CommandDialog({ open, onOpenChange, items }: CommandDial
                 <div className="command-dialog-shortcuts" aria-hidden="true">
                   {isVoiceMode ? (
                     <span className="command-dialog-shortcut">
-                      <span className="command-dialog-keycap">Space</span> {isListening ? 'Stop Recording' : 'Record'}
+                      <span className="command-dialog-keycap">Space</span>{' '}
+                      {isListening ? 'Stop Recording' : 'Record'}
                     </span>
                   ) : (
-                    <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Enter</span> Send Message</span>
+                    <span className="command-dialog-shortcut">
+                      <span className="command-dialog-keycap">Enter</span> Send Message
+                    </span>
                   )}
-                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">↑↓</span> Move</span>
-                  <span className="command-dialog-shortcut"><span className="command-dialog-keycap">Esc</span> Close</span>
+
+                  <span className="command-dialog-shortcut">
+                    <span className="command-dialog-keycap">↑↓</span> Move
+                  </span>
+
+                  <span className="command-dialog-shortcut">
+                    <span className="command-dialog-keycap">Esc</span> Close
+                  </span>
                 </div>
               </div>
             </div>

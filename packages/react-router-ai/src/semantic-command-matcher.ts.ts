@@ -2,6 +2,13 @@ import type { AICommandMatcher } from './types'
 
 type GraphQlRow = Record<string, unknown>
 
+type WeaviateRouteResult = {
+  route: string
+  label: string
+  description: string
+}
+
+// weaviate + openai
 export function createWeaviateCommandMatcher(options: {
   weaviateUrl: string
   weaviateApiKey: string
@@ -102,6 +109,80 @@ export function createWeaviateCommandMatcher(options: {
         ?.find((content) => content.type === 'output_text')
         ?.text ?? ''
     )
+  }
+}
+
+// weaviate only
+export function createWeaviateRouteSearch(options: {
+  weaviateUrl: string
+  weaviateApiKey: string
+  clusterUrl?: string
+}) {
+  const rawUrl = options.weaviateUrl
+  const weaviateUrl =
+    rawUrl.startsWith('http') || rawUrl.startsWith('/')
+      ? rawUrl
+      : `https://${rawUrl}`
+
+  const clusterUrl = options.clusterUrl ?? weaviateUrl
+
+  return async function searchWeaviateRoutes(
+    query: string,
+    limit = 10,
+  ): Promise<WeaviateRouteResult[]> {
+    const escapedQuery = JSON.stringify(query)
+
+    const graphQlQuery = `
+      {
+        Get {
+          Routes(
+            hybrid: { query: ${escapedQuery} }
+            limit: ${limit}
+          ) {
+            path
+            label
+            description
+          }
+        }
+      }
+    `
+
+    const response = await fetch(`${weaviateUrl}/v1/graphql`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${options.weaviateApiKey}`,
+        'X-Weaviate-Cluster-Url': clusterUrl,
+      },
+      body: JSON.stringify({ query: graphQlQuery }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      throw new Error(`Weaviate query failed (${response.status}). ${errorText}`)
+    }
+
+    const data = (await response.json()) as {
+      data?: {
+        Get?: {
+          Routes?: GraphQlRow[]
+        }
+      }
+      errors?: Array<{ message: string }>
+    }
+
+    if (data.errors?.length) {
+      const messages = data.errors.map((error) => error.message).join('; ')
+      throw new Error(`Weaviate GraphQL errors: ${messages}`)
+    }
+
+    return (data.data?.Get?.Routes ?? [])
+      .map((row) => ({
+        route: stringOrEmpty(row.path),
+        label: stringOrEmpty(row.label),
+        description: stringOrEmpty(row.description),
+      }))
+      .filter((item) => item.route)
   }
 }
 

@@ -768,6 +768,207 @@ export function AICommandNoMatch({
   );
 }
 
+type WeaviateRouteResult = {
+  route: string;
+  label: string;
+  description: string;
+};
+
+type WeaviateRoutesProps = {
+  weaviateUrl: string;
+  weaviateApiKey: string;
+  clusterUrl?: string;
+  limit?: number;
+  debounceMs?: number;
+  minQueryLength?: number;
+  onSelectRoute: (route: string, item: WeaviateRouteResult) => void;
+  renderItem?: (item: WeaviateRouteResult) => React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export function AICommandWeaviateRoutes({
+  weaviateUrl,
+  weaviateApiKey,
+  clusterUrl,
+  limit = 10,
+  debounceMs = 200,
+  minQueryLength = 2,
+  onSelectRoute,
+  renderItem,
+  className,
+  style,
+}: WeaviateRoutesProps) {
+  const ctx = useAICommand()
+  const [routes, setRoutes] = useState<WeaviateRouteResult[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const requestIdRef = useRef(0)
+
+  const query = ctx.query.trim()
+
+  useEffect(() => {
+    if (query.length < minQueryLength) {
+      setRoutes([])
+      setError(null)
+      return
+    }
+
+    const requestId = ++requestIdRef.current
+    const abortController = new AbortController()
+
+    const timeout = window.setTimeout(() => {
+      void searchWeaviateRoutes({
+        query,
+        weaviateUrl,
+        weaviateApiKey,
+        clusterUrl,
+        limit,
+        signal: abortController.signal,
+      })
+        .then((nextRoutes) => {
+          if (requestIdRef.current !== requestId) return
+          setRoutes(nextRoutes)
+          setError(null)
+        })
+        .catch((err) => {
+          if (abortController.signal.aborted) return
+          if (requestIdRef.current !== requestId) return
+
+          setRoutes([])
+          setError(err instanceof Error ? err.message : 'Weaviate search failed.')
+        })
+    }, debounceMs)
+
+    return () => {
+      window.clearTimeout(timeout)
+      abortController.abort()
+    }
+  }, [
+    query,
+    weaviateUrl,
+    weaviateApiKey,
+    clusterUrl,
+    limit,
+    debounceMs,
+    minQueryLength,
+  ])
+
+  if (error) {
+    return (
+      <div role="alert" className={className} style={style}>
+        {error}
+      </div>
+    )
+  }
+
+  return (
+    <>
+      {routes.map((item) => (
+        <AICommandItem
+          key={item.route}
+          id={`weaviate:${item.route}`}
+          value={item.label || item.route}
+          description={item.description}
+          keywords={[query, item.route, item.label, item.description].filter(Boolean)}
+          onSelect={() => onSelectRoute(item.route, item)}
+          className={className}
+          style={style}
+        >
+          {renderItem ? (
+            renderItem(item)
+          ) : (
+            <div>
+              <div>{item.label || item.route}</div>
+              {item.description ? <small>{item.description}</small> : null}
+            </div>
+          )}
+        </AICommandItem>
+      ))}
+    </>
+  )
+}
+
+async function searchWeaviateRoutes({
+  query,
+  weaviateUrl,
+  weaviateApiKey,
+  clusterUrl,
+  limit,
+  signal,
+}: {
+  query: string;
+  weaviateUrl: string;
+  weaviateApiKey: string;
+  clusterUrl?: string;
+  limit: number;
+  signal?: AbortSignal;
+}): Promise<WeaviateRouteResult[]> {
+  const normalizedUrl =
+    weaviateUrl.startsWith("http") || weaviateUrl.startsWith("/")
+      ? weaviateUrl
+      : `https://${weaviateUrl}`;
+
+  const normalizedClusterUrl = clusterUrl ?? normalizedUrl;
+  const escapedQuery = JSON.stringify(query);
+
+  const graphQlQuery = `
+    {
+      Get {
+        Routes(
+          hybrid: { query: ${escapedQuery} }
+          limit: ${limit}
+        ) {
+          path
+          label
+          description
+        }
+      }
+    }
+  `;
+
+  const response = await fetch(`${normalizedUrl}/v1/graphql`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${weaviateApiKey}`,
+      "X-Weaviate-Cluster-Url": normalizedClusterUrl,
+    },
+    body: JSON.stringify({ query: graphQlQuery }),
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(`Weaviate query failed (${response.status}). ${errorText}`);
+  }
+
+  const data = (await response.json()) as {
+    data?: {
+      Get?: {
+        Routes?: Array<{
+          path?: unknown;
+          label?: unknown;
+          description?: unknown;
+        }>;
+      };
+    };
+    errors?: Array<{ message: string }>;
+  };
+
+  if (data.errors?.length) {
+    const messages = data.errors.map((error) => error.message).join("; ");
+    throw new Error(`Weaviate GraphQL errors: ${messages}`);
+  }
+
+  return (data.data?.Get?.Routes ?? [])
+    .map((row) => ({
+      route: row.path,
+      label: row.label,
+      description: row.description,
+    }))
+    .filter((item) => item.route);
+}
+
 export const AICommand = {
   Root: AICommandRoot,
   Dialog: AICommandDialog,
@@ -788,4 +989,5 @@ export const AICommand = {
   VoiceWaveform: AICommandVoiceWaveform,
   VoiceEmptyPrompt: AICommandVoiceEmptyPrompt,
   ChatEmptyPrompt: AICommandChatEmptyPrompt,
+  WeaviateRoutes: AICommandWeaviateRoutes,
 };
