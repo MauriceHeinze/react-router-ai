@@ -573,13 +573,14 @@ export function AICommandRoot({
     };
   }, [submitMatcherQuery, submitChat, stopAudioAnalysis]);
 
-  useEffect(() => {
-    if (mode === "voice") {
-      startListening();
-    } else if (isListeningRef.current) {
-      stopListening();
-    }
-  }, [mode, startListening, stopListening]);
+  // Voice mode is disabled.
+  // useEffect(() => {
+  //   if (mode === "voice") {
+  //     startListening();
+  //   } else if (isListeningRef.current) {
+  //     stopListening();
+  //   }
+  // }, [mode, startListening, stopListening]);
 
   const value: AICommandContextValue = {
     query,

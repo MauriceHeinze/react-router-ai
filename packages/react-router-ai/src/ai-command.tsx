@@ -69,21 +69,22 @@ export function AICommandDialog({
         setOpen(true);
         return;
       }
-      if (
-        event.key === "Tab" &&
-        !event.defaultPrevented &&
-        !event.shiftKey &&
-        !event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey &&
-        ctx.mode === "voice"
-      ) {
-        event.preventDefault();
-        const modes = ["search", "ai", "voice"] as const;
-        const idx = modes.indexOf(ctx.mode);
-        const next = modes[(idx + 1) % modes.length];
-        ctx.switchMode(next);
-      }
+      // Tab mode navigation is disabled.
+      // if (
+      //   event.key === "Tab" &&
+      //   !event.defaultPrevented &&
+      //   !event.shiftKey &&
+      //   !event.metaKey &&
+      //   !event.ctrlKey &&
+      //   !event.altKey &&
+      //   ctx.mode === "voice"
+      // ) {
+      //   event.preventDefault();
+      //   const modes = ["search", "ai", "voice"] as const;
+      //   const idx = modes.indexOf(ctx.mode);
+      //   const next = modes[(idx + 1) % modes.length];
+      //   ctx.switchMode(next);
+      // }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -111,6 +112,10 @@ export function AICommandInput({
   className,
   style,
 }: AICommandInputProps) {
+  // Shortcuts are disabled while voice mode is disabled.
+  void modeShortcut;
+  void micShortcut;
+
   const ctx = useAICommand();
   const isControlled = controlledValue !== undefined;
   const value = isControlled ? controlledValue : ctx.query;
@@ -152,34 +157,36 @@ export function AICommandInput({
     } else if (event.key === "Escape") {
       event.preventDefault();
       ctx.closeDialog();
-    } else if (
-      modeShortcut === "tab" &&
-      event.key === "Tab" &&
-      !event.shiftKey &&
-      !event.metaKey &&
-      !event.ctrlKey &&
-      !event.altKey
-    ) {
-      event.preventDefault();
-      const modes = ["search", "ai", "voice"] as const;
-      const idx = modes.indexOf(ctx.mode);
-      const next = modes[(idx + 1) % modes.length];
-      ctx.switchMode(next);
-    } else if (
-      micShortcut === "ctrl+m" &&
-      (event.key === "m" || event.key === "M") &&
-      event.ctrlKey &&
-      !event.metaKey &&
-      !event.altKey &&
-      !event.shiftKey
-    ) {
-      event.preventDefault();
-      if (ctx.isListening) {
-        ctx.stopListening();
-      } else {
-        ctx.startListening();
-      }
     }
+    // Tab mode navigation and voice mic shortcut are disabled.
+    // else if (
+    //   modeShortcut === "tab" &&
+    //   event.key === "Tab" &&
+    //   !event.shiftKey &&
+    //   !event.metaKey &&
+    //   !event.ctrlKey &&
+    //   !event.altKey
+    // ) {
+    //   event.preventDefault();
+    //   const modes = ["search", "ai", "voice"] as const;
+    //   const idx = modes.indexOf(ctx.mode);
+    //   const next = modes[(idx + 1) % modes.length];
+    //   ctx.switchMode(next);
+    // } else if (
+    //   micShortcut === "ctrl+m" &&
+    //   (event.key === "m" || event.key === "M") &&
+    //   event.ctrlKey &&
+    //   !event.metaKey &&
+    //   !event.altKey &&
+    //   !event.shiftKey
+    // ) {
+    //   event.preventDefault();
+    //   if (ctx.isListening) {
+    //     ctx.stopListening();
+    //   } else {
+    //     ctx.startListening();
+    //   }
+    // }
     onKeyDown?.(event);
   }
 
@@ -416,6 +423,10 @@ export function AICommandChatInput({
   className,
   style,
 }: AICommandChatInputProps) {
+  // Shortcuts are disabled while voice mode is disabled.
+  void modeShortcut;
+  void micShortcut;
+
   const ctx = useAICommand();
   const isControlled = controlledValue !== undefined;
   const value = isControlled ? controlledValue : ctx.chatInput;
@@ -443,34 +454,36 @@ export function AICommandChatInput({
     if (event.key === "Escape") {
       event.preventDefault();
       ctx.closeDialog();
-    } else if (
-      modeShortcut === "tab" &&
-      event.key === "Tab" &&
-      !event.shiftKey &&
-      !event.metaKey &&
-      !event.ctrlKey &&
-      !event.altKey
-    ) {
-      event.preventDefault();
-      const modes = ["search", "ai", "voice"] as const;
-      const idx = modes.indexOf(ctx.mode);
-      const next = modes[(idx + 1) % modes.length];
-      ctx.switchMode(next);
-    } else if (
-      micShortcut === "ctrl+m" &&
-      (event.key === "m" || event.key === "M") &&
-      event.ctrlKey &&
-      !event.metaKey &&
-      !event.altKey &&
-      !event.shiftKey
-    ) {
-      event.preventDefault();
-      if (ctx.isListening) {
-        ctx.stopListening();
-      } else {
-        ctx.startListening();
-      }
     }
+    // Tab mode navigation and voice mic shortcut are disabled.
+    // else if (
+    //   modeShortcut === "tab" &&
+    //   event.key === "Tab" &&
+    //   !event.shiftKey &&
+    //   !event.metaKey &&
+    //   !event.ctrlKey &&
+    //   !event.altKey
+    // ) {
+    //   event.preventDefault();
+    //   const modes = ["search", "ai", "voice"] as const;
+    //   const idx = modes.indexOf(ctx.mode);
+    //   const next = modes[(idx + 1) % modes.length];
+    //   ctx.switchMode(next);
+    // } else if (
+    //   micShortcut === "ctrl+m" &&
+    //   (event.key === "m" || event.key === "M") &&
+    //   event.ctrlKey &&
+    //   !event.metaKey &&
+    //   !event.altKey &&
+    //   !event.shiftKey
+    // ) {
+    //   event.preventDefault();
+    //   if (ctx.isListening) {
+    //     ctx.stopListening();
+    //   } else {
+    //     ctx.startListening();
+    //   }
+    // }
     onKeyDown?.(event);
   }
 
