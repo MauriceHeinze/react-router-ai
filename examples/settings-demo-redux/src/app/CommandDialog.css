@@ -196,12 +196,14 @@
 }
 
 .command-dialog-item-value {
+  display: block;
   font-weight: 600;
   font-size: 0.95rem;
   color: #0f172a;
 }
 
 .command-dialog-item-description {
+  display: block;
   font-size: 0.85rem;
   color: #64748b;
 }

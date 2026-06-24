@@ -1,7 +1,7 @@
 import { AudioWave, useMediaAudio } from '@audiowave/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AICommand, useAICommand, type AICommandItem } from 'react-router-ai'
-import { CloseIcon, SearchIcon, MicrophoneIcon } from '../shared/ui/Icons.tsx'
+import { SearchIcon, MicrophoneIcon } from '../shared/ui/Icons.tsx'
 import './CommandDialog.css'
 
 type CommandDialogProps = {
@@ -242,6 +242,7 @@ export default function CommandDialog({
                     limit={8}
                     debounceMs={200}
                     minQueryLength={2}
+                    minScore={0.8}
                     onSelectRoute={(route) => {
                       onSelectWeaviateRoute(route)
                       onOpenChange(false)

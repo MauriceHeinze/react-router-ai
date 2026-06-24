@@ -333,84 +333,12 @@ export function AICommandConfirmation({ className, style }: AICommandConfirmatio
 }
 
 export function AICommandModeHeader({
-  searchLabel = "Classic Search",
-  aiLabel = "Text Chat",
-  voiceLabel = "Voice Chat",
-  switchLabel = "Switch Mode",
-  switchKeycap = "Tab",
   className,
   style,
 }: AICommandModeHeaderProps) {
-  const ctx = useAICommand();
-  // const modes = ["search", "ai", "voice"] as const;
-  const modes = ["search"] as const;
-  const labels: Record<(typeof modes)[number], string> = {
-    search: searchLabel,
-    ai: aiLabel,
-    voice: voiceLabel,
-  };
-
   return (
     <div className={className} style={style}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {/* <div style={{ display: "flex", gap: 4 }} aria-hidden="true">
-          {modes.map((m) => (
-            <span
-              key={m}
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: ctx.mode === m ? "#3b82f6" : "#cbd5e1",
-                transition: "background 0.2s ease",
-              }}
-            />
-          ))}
-        </div> */}
-        {/* <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "#64748b" }}>
-          {labels[ctx.mode]}
-        </span> */}
-      </div>
-      {/* <button
-        type="button"
-        onClick={() => {
-          const idx = modes.indexOf(ctx.mode);
-          const next = modes[(idx + 1) % modes.length];
-          ctx.switchMode(next);
-        }}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          border: 0,
-          background: "transparent",
-          color: "#64748b",
-          fontSize: "0.8rem",
-          cursor: "pointer",
-          padding: 0,
-        }}
-      >
-        {switchLabel}
-        <kbd
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minWidth: 24,
-            height: 20,
-            padding: "0 6px",
-            border: "1px solid rgba(148, 163, 184, 0.3)",
-            borderRadius: 6,
-            background: "rgba(248, 250, 252, 0.9)",
-            fontSize: "0.7rem",
-            fontWeight: 600,
-            fontFamily: "inherit",
-            color: "inherit",
-          }}
-        >
-          {switchKeycap}
-        </kbd>
-      </button> */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }} />
     </div>
   );
 }
@@ -508,10 +436,11 @@ export function AICommandChatInput({
   }
 
   function handleKeyDown(event: ReactKeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      void ctx.submitChat();
-    } else if (event.key === "Escape") {
+    // if (event.key === "Enter" && !event.shiftKey) {
+    //   event.preventDefault();
+    //   void ctx.submitChat();
+    // } 
+    if (event.key === "Escape") {
       event.preventDefault();
       ctx.closeDialog();
     } else if (
@@ -773,6 +702,8 @@ type WeaviateRouteResult = {
   route: string;
   label: string;
   description: string;
+  score?: number;
+  explainScore?: string;
 };
 
 type WeaviateRoutesProps = {
@@ -782,6 +713,7 @@ type WeaviateRoutesProps = {
   limit?: number;
   debounceMs?: number;
   minQueryLength?: number;
+  minScore?: number;
   onSelectRoute: (route: string, item: WeaviateRouteResult) => void;
   renderItem?: (item: WeaviateRouteResult) => React.ReactNode;
   className?: string;
@@ -795,27 +727,28 @@ export function AICommandWeaviateRoutes({
   limit = 10,
   debounceMs = 200,
   minQueryLength = 2,
+  minScore = 0.8,
   onSelectRoute,
   renderItem,
   className,
   style,
 }: WeaviateRoutesProps) {
-  const ctx = useAICommand()
-  const [routes, setRoutes] = useState<WeaviateRouteResult[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const requestIdRef = useRef(0)
+  const ctx = useAICommand();
+  const [routes, setRoutes] = useState<WeaviateRouteResult[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
-  const query = ctx.query.trim()
+  const query = ctx.query.trim();
 
   useEffect(() => {
     if (query.length < minQueryLength) {
-      setRoutes([])
-      setError(null)
-      return
+      setRoutes([]);
+      setError(null);
+      return;
     }
 
-    const requestId = ++requestIdRef.current
-    const abortController = new AbortController()
+    const requestId = ++requestIdRef.current;
+    const abortController = new AbortController();
 
     const timeout = window.setTimeout(() => {
       void searchWeaviateRoutes({
@@ -824,26 +757,27 @@ export function AICommandWeaviateRoutes({
         weaviateApiKey,
         clusterUrl,
         limit,
+        minScore,
         signal: abortController.signal,
       })
         .then((nextRoutes) => {
-          if (requestIdRef.current !== requestId) return
-          setRoutes(nextRoutes)
-          setError(null)
+          if (requestIdRef.current !== requestId) return;
+          setRoutes(nextRoutes);
+          setError(null);
         })
         .catch((err) => {
-          if (abortController.signal.aborted) return
-          if (requestIdRef.current !== requestId) return
+          if (abortController.signal.aborted) return;
+          if (requestIdRef.current !== requestId) return;
 
-          setRoutes([])
-          setError(err instanceof Error ? err.message : 'Weaviate search failed.')
-        })
-    }, debounceMs)
+          setRoutes([]);
+          setError(err instanceof Error ? err.message : "Weaviate search failed.");
+        });
+    }, debounceMs);
 
     return () => {
-      window.clearTimeout(timeout)
-      abortController.abort()
-    }
+      window.clearTimeout(timeout);
+      abortController.abort();
+    };
   }, [
     query,
     weaviateUrl,
@@ -852,41 +786,62 @@ export function AICommandWeaviateRoutes({
     limit,
     debounceMs,
     minQueryLength,
-  ])
+    minScore,
+  ]);
 
   if (error) {
     return (
       <div role="alert" className={className} style={style}>
         {error}
       </div>
-    )
+    );
   }
 
   return (
-    <>
+    <div
+      role="listbox"
+      aria-label="Weaviate route results"
+      style={{ display: "flex", flexDirection: "column", gap: 8 }}
+    >
       {routes.map((item, index) => (
-        <AICommandItem
+        <button
           key={`weaviate:${item.route}:${index}`}
-          id={`weaviate:${item.route}:${index}`}
-          value={item.label || item.route}
-          description={item.description}
-          keywords={[query, item.route, item.label, item.description].filter(Boolean)}
-          onSelect={() => onSelectRoute(item.route, item)}
+          type="button"
+          role="option"
+          aria-selected={index === 0}
+          onClick={() => onSelectRoute(item.route, item)}
           className={className}
-          style={style}
+          style={{
+            width: "100%",
+            textAlign: "left",
+            ...style,
+          }}
         >
           {renderItem ? (
             renderItem(item)
           ) : (
-            <div>
-              <div>{item.label || item.route}</div>
-              {item.description ? <small>{item.description}</small> : null}
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ display: "block", fontWeight: 600 }}>
+                {item.label || item.route}
+              </span>
+
+              {item.description ? (
+                <span style={{ display: "block", opacity: 0.7 }}>
+                  {item.description}
+                </span>
+              ) : null}
+
+              {item.score !== undefined ? (
+                <span style={{ display: "block", opacity: 0.65, fontSize: "0.8em" }}>
+                  Score: {item.score.toFixed(3)}
+                </span>
+              ) : null}
             </div>
           )}
-        </AICommandItem>
+        </button>
       ))}
-    </>
-  )
+    </div>
+  );
 }
 
 async function searchWeaviateRoutes({
@@ -895,6 +850,7 @@ async function searchWeaviateRoutes({
   weaviateApiKey,
   clusterUrl,
   limit,
+  minScore,
   signal,
 }: {
   query: string;
@@ -902,6 +858,7 @@ async function searchWeaviateRoutes({
   weaviateApiKey: string;
   clusterUrl?: string;
   limit: number;
+  minScore: number;
   signal?: AbortSignal;
 }): Promise<WeaviateRouteResult[]> {
   const normalizedUrl =
@@ -916,12 +873,19 @@ async function searchWeaviateRoutes({
     {
       Get {
         Routes(
-          hybrid: { query: ${escapedQuery} }
+          hybrid: {
+            query: ${escapedQuery}
+            alpha: 1
+          }
           limit: ${limit}
         ) {
           path
           label
           description
+          _additional {
+            score
+            explainScore
+          }
         }
       }
     }
@@ -950,6 +914,10 @@ async function searchWeaviateRoutes({
           path?: unknown;
           label?: unknown;
           description?: unknown;
+          _additional?: {
+            score?: string | number;
+            explainScore?: string;
+          };
         }>;
       };
     };
@@ -963,11 +931,23 @@ async function searchWeaviateRoutes({
 
   return (data.data?.Get?.Routes ?? [])
     .map((row) => ({
-      route: row.path,
-      label: row.label,
-      description: row.description,
+      route: stringOrEmpty(row.path),
+      label: stringOrEmpty(row.label),
+      description: stringOrEmpty(row.description),
+      score: numberOrUndefined(row._additional?.score),
+      explainScore: row._additional?.explainScore,
     }))
-    .filter((item) => item.route);
+    .filter((item) => item.route && item.score !== undefined && item.score >= minScore)
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+}
+
+function stringOrEmpty(value: unknown): string {
+  return String(value ?? "").trim();
+}
+
+function numberOrUndefined(value: unknown): number | undefined {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : undefined;
 }
 
 export const AICommand = {
