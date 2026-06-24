@@ -25,6 +25,7 @@ export type {
   CommandDialogLabels,
   CommandDialogProps,
 } from "./command-dialog";
+export { aiCommandAttributes, commandDialogAttributes } from "./data-attributes";
 export { matchItems, resolveIntent } from "./matcher";
 export type { MatchItemsOptions, ResolveIntentOptions } from "./matcher";
 export { findDirectCommandMatch } from "./local-matcher";

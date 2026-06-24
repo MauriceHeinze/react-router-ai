@@ -79,9 +79,9 @@ function DefaultMicrophoneIcon(props: SVGProps<SVGSVGElement>) {
 function defaultRenderItem(item: AICommandItem) {
   return (
     <>
-      <span className="command-dialog-item-value">{item.value}</span>
+      <span ai-command-dialog-item-value="">{item.value}</span>
       {item.description ? (
-        <span className="command-dialog-item-description">{item.description}</span>
+        <span ai-command-dialog-item-description="">{item.description}</span>
       ) : null}
     </>
   );
@@ -90,9 +90,9 @@ function defaultRenderItem(item: AICommandItem) {
 function defaultRenderWeaviateItem(item: WeaviateRouteResult) {
   return (
     <>
-      <span className="command-dialog-item-value">{item.label || item.route}</span>
+      <span ai-command-dialog-item-value="">{item.label || item.route}</span>
       {item.description ? (
-        <span className="command-dialog-item-description">{item.description}</span>
+        <span ai-command-dialog-item-description="">{item.description}</span>
       ) : null}
     </>
   );
@@ -128,9 +128,11 @@ function CommandDialogContent({
   const isVoiceMode = mode === "voice";
   const isSearchMode = mode === "search";
 
-  const searchIcon = icons.search ?? <DefaultSearchIcon className="command-dialog-search-icon" />;
+  const searchIcon = icons.search ?? (
+    <DefaultSearchIcon ai-command-dialog-search-icon="" />
+  );
   const microphoneIcon = icons.microphone ?? (
-    <DefaultMicrophoneIcon className="command-dialog-mic-icon" />
+    <DefaultMicrophoneIcon ai-command-dialog-mic-icon="" />
   );
 
   useEffect(() => {
@@ -180,10 +182,16 @@ function CommandDialogContent({
   }, [isListening, isVoiceMode, onOpenChange, startListening, stopListening]);
 
   return (
-    <div className="command-dialog-overlay" onClick={() => onOpenChange(false)}>
-      <div className="command-dialog" onClick={(event) => event.stopPropagation()}>
+    <div
+      ai-command-dialog-overlay=""
+      onClick={() => onOpenChange(false)}
+    >
+      <div
+        ai-command-dialog=""
+        onClick={(event) => event.stopPropagation()}
+      >
         {!isSearchMode ? (
-          <div className="command-dialog-registry" aria-hidden="true">
+          <div ai-command-dialog-registry="" aria-hidden="true">
             <AICommand.List>
               {items.map((item) => (
                 <AICommand.Item key={item.id} {...item} onSelect={async () => item.onSelect()}>
@@ -195,28 +203,28 @@ function CommandDialogContent({
         ) : null}
 
         {isSearchMode ? (
-          <div className="command-dialog-search">
-            <div className="command-dialog-search-input-wrap">
+          <div ai-command-dialog-search="">
+            <div ai-command-dialog-search-input-wrap="">
               {searchIcon}
 
               <AICommand.Input
                 autoFocus
                 placeholder={searchPlaceholder}
-                className="command-dialog-input"
+                ai-command-dialog-input=""
               />
             </div>
 
-            <div className="command-dialog-body">
-              <AICommand.Loading className="command-dialog-loader">
-                <span className="command-dialog-spinner" />
+            <div ai-command-dialog-body="">
+              <AICommand.Loading ai-command-dialog-loader="">
+                <span ai-command-dialog-spinner="" />
                 <span>Searching...</span>
               </AICommand.Loading>
 
-              <AICommand.Error className="command-dialog-error" />
+              <AICommand.Error ai-command-dialog-error="" />
 
-              <AICommand.Confirmation className="command-dialog-confirmation" />
+              <AICommand.Confirmation ai-command-dialog-confirmation="" />
 
-              <AICommand.List className="command-dialog-list">
+              <AICommand.List ai-command-dialog-list="">
                 {weaviateUrl && weaviateApiKey && onSelectWeaviateRoute ? (
                   <AICommand.WeaviateRoutes
                     weaviateUrl={weaviateUrl}
@@ -230,7 +238,7 @@ function CommandDialogContent({
                       onSelectWeaviateRoute(route, item);
                       onOpenChange(false);
                     }}
-                    className="command-dialog-item command-dialog-item-weaviate"
+                    ai-command-dialog-item-weaviate=""
                     renderItem={renderWeaviateItem}
                   />
                 ) : null}
@@ -243,116 +251,116 @@ function CommandDialogContent({
                       await item.onSelect();
                       onOpenChange(false);
                     }}
-                    className="command-dialog-item"
+                    ai-command-dialog-item=""
                   >
                     {renderItem(item)}
                   </AICommand.Item>
                 ))}
               </AICommand.List>
 
-              <AICommand.Empty className="command-dialog-empty">{emptyMessage}</AICommand.Empty>
+              <AICommand.Empty ai-command-dialog-empty="">{emptyMessage}</AICommand.Empty>
             </div>
 
-            <div className="command-dialog-footer">
-              <div className="command-dialog-shortcuts" aria-hidden="true">
-                <span className="command-dialog-shortcut">
-                  <span className="command-dialog-keycap">Enter</span>{" "}
+            <div ai-command-dialog-footer="">
+              <div ai-command-dialog-shortcuts="" aria-hidden="true">
+                <span ai-command-dialog-shortcut="">
+                  <span ai-command-dialog-keycap="">Enter</span>{" "}
                   {labels.runShortcut ?? "Run"}
                 </span>
-                <span className="command-dialog-shortcut">
-                  <span className="command-dialog-keycap">↑↓</span>{" "}
+                <span ai-command-dialog-shortcut="">
+                  <span ai-command-dialog-keycap="">↑↓</span>{" "}
                   {labels.moveShortcut ?? "Move"}
                 </span>
-                <span className="command-dialog-shortcut">
-                  <span className="command-dialog-keycap">Esc</span>{" "}
+                <span ai-command-dialog-shortcut="">
+                  <span ai-command-dialog-keycap="">Esc</span>{" "}
                   {labels.closeShortcut ?? "Close"}
                 </span>
               </div>
             </div>
           </div>
         ) : (
-          <div className="command-dialog-chat-panel">
-            <AICommand.Chat
-              className={`command-dialog-chat ${
-                isVoiceMode && ctx.chatMessages.length === 0
-                  ? "command-dialog-chat-voice-empty"
-                  : ""
-              }`}
+          <div ai-command-dialog-chat-panel="">
+            <div
+              ai-command-dialog-chat=""
+              data-voice-empty={isVoiceMode && ctx.chatMessages.length === 0 ? "" : undefined}
             >
-              <AICommand.ChatEmptyPrompt className="command-dialog-voice-prompt">
-                <h2>{voicePrompt}</h2>
-              </AICommand.ChatEmptyPrompt>
+              <AICommand.Chat>
+                <AICommand.ChatEmptyPrompt ai-command-dialog-voice-prompt="">
+                  <h2>{voicePrompt}</h2>
+                </AICommand.ChatEmptyPrompt>
 
-              {ctx.chatMessages.map((message) => (
-                <AICommand.ChatMessage
-                  key={message.id}
-                  message={message}
-                  userLabel={userLabel}
-                  className="command-dialog-chat-message"
-                />
-              ))}
+                {ctx.chatMessages.map((message) => (
+                  <AICommand.ChatMessage
+                    key={message.id}
+                    message={message}
+                    userLabel={userLabel}
+                    ai-command-dialog-chat-message=""
+                  />
+                ))}
 
-              <AICommand.Loading
-                className={
-                  isVoiceMode ? "command-dialog-voice-thinking" : "command-dialog-loader"
-                }
-              >
-                {isVoiceMode ? (
-                  <span className="command-dialog-thinking">
-                    Thinking
-                    <span className="command-dialog-thinking-dots" aria-hidden="true">
-                      <span />
-                      <span />
-                      <span />
+                <AICommand.Loading
+                  ai-command-dialog-loader={isVoiceMode ? undefined : ""}
+                  ai-command-dialog-voice-thinking={isVoiceMode ? "" : undefined}
+                >
+                  {isVoiceMode ? (
+                    <span ai-command-dialog-thinking="">
+                      Thinking
+                      <span ai-command-dialog-thinking-dots="" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                      </span>
                     </span>
-                  </span>
-                ) : (
-                  <>
-                    <span className="command-dialog-spinner" />
-                    <span>Thinking...</span>
-                  </>
-                )}
-              </AICommand.Loading>
+                  ) : (
+                    <>
+                      <span ai-command-dialog-spinner="" />
+                      <span>Thinking...</span>
+                    </>
+                  )}
+                </AICommand.Loading>
 
-              <AICommand.Error className="command-dialog-error" />
+                <AICommand.Error ai-command-dialog-error="" />
 
-              <AICommand.Confirmation className="command-dialog-confirmation" />
+                <AICommand.Confirmation ai-command-dialog-confirmation="" />
 
-              <AICommand.Clarification
-                className="command-dialog-clarification"
-                message={clarificationMessage}
-                itemClassName="command-dialog-clarification-item"
-              />
+                <AICommand.Clarification
+                  ai-command-dialog-clarification=""
+                  message={clarificationMessage}
+                />
 
-              <AICommand.NoMatch
-                className="command-dialog-no-match"
-                onContactSupport={onContactSupport}
-              />
-            </AICommand.Chat>
+                <AICommand.NoMatch
+                  ai-command-dialog-no-match=""
+                  onContactSupport={onContactSupport}
+                />
+              </AICommand.Chat>
+            </div>
 
             {mode === "ai" ? (
-              <div className="command-dialog-chat-input-wrap">
+              <div ai-command-dialog-chat-input-wrap="">
                 <AICommand.ChatInput
                   autoFocus
                   placeholder={chatPlaceholder}
-                  className="command-dialog-chat-input"
+                  ai-command-dialog-chat-input=""
                 />
 
                 <AICommand.VoiceButton
-                  className="command-dialog-chat-mic"
+                  ai-command-dialog-chat-mic=""
                   title="Mic (Ctrl+M)"
                 >
                   {microphoneIcon}
                 </AICommand.VoiceButton>
               </div>
             ) : (
-              <div className="command-dialog-voice-controls">
-                <div className="command-dialog-audio-wave" aria-label="Live microphone waveform">
-                  <AICommand.VoiceWaveform className="command-dialog-audio-wave-renderer" />
+              <div ai-command-dialog-voice-controls="">
+                <div
+                  ai-command-dialog-audio-wave=""
+                  aria-label="Live microphone waveform"
+                >
+                  <AICommand.VoiceWaveform ai-command-dialog-audio-wave-renderer="" />
                 </div>
 
                 <AICommand.VoiceButton
-                  className="command-dialog-voice-mic"
+                  ai-command-dialog-voice-mic=""
                   title={isListening ? "Stop listening" : "Start listening"}
                 >
                   {microphoneIcon}
@@ -360,29 +368,29 @@ function CommandDialogContent({
               </div>
             )}
 
-            <div className="command-dialog-footer">
-              <div className="command-dialog-shortcuts" aria-hidden="true">
+            <div ai-command-dialog-footer="">
+              <div ai-command-dialog-shortcuts="" aria-hidden="true">
                 {isVoiceMode ? (
-                  <span className="command-dialog-shortcut">
-                    <span className="command-dialog-keycap">Space</span>{" "}
+                  <span ai-command-dialog-shortcut="">
+                    <span ai-command-dialog-keycap="">Space</span>{" "}
                     {isListening
                       ? labels.stopRecordingShortcut ?? "Stop Recording"
                       : labels.recordShortcut ?? "Record"}
                   </span>
                 ) : (
-                  <span className="command-dialog-shortcut">
-                    <span className="command-dialog-keycap">Enter</span>{" "}
+                  <span ai-command-dialog-shortcut="">
+                    <span ai-command-dialog-keycap="">Enter</span>{" "}
                     {labels.sendShortcut ?? "Send Message"}
                   </span>
                 )}
 
-                <span className="command-dialog-shortcut">
-                  <span className="command-dialog-keycap">↑↓</span>{" "}
+                <span ai-command-dialog-shortcut="">
+                  <span ai-command-dialog-keycap="">↑↓</span>{" "}
                   {labels.moveShortcut ?? "Move"}
                 </span>
 
-                <span className="command-dialog-shortcut">
-                  <span className="command-dialog-keycap">Esc</span>{" "}
+                <span ai-command-dialog-shortcut="">
+                  <span ai-command-dialog-keycap="">Esc</span>{" "}
                   {labels.closeShortcut ?? "Close"}
                 </span>
               </div>

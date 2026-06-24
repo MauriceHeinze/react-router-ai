@@ -1,5 +1,124 @@
 import type { Dispatch, ReactNode, RefObject, SetStateAction } from "react";
 
+export type WithAICommandAttributes<T> = T & {
+  [key: string]: unknown;
+};
+
+export type AICommandInputProps = WithAICommandAttributes<
+  React.InputHTMLAttributes<HTMLInputElement> & {
+    onValueChange?: (value: string) => void;
+    modeShortcut?: "tab";
+    micShortcut?: "ctrl+m";
+  }
+>;
+
+export type AICommandListProps = WithAICommandAttributes<
+  React.HTMLAttributes<HTMLDivElement> & {
+    children?: ReactNode;
+  }
+>;
+
+export type AICommandItemProps = WithAICommandAttributes<
+  AICommandItem &
+    React.HTMLAttributes<HTMLDivElement> & {
+      children: ReactNode;
+    }
+>;
+
+export type AICommandEmptyProps = WithAICommandAttributes<
+  React.HTMLAttributes<HTMLDivElement> & {
+    children: ReactNode;
+  }
+>;
+
+export type AICommandLoadingProps = WithAICommandAttributes<
+  React.HTMLAttributes<HTMLDivElement> & {
+    children?: ReactNode;
+  }
+>;
+
+export type AICommandErrorProps = WithAICommandAttributes<
+  Omit<React.HTMLAttributes<HTMLDivElement>, "children"> & {
+    children?: (error: string) => ReactNode;
+  }
+>;
+
+export type AICommandConfirmationProps = WithAICommandAttributes<React.HTMLAttributes<HTMLDivElement>>;
+
+export type AICommandVoiceButtonProps = WithAICommandAttributes<
+  React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  }
+>;
+
+export type AICommandModeHeaderProps = WithAICommandAttributes<
+  React.HTMLAttributes<HTMLDivElement> & {
+    searchLabel?: string;
+    aiLabel?: string;
+    voiceLabel?: string;
+    switchLabel?: string;
+    switchKeycap?: string;
+  }
+>;
+
+export type AICommandChatProps = WithAICommandAttributes<
+  React.HTMLAttributes<HTMLDivElement> & {
+    children?: ReactNode;
+  }
+>;
+
+export type AICommandChatMessageProps = WithAICommandAttributes<
+  React.HTMLAttributes<HTMLDivElement> & {
+    message: AICommandChatMessageData;
+    onSelectCandidate?: (item: AICommandItem) => void;
+    userLabel?: string;
+  }
+>;
+
+export type AICommandVoiceWaveformProps = WithAICommandAttributes<
+  React.HTMLAttributes<HTMLDivElement> & {
+    barCount?: number;
+  }
+>;
+
+export type AICommandChatInputProps = WithAICommandAttributes<
+  React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+    onValueChange?: (value: string) => void;
+    modeShortcut?: "tab";
+    micShortcut?: "ctrl+m";
+  }
+>;
+
+export type AICommandClarificationProps = WithAICommandAttributes<
+  React.HTMLAttributes<HTMLDivElement> & {
+    message?: string;
+    onSelect?: (item: AICommandItem) => void;
+    itemClassName?: string;
+    itemStyle?: React.CSSProperties;
+  }
+>;
+
+export type AICommandNoMatchProps = WithAICommandAttributes<
+  React.HTMLAttributes<HTMLDivElement> & {
+    message?: string;
+    rephraseLabel?: string;
+    contactSupportLabel?: string;
+    onContactSupport?: () => void;
+  }
+>;
+
+export type AICommandChatEmptyPromptProps = WithAICommandAttributes<
+  React.HTMLAttributes<HTMLDivElement> & {
+    children?: ReactNode;
+  }
+>;
+
+export type AICommandVoiceEmptyPromptProps = WithAICommandAttributes<
+  React.HTMLAttributes<HTMLDivElement> & {
+    children?: ReactNode;
+  }
+>;
+
 export type AICommandItem = {
   id: string;
   value: string;
@@ -62,143 +181,11 @@ export type AICommandRootProps = {
   initialMode?: AICommandMode;
 };
 
-export type AICommandDialogProps = {
+export type AICommandDialogProps = WithAICommandAttributes<{
   children: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-};
-
-export type AICommandInputProps = {
-  placeholder?: string;
-  value?: string;
-  onValueChange?: (value: string) => void;
-  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-  modeShortcut?: "tab";
-  micShortcut?: "ctrl+m";
-  onFocus?: (event: React.FocusEvent<HTMLInputElement>) => void;
-  onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
-  autoFocus?: boolean;
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandListProps = {
-  children?: ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandItemProps = AICommandItem & {
-  children: ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandEmptyProps = {
-  children: ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandLoadingProps = {
-  children?: ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandErrorProps = {
-  children?: (error: string) => ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandConfirmationProps = {
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandVoiceButtonProps = {
-  children?: ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  title?: string;
-};
-
-export type AICommandModeHeaderProps = {
-  searchLabel?: string;
-  aiLabel?: string;
-  voiceLabel?: string;
-  switchLabel?: string;
-  switchKeycap?: string;
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandChatProps = {
-  children?: ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandChatMessageProps = {
-  message: AICommandChatMessageData;
-  onSelectCandidate?: (item: AICommandItem) => void;
-  userLabel?: string;
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandVoiceWaveformProps = {
-  barCount?: number;
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandChatInputProps = {
-  placeholder?: string;
-  value?: string;
-  onValueChange?: (value: string) => void;
-  onKeyDown?: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  modeShortcut?: "tab";
-  micShortcut?: "ctrl+m";
-  onFocus?: (event: React.FocusEvent<HTMLTextAreaElement>) => void;
-  onBlur?: (event: React.FocusEvent<HTMLTextAreaElement>) => void;
-  autoFocus?: boolean;
-  rows?: number;
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandClarificationProps = {
-  message?: string;
-  onSelect?: (item: AICommandItem) => void;
-  className?: string;
-  style?: React.CSSProperties;
-  itemClassName?: string;
-  itemStyle?: React.CSSProperties;
-};
-
-export type AICommandNoMatchProps = {
-  message?: string;
-  rephraseLabel?: string;
-  contactSupportLabel?: string;
-  onContactSupport?: () => void;
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandChatEmptyPromptProps = {
-  children?: ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-};
-
-export type AICommandVoiceEmptyPromptProps = {
-  children?: ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-};
+}>;
 
 export type AICommandRegistryEntry = {
   id: string;

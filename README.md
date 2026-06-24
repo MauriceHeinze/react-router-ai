@@ -114,7 +114,110 @@ function AppShell() {
 }
 ```
 
-`CommandDialog` renders the same search, AI chat, and voice layouts as the settings demo. It emits stable CSS class names (`command-dialog`, `command-dialog-search`, `command-dialog-chat-panel`, etc.) so you can style it with your own CSS. It also accepts optional `icons`, `labels`, `renderItem`, and Weaviate route props for customization.
+`CommandDialog` renders the same search, AI chat, and voice layouts as the settings demo. It emits stable part attributes (`ai-command-dialog`, `ai-command-dialog-search`, `ai-command-dialog-chat-panel`, etc.) so you can style it with your own CSS. It also accepts optional `icons`, `labels`, `renderItem`, and Weaviate route props for customization.
+
+## Parts and styling
+
+Every `AICommand.*` primitive and every structural element inside `CommandDialog` exposes a stable part attribute. Style them with attribute selectors the same way you would style cmdk parts.
+
+### Primitive attributes
+
+These attributes are rendered by the `AICommand` primitives:
+
+- `ai-command-dialog`
+- `ai-command-input`
+- `ai-command-list`
+- `ai-command-item`
+- `ai-command-empty`
+- `ai-command-loading`
+- `ai-command-error`
+- `ai-command-voice-button`
+- `ai-command-confirmation`
+- `ai-command-mode-header`
+- `ai-command-chat`
+- `ai-command-chat-input`
+- `ai-command-chat-message`
+- `ai-command-clarification`
+- `ai-command-clarification-item`
+- `ai-command-no-match`
+- `ai-command-voice-waveform`
+- `ai-command-voice-empty-prompt`
+- `ai-command-chat-empty-prompt`
+- `ai-command-weaviate-routes`
+
+Selected items carry `data-selected="true"`. Chat messages carry `data-role="user"` or `data-role="assistant"`.
+
+### CommandDialog attributes
+
+These attributes are rendered by the drop-in `CommandDialog` component:
+
+- `ai-command-dialog-overlay`
+- `ai-command-dialog`
+- `ai-command-dialog-search`
+- `ai-command-dialog-search-input-wrap`
+- `ai-command-dialog-search-icon`
+- `ai-command-dialog-input`
+- `ai-command-dialog-body`
+- `ai-command-dialog-loader`
+- `ai-command-dialog-spinner`
+- `ai-command-dialog-error`
+- `ai-command-dialog-confirmation`
+- `ai-command-dialog-list`
+- `ai-command-dialog-item`
+- `ai-command-dialog-item-weaviate`
+- `ai-command-dialog-item-value`
+- `ai-command-dialog-item-description`
+- `ai-command-dialog-empty`
+- `ai-command-dialog-footer`
+- `ai-command-dialog-shortcuts`
+- `ai-command-dialog-shortcut`
+- `ai-command-dialog-keycap`
+- `ai-command-dialog-chat-panel`
+- `ai-command-dialog-chat`
+- `ai-command-dialog-voice-prompt`
+- `ai-command-dialog-chat-message`
+- `ai-command-dialog-voice-thinking`
+- `ai-command-dialog-thinking`
+- `ai-command-dialog-thinking-dots`
+- `ai-command-dialog-clarification`
+- `ai-command-dialog-no-match`
+- `ai-command-dialog-chat-input-wrap`
+- `ai-command-dialog-chat-input`
+- `ai-command-dialog-chat-mic`
+- `ai-command-dialog-voice-controls`
+- `ai-command-dialog-audio-wave`
+- `ai-command-dialog-audio-wave-renderer`
+- `ai-command-dialog-voice-mic`
+- `ai-command-dialog-mic-icon`
+
+### Example
+
+```css
+[ai-command-dialog-overlay] {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+[ai-command-dialog] {
+  width: min(420px, 100%);
+  background: white;
+  border-radius: 12px;
+}
+
+[ai-command-dialog-item][data-selected="true"] {
+  background: rgba(59, 130, 246, 0.1);
+}
+```
+
+The constants are also exported for type-safe references:
+
+```ts
+import { aiCommandAttributes, commandDialogAttributes } from "react-router-ai";
+
+aiCommandAttributes.item; // "ai-command-item"
+commandDialogAttributes.input; // "ai-command-dialog-input"
+```
 
 ## Modes
 

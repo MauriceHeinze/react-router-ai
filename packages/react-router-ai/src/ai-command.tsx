@@ -27,12 +27,14 @@ import type {
   AICommandVoiceButtonProps,
   AICommandVoiceEmptyPromptProps,
   AICommandVoiceWaveformProps,
+  WithAICommandAttributes,
 } from "./types";
 
 export function AICommandDialog({
   children,
   open: controlledOpen,
   onOpenChange,
+  ...rest
 }: PropsWithChildren<AICommandDialogProps>) {
   const ctx = useAICommand();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
@@ -93,7 +95,13 @@ export function AICommandDialog({
   if (!open) return null;
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Command palette">
+    <div
+      {...(rest as React.HTMLAttributes<HTMLDivElement>)}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Command palette"
+      ai-command-dialog=""
+    >
       {children}
     </div>
   );
@@ -104,6 +112,7 @@ export function AICommandInput({
   value: controlledValue,
   onValueChange,
   onKeyDown,
+  onChange,
   modeShortcut,
   micShortcut,
   onFocus,
@@ -111,6 +120,7 @@ export function AICommandInput({
   autoFocus,
   className,
   style,
+  ...rest
 }: AICommandInputProps) {
   // Shortcuts are disabled while voice mode is disabled.
   void modeShortcut;
@@ -133,6 +143,7 @@ export function AICommandInput({
       ctx.setQuery(nextValue);
     }
     onValueChange?.(nextValue);
+    onChange?.(event);
   }
 
   function handleKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
@@ -192,6 +203,7 @@ export function AICommandInput({
 
   return (
     <input
+      {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
       ref={inputRef}
       type="text"
       value={value}
@@ -203,13 +215,26 @@ export function AICommandInput({
       aria-label="Command query"
       className={className}
       style={style}
+      ai-command-input=""
     />
   );
 }
 
-export function AICommandList({ children, className, style }: PropsWithChildren<AICommandListProps>) {
+export function AICommandList({
+  children,
+  className,
+  style,
+  ...rest
+}: PropsWithChildren<AICommandListProps>) {
   return (
-    <div role="listbox" aria-label="Commands" className={className} style={style}>
+    <div
+      {...(rest as React.HTMLAttributes<HTMLDivElement>)}
+      role="listbox"
+      aria-label="Commands"
+      className={className}
+      style={style}
+      ai-command-list=""
+    >
       {children}
     </div>
   );
@@ -226,6 +251,8 @@ export function AICommandItem({
   children,
   className,
   style,
+  onClick,
+  ...rest
 }: PropsWithChildren<AICommandItemProps>) {
   const ctx = useAICommand();
   const itemRef = useRef({ id, value, keywords, description, disabled, confirmation, onSelect });
@@ -242,23 +269,34 @@ export function AICommandItem({
 
   return (
     <div
+      {...(rest as React.HTMLAttributes<HTMLDivElement>)}
       role="option"
       aria-selected={isSelected}
       aria-disabled={disabled}
-      onClick={() => void ctx.selectItem(itemRef.current)}
+      onClick={(event) => {
+        onClick?.(event);
+        void ctx.selectItem(itemRef.current);
+      }}
       className={className}
       style={{ ...style, order: index }}
+      ai-command-item=""
+      data-selected={isSelected || undefined}
     >
       {children}
     </div>
   );
 }
 
-export function AICommandEmpty({ children, className, style }: PropsWithChildren<AICommandEmptyProps>) {
+export function AICommandEmpty({
+  children,
+  className,
+  style,
+  ...rest
+}: PropsWithChildren<AICommandEmptyProps>) {
   const ctx = useAICommand();
   if (ctx.isSubmitting || ctx.filteredItems.length > 0) return null;
   return (
-    <div role="status" className={className} style={style}>
+    <div {...(rest as React.HTMLAttributes<HTMLDivElement>)} role="status" className={className} style={style} ai-command-empty="">
       {children}
     </div>
   );
@@ -268,21 +306,29 @@ export function AICommandLoading({
   children,
   className,
   style,
+  ...rest
 }: PropsWithChildren<AICommandLoadingProps>) {
   const ctx = useAICommand();
   if (!ctx.isSubmitting) return null;
   return (
-    <div role="status" aria-busy="true" className={className} style={style}>
+    <div
+      {...(rest as React.HTMLAttributes<HTMLDivElement>)}
+      role="status"
+      aria-busy="true"
+      className={className}
+      style={style}
+      ai-command-loading=""
+    >
       {children ?? "Loading..."}
     </div>
   );
 }
 
-export function AICommandError({ children, className, style }: AICommandErrorProps) {
+export function AICommandError({ children, className, style, ...rest }: AICommandErrorProps) {
   const ctx = useAICommand();
   if (!ctx.error) return null;
   return (
-    <div role="alert" className={className} style={style}>
+    <div {...(rest as React.HTMLAttributes<HTMLDivElement>)} role="alert" className={className} style={style} ai-command-error="">
       {children ? children(ctx.error) : ctx.error}
     </div>
   );
@@ -294,12 +340,14 @@ export function AICommandVoiceButton({
   title,
   className,
   style,
+  ...rest
 }: PropsWithChildren<AICommandVoiceButtonProps>) {
   const ctx = useAICommand();
   if (ctx.isListening) return null;
 
   return (
     <button
+      {...(rest as React.ButtonHTMLAttributes<HTMLButtonElement>)}
       type="button"
       aria-pressed={false}
       title={title}
@@ -309,13 +357,18 @@ export function AICommandVoiceButton({
       }}
       className={className}
       style={style}
+      ai-command-voice-button=""
     >
       {children ?? "Use voice"}
     </button>
   );
 }
 
-export function AICommandConfirmation({ className, style }: AICommandConfirmationProps) {
+export function AICommandConfirmation({
+  className,
+  style,
+  ...rest
+}: AICommandConfirmationProps) {
   const ctx = useAICommand();
   if (!ctx.pendingConfirmation) return null;
 
@@ -325,7 +378,7 @@ export function AICommandConfirmation({ className, style }: AICommandConfirmatio
       : `Confirm "${ctx.pendingConfirmation.item.value}"?`;
 
   return (
-    <div className={className} style={style}>
+    <div {...(rest as React.HTMLAttributes<HTMLDivElement>)} className={className} style={style} ai-command-confirmation="">
       <p style={{ margin: "0 0 10px" }}>{message}</p>
       <div style={{ display: "flex", gap: 8 }}>
         <button type="button" onClick={() => void ctx.confirmPending()}>
@@ -342,24 +395,32 @@ export function AICommandConfirmation({ className, style }: AICommandConfirmatio
 export function AICommandModeHeader({
   className,
   style,
+  ...rest
 }: AICommandModeHeaderProps) {
   return (
-    <div className={className} style={style}>
+    <div {...(rest as React.HTMLAttributes<HTMLDivElement>)} className={className} style={style} ai-command-mode-header="">
       <div style={{ display: "flex", alignItems: "center", gap: 8 }} />
     </div>
   );
 }
 
-export function AICommandChat({ children, className, style }: PropsWithChildren<AICommandChatProps>) {
+export function AICommandChat({
+  children,
+  className,
+  style,
+  ...rest
+}: PropsWithChildren<AICommandChatProps>) {
   const ctx = useAICommand();
   return (
     <div
+      {...(rest as React.HTMLAttributes<HTMLDivElement>)}
       role="log"
       aria-label="AI chat"
       aria-live="polite"
       aria-busy={ctx.isSubmitting || undefined}
       className={className}
       style={style}
+      ai-command-chat=""
     >
       {children}
     </div>
@@ -372,6 +433,7 @@ export function AICommandChatMessage({
   userLabel = "Your Request",
   className,
   style,
+  ...rest
 }: AICommandChatMessageProps) {
   const ctx = useAICommand();
   const isUser = message.role === "user";
@@ -384,10 +446,12 @@ export function AICommandChatMessage({
   };
   return (
     <div
+      {...(rest as React.HTMLAttributes<HTMLDivElement>)}
       role={isUser ? "user" : "assistant"}
       data-role={message.role}
       className={className}
       style={style}
+      ai-command-chat-message=""
     >
       {isUser && userLabel ? (
         <p style={{ margin: "0 0 4px", fontWeight: 600, fontSize: "0.9rem" }}>{userLabel}</p>
@@ -414,6 +478,7 @@ export function AICommandChatInput({
   value: controlledValue,
   onValueChange,
   onKeyDown,
+  onChange,
   modeShortcut,
   micShortcut,
   onFocus,
@@ -422,6 +487,7 @@ export function AICommandChatInput({
   rows = 2,
   className,
   style,
+  ...rest
 }: AICommandChatInputProps) {
   // Shortcuts are disabled while voice mode is disabled.
   void modeShortcut;
@@ -444,13 +510,14 @@ export function AICommandChatInput({
       ctx.setChatInput(nextValue);
     }
     onValueChange?.(nextValue);
+    onChange?.(event);
   }
 
   function handleKeyDown(event: ReactKeyboardEvent<HTMLTextAreaElement>) {
     // if (event.key === "Enter" && !event.shiftKey) {
     //   event.preventDefault();
     //   void ctx.submitChat();
-    // } 
+    // }
     if (event.key === "Escape") {
       event.preventDefault();
       ctx.closeDialog();
@@ -489,6 +556,7 @@ export function AICommandChatInput({
 
   return (
     <textarea
+      {...(rest as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
       ref={inputRef}
       rows={rows}
       value={value}
@@ -500,6 +568,7 @@ export function AICommandChatInput({
       aria-label="AI chat input"
       className={className}
       style={style}
+      ai-command-chat-input=""
     />
   );
 }
@@ -511,11 +580,19 @@ export function AICommandClarification({
   style,
   itemClassName,
   itemStyle,
+  ...rest
 }: AICommandClarificationProps) {
   const ctx = useAICommand();
   if (!ctx.candidates || ctx.candidates.length === 0) return null;
   return (
-    <div role="group" aria-label="Clarification" className={className} style={style}>
+    <div
+      {...(rest as React.HTMLAttributes<HTMLDivElement>)}
+      role="group"
+      aria-label="Clarification"
+      className={className}
+      style={style}
+      ai-command-clarification=""
+    >
       <p style={{ margin: "0 0 8px" }}>{message}</p>
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
         {ctx.candidates.map((item) => (
@@ -524,6 +601,7 @@ export function AICommandClarification({
               type="button"
               className={itemClassName}
               style={itemStyle}
+              ai-command-clarification-item=""
               onClick={() => {
                 if (onSelect) {
                   onSelect(item);
@@ -546,11 +624,12 @@ export function AICommandVoiceEmptyPrompt({
   children,
   className,
   style,
+  ...rest
 }: PropsWithChildren<AICommandVoiceEmptyPromptProps>) {
   const ctx = useAICommand();
   if (ctx.mode !== "voice" || ctx.chatMessages.length > 0 || ctx.isSubmitting) return null;
   return (
-    <div className={className} style={style}>
+    <div {...(rest as React.HTMLAttributes<HTMLDivElement>)} className={className} style={style} ai-command-voice-empty-prompt="">
       {children}
     </div>
   );
@@ -560,11 +639,12 @@ export function AICommandChatEmptyPrompt({
   children,
   className,
   style,
+  ...rest
 }: PropsWithChildren<AICommandChatEmptyPromptProps>) {
   const ctx = useAICommand();
   if (ctx.mode === "search" || ctx.chatMessages.length > 0 || ctx.isSubmitting) return null;
   return (
-    <div className={className} style={style}>
+    <div {...(rest as React.HTMLAttributes<HTMLDivElement>)} className={className} style={style} ai-command-chat-empty-prompt="">
       {children}
     </div>
   );
@@ -665,12 +745,20 @@ function VoiceWaveformCanvas({ mediaRecorder }: { mediaRecorder: MediaRecorder }
 export function AICommandVoiceWaveform({
   className,
   style,
+  ...rest
 }: AICommandVoiceWaveformProps) {
   const ctx = useAICommand();
   if (!ctx.isListening) return null;
 
   return (
-    <div className={className} style={style} aria-label="Voice waveform" aria-busy="true">
+    <div
+      {...(rest as React.HTMLAttributes<HTMLDivElement>)}
+      className={className}
+      style={style}
+      aria-label="Voice waveform"
+      aria-busy="true"
+      ai-command-voice-waveform=""
+    >
       {ctx.mediaRecorder ? (
         <VoiceWaveformCanvas mediaRecorder={ctx.mediaRecorder} />
       ) : null}
@@ -685,6 +773,7 @@ export function AICommandNoMatch({
   onContactSupport,
   className,
   style,
+  ...rest
 }: AICommandNoMatchProps) {
   const ctx = useAICommand();
   const lastMessage = ctx.chatMessages[ctx.chatMessages.length - 1];
@@ -697,7 +786,7 @@ export function AICommandNoMatch({
   const supportHandler = onContactSupport ?? ctx.onContactSupport;
 
   return (
-    <div role="status" className={className} style={style}>
+    <div {...(rest as React.HTMLAttributes<HTMLDivElement>)} role="status" className={className} style={style} ai-command-no-match="">
       <p style={{ margin: 0 }}>{message}</p>
       <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
         {rephraseLabel ? <span>{rephraseLabel}</span> : null}
@@ -719,7 +808,7 @@ export type WeaviateRouteResult = {
   explainScore?: string;
 };
 
-export type WeaviateRoutesProps = {
+export type WeaviateRoutesProps = WithAICommandAttributes<{
   weaviateUrl: string;
   weaviateApiKey: string;
   clusterUrl?: string;
@@ -731,7 +820,7 @@ export type WeaviateRoutesProps = {
   renderItem?: (item: WeaviateRouteResult) => React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
-};
+}>;
 
 export function AICommandWeaviateRoutes({
   weaviateUrl,
@@ -745,6 +834,7 @@ export function AICommandWeaviateRoutes({
   renderItem,
   className,
   style,
+  ...rest
 }: WeaviateRoutesProps) {
   const ctx = useAICommand();
   const [routes, setRoutes] = useState<WeaviateRouteResult[]>([]);
@@ -804,7 +894,13 @@ export function AICommandWeaviateRoutes({
 
   if (error) {
     return (
-      <div role="alert" className={className} style={style}>
+      <div
+        {...(rest as React.HTMLAttributes<HTMLDivElement>)}
+        role="alert"
+        className={className}
+        style={style}
+        ai-command-weaviate-routes=""
+      >
         {error}
       </div>
     );
@@ -822,6 +918,7 @@ export function AICommandWeaviateRoutes({
           onSelect={() => onSelectRoute(item.route, item)}
           className={className}
           style={style}
+          {...rest}
         >
           {renderItem ? (
             renderItem(item)
