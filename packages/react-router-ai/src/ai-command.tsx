@@ -798,24 +798,17 @@ export function AICommandWeaviateRoutes({
   }
 
   return (
-    <div
-      role="listbox"
-      aria-label="Weaviate route results"
-      style={{ display: "flex", flexDirection: "column", gap: 8 }}
-    >
+    <>
       {routes.map((item, index) => (
-        <button
+        <AICommandItem
           key={`weaviate:${item.route}:${index}`}
-          type="button"
-          role="option"
-          aria-selected={index === 0}
-          onClick={() => onSelectRoute(item.route, item)}
+          id={`weaviate:${item.route}:${index}`}
+          value={item.label || item.route}
+          description={item.description}
+          keywords={[query, item.route, item.label, item.description].filter(Boolean)}
+          onSelect={() => onSelectRoute(item.route, item)}
           className={className}
-          style={{
-            width: "100%",
-            textAlign: "left",
-            ...style,
-          }}
+          style={style}
         >
           {renderItem ? (
             renderItem(item)
@@ -838,9 +831,9 @@ export function AICommandWeaviateRoutes({
               ) : null}
             </div>
           )}
-        </button>
+        </AICommandItem>
       ))}
-    </div>
+    </>
   );
 }
 
