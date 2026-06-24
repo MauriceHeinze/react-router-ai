@@ -2,10 +2,21 @@ import type { AICommandMatcher } from './types'
 
 type GraphQlRow = Record<string, unknown>
 
+type WeaviateAdditional = {
+  score?: string | number
+  explainScore?: string
+}
+
+type ScoredGraphQlRow = GraphQlRow & {
+  _additional?: WeaviateAdditional
+}
+
 type WeaviateRouteResult = {
   route: string
   label: string
   description: string
+  score?: number
+  explainScore?: string
 }
 
 // weaviate + openai
@@ -40,10 +51,41 @@ export function createWeaviateCommandMatcher(options: {
     return matched ? { kind: 'execute', item: matched } : { kind: 'no-match' }
   }
 
-  async function queryWeaviateRoutes(command: string, limit = 10): Promise<GraphQlRow[]> {
+  async function queryWeaviateRoutes(command: string, limit = 10): Promise<ScoredGraphQlRow[]> {
     const escaped = JSON.stringify(command)
-    const query = `{ Get { Routes(hybrid: { query: ${escaped} }, limit: ${limit}) { commandId label description path actionType section stateKey setValue recordType phrasesKeywords _additional { score explainScore } } } }`
 
+    // MEANING OF ALPHA:
+    // 0.0 = pure keyword/BM25
+    // 0.5 = balanced hybrid
+    // 1.0 = pure vector
+    const query = `
+    {
+      Get {
+        Routes(
+          hybrid: {
+            query: ${escaped}
+            alpha: 1
+          }
+          limit: ${limit}
+        ) {
+          commandId
+          label
+          description
+          path
+          actionType
+          section
+          stateKey
+          setValue
+          recordType
+          phrasesKeywords
+          _additional {
+            score
+            explainScore
+          }
+        }
+      }
+    }
+    `
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${options.weaviateApiKey}`,
@@ -62,7 +104,7 @@ export function createWeaviateCommandMatcher(options: {
     }
 
     const data = (await response.json()) as {
-      data?: { Get?: { Routes?: GraphQlRow[] } }
+      data?: { Get?: { Routes?: ScoredGraphQlRow[] } }
       errors?: Array<{ message: string }>
     }
 
@@ -142,6 +184,10 @@ export function createWeaviateRouteSearch(options: {
             path
             label
             description
+            _additional {
+              score
+              explainScore
+            }
           }
         }
       }
@@ -165,7 +211,7 @@ export function createWeaviateRouteSearch(options: {
     const data = (await response.json()) as {
       data?: {
         Get?: {
-          Routes?: GraphQlRow[]
+          Routes?: ScoredGraphQlRow[]
         }
       }
       errors?: Array<{ message: string }>
@@ -181,20 +227,22 @@ export function createWeaviateRouteSearch(options: {
         route: stringOrEmpty(row.path),
         label: stringOrEmpty(row.label),
         description: stringOrEmpty(row.description),
+        score: numberOrUndefined(row._additional?.score),
+        explainScore: row._additional?.explainScore,
       }))
       .filter((item) => item.route)
   }
 }
 
-function buildCsv(objects: GraphQlRow[]): string {
+function buildCsv(objects: ScoredGraphQlRow[]): string {
   const rows = objects.map(rowFromGraphQl).join('\n')
   return [
-    'commandId,actionType,section,target,description,phrases',
+    'commandId,score,actionType,section,target,description,phrases',
     rows,
   ].join('\n')
 }
 
-function rowFromGraphQl(row: GraphQlRow): string {
+function rowFromGraphQl(row: ScoredGraphQlRow): string {
   const path = stringOrEmpty(row.path)
   const stateKey = stringOrEmpty(row.stateKey)
   const target =
@@ -207,6 +255,7 @@ function rowFromGraphQl(row: GraphQlRow): string {
 
   return [
     cleanCsvText(row.commandId),
+    cleanCsvText(row._additional?.score),
     cleanCsvText(row.actionType),
     cleanCsvText(row.section),
     cleanCsvText(target),
@@ -228,6 +277,7 @@ rules = [
   "Prefer navigation candidates when the user wants to open, go to, check, view, or manage a page.",
   "Prefer field or set_value candidates when the user wants to change, enable, disable, update, or set something.",
   "Use the commandId as identifier.",
+  "Use the score column as the retrieval confidence from Weaviate. Higher is better, but still reject bad semantic matches.",
 ]
 
 return = "JSON only: { commandId: string | null, confidence: number }"
@@ -250,4 +300,9 @@ function cleanCsvText(value: unknown): string {
 
 function stringOrEmpty(value: unknown): string {
   return String(value ?? '').trim()
+}
+
+function numberOrUndefined(value: unknown): number | undefined {
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : undefined
 }

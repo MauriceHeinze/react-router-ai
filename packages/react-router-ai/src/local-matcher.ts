@@ -87,6 +87,8 @@ export function findBestFuzzyMatch(
     return null;
   }
 
+  console.log("hallo")
+
   const fuse = buildFuse(activeItems);
   const results = fuse.search(trimmed);
   const best = results[0];
