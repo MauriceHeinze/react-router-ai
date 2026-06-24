@@ -7,7 +7,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PropsWithChildren,
 } from "react";
-import { AICommandRoot, useAICommand } from "./controller";
+import { AICommandRoot, useAICommand } from "./command-controller";
 import type {
   AICommandChatEmptyPromptProps,
   AICommandChatInputProps,
@@ -157,14 +157,14 @@ export function AICommandInput({
           (current - 1 + Math.max(ctx.filteredItems.length, 1)) %
           Math.max(ctx.filteredItems.length, 1),
       );
-    } else if (event.key === "Enter") {
-      event.preventDefault();
-      const item = ctx.filteredItems[ctx.activeIndex];
-      if (item) {
-        void ctx.selectItem(item);
-      } else if (ctx.hasMatcher) {
-        void ctx.submitMatcherQuery();
-      }
+    // } else if (event.key === "Enter") {
+    //   event.preventDefault();
+    //   const item = ctx.filteredItems[ctx.activeIndex];
+    //   if (item) {
+    //     void ctx.selectItem(item);
+    //   } else if (ctx.hasMatcher) {
+    //     void ctx.submitMatcherQuery();
+    //   }
     } else if (event.key === "Escape") {
       event.preventDefault();
       ctx.closeDialog();

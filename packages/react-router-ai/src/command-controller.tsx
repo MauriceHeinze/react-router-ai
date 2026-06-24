@@ -9,7 +9,7 @@ import {
   type PropsWithChildren,
   type RefObject,
 } from "react";
-import { matchItems, resolveIntent } from "./matcher";
+import { matchItems, resolveIntent } from "./command-matcher";
 import { findDirectCommandMatch } from "./local-matcher";
 import { createSpeechRecognizer } from "./speech";
 import { useCommandRegistry, useRegisteredItems } from "./registry";

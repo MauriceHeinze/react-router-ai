@@ -1,8 +1,10 @@
 import { useEffect, type ReactNode, type SVGProps } from "react";
-import { AICommand } from "./ai-command";
-import { useAICommand } from "./controller";
+import { AICommand } from "./command";
+import { useAICommand } from "./command-controller";
 import type { AICommandItem } from "./types";
-import type { WeaviateRouteResult } from "./ai-command";
+import type { WeaviateRouteResult } from "./command";
+// @ts-ignore: allow importing CSS side-effect in environments without ambient type declarations
+import './command-dialog.css';
 
 export type { WeaviateRouteResult as AICommandWeaviateRouteResult };
 

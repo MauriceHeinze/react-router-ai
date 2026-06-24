@@ -1,4 +1,4 @@
-/* [ai-command-dialog-overlay] {
+[ai-command-dialog-overlay] {
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -10,7 +10,7 @@
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
 }
-*/
+
 [ai-command-dialog] {
   width: min(420px, 100%);
   height: min(520px, calc(100vh - 32px));
@@ -20,9 +20,7 @@
   box-shadow: none;
   display: flex;
   flex-direction: column;
-} 
-
-/*
+}
 
 [ai-command-dialog-header] {
   display: flex;
@@ -618,4 +616,4 @@
   [ai-command-dialog-footer] {
     padding: 6px 12px 10px;
   }
-} */
+}

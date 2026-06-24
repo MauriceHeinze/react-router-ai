@@ -1,4 +1,4 @@
-export { AICommandRoot, useAICommand } from "./controller";
+export { AICommandRoot, useAICommand } from "./command-controller.tsx";
 export {
   AICommand,
   AICommandChat,
@@ -16,18 +16,18 @@ export {
   AICommandNoMatch,
   AICommandVoiceButton,
   AICommandVoiceWaveform,
-} from "./ai-command";
+} from "./command.tsx";
 export { createWeaviateCommandMatcher } from "./semantic-command-matcher.ts.ts";
-export { CommandDialog } from "./command-dialog";
+export { CommandDialog } from "./command-dialog.tsx";
 export type {
   AICommandWeaviateRouteResult,
   CommandDialogIcons,
   CommandDialogLabels,
   CommandDialogProps,
-} from "./command-dialog";
+} from "./command-dialog.tsx";
 export { aiCommandAttributes, commandDialogAttributes } from "./data-attributes";
-export { matchItems, resolveIntent } from "./matcher";
-export type { MatchItemsOptions, ResolveIntentOptions } from "./matcher";
+export { matchItems, resolveIntent } from "./command-matcher.ts";
+export type { MatchItemsOptions, ResolveIntentOptions } from "./command-matcher.ts";
 export { findDirectCommandMatch } from "./local-matcher";
 export type {
   AICommandChatEmptyPromptProps,
