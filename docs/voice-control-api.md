@@ -63,7 +63,7 @@ Headless UI primitives with `className`/`style` pass-through. The host app owns 
 
 The dialog has three modes controlled by `AICommand.ModeHeader`:
 
-- **Search mode** uses Fuse.js fuzzy matching over the registered command catalog. Typing filters and ranks; Enter runs the top match; the mic fills the search field and submits.
+- **Search mode** filters the registered command catalog by simple substring matches against `value`, `keywords`, and `description`. Enter runs the top match; the mic fills the search field and submits.
 - **Text Chat** is a chat window. Each user message is sent (single-shot, no conversation history) to the configured matcher. The library renders the assistant response, including inline candidate buttons when the matcher returns `clarify`. Switching from search to text chat seeds the chat input with the current search query; switching back seeds the search query from the chat input.
 - **Voice Chat** shows a waveform visualization while listening, renders interim speech text as the user talks, and submits the final transcript once the browser's speech recognizer detects a pause. The user can also switch to voice chat via Tab to see the waveform UI without auto-starting listening.
 
@@ -103,8 +103,9 @@ This is a **breaking change** from the previous matcher contract, which returned
 
 ## Matching Rules
 
-- Search mode uses Fuse.js fuzzy matching as the first pass (keys: `value`, `keywords`, `description`).
-- AI mode sends the user's message to the matcher directly; Fuse is not consulted.
+- Search mode filters by simple substring matches (keys: `value`, `keywords`, `description`).
+- AI mode sends the user's message to the matcher directly.
+- When no matcher is configured, command resolution falls back to a fuzzy match against the registered command catalog.
 - When the matcher returns multiple matches, the library shows candidates instead of guessing.
 - When the matcher returns zero matches, the library shows a no-match state with a rephrase prompt and optional support contact.
 - Risky actions are gated by `confirmation` on the command, or by `needsApproval` on the matcher result.

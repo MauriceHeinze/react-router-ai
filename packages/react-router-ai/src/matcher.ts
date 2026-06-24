@@ -1,4 +1,4 @@
-import { rankCommandItems } from "./local-matcher";
+import { findBestFuzzyMatch } from "./local-matcher";
 import type {
   AICommandItem,
   AICommandMatch,
@@ -10,7 +10,6 @@ export type MatchItemsOptions = {
   matcher?: AICommandMatcher;
   threshold?: number;
   maxMatcherCandidates?: number;
-  forceMatcher?: boolean;
 };
 
 export type ResolveIntentOptions = {
@@ -43,10 +42,9 @@ function matchLocalItems(
   items: readonly AICommandItem[],
   threshold: number,
 ): AICommandMatch | null {
-  const ranked = rankCommandItems(query, items);
-  const bestLocal = ranked[0];
+  const bestLocal = findBestFuzzyMatch(query, items, threshold);
 
-  if (bestLocal && bestLocal.confidence >= threshold) {
+  if (bestLocal) {
     return {
       item: bestLocal,
       query,
@@ -63,11 +61,7 @@ export async function matchItems(
   items: readonly AICommandItem[],
   options: MatchItemsOptions = {},
 ): Promise<AICommandMatch | null> {
-  const {
-    matcher,
-    threshold = 0.45,
-    maxMatcherCandidates,
-  } = options;
+  const { matcher, threshold = 0.45, maxMatcherCandidates } = options;
 
   const trimmed = query.trim();
   if (!trimmed) return null;
@@ -75,26 +69,22 @@ export async function matchItems(
   const matcherCandidates = getCandidates(items, maxMatcherCandidates);
 
   if (matcher) {
-    try {
-      const result = await matcher(trimmed, matcherCandidates);
+    const result = await matcher(trimmed, matcherCandidates);
 
-      if (result?.kind === "execute") {
-        const resolvedItem = resolveMatcherItem(result.item, matcherCandidates);
+    if (result?.kind === "execute") {
+      const resolvedItem = resolveMatcherItem(result.item, matcherCandidates);
 
-        if (resolvedItem) {
-          return {
-            item: resolvedItem,
-            query: trimmed,
-            confidence: 1,
-            source: "matcher",
-          };
-        }
+      if (resolvedItem) {
+        return {
+          item: resolvedItem,
+          query: trimmed,
+          confidence: 1,
+          source: "matcher",
+        };
       }
-
-      return null;
-    } catch {
-      return matchLocalItems(trimmed, items, threshold);
     }
+
+    return null;
   }
 
   return matchLocalItems(trimmed, items, threshold);

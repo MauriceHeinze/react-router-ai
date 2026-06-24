@@ -20,8 +20,7 @@ export {
 export { createWeaviateCommandMatcher } from "./semantic-command-matcher.ts.ts";
 export { matchItems, resolveIntent } from "./matcher";
 export type { MatchItemsOptions, ResolveIntentOptions } from "./matcher";
-export { findDirectCommandMatch, rankCommandItems } from "./local-matcher";
-export type { ScoredCommandItem } from "./local-matcher";
+export { findDirectCommandMatch } from "./local-matcher";
 export type {
   AICommandChatEmptyPromptProps,
   AICommandChatInputProps,

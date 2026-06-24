@@ -8,7 +8,6 @@ import {
   AICommandRoot,
   findDirectCommandMatch,
   matchItems,
-  rankCommandItems,
   useAICommand,
 } from "./index";
 import type { AICommandItem, AICommandMatcher } from "./types";
@@ -104,68 +103,6 @@ describe("AICommand registry", () => {
 
     await waitFor(() => expect(screen.queryByText("Create invoice")).toBeNull());
     expect(screen.getByText("Open customer profile")).toBeTruthy();
-  });
-});
-
-describe("rankCommandItems", () => {
-  it("ranks exact value matches highest", () => {
-    const items: AICommandItem[] = [
-      { id: "a", value: "Open settings", onSelect: vi.fn() },
-      { id: "b", value: "Open customer profile", keywords: ["settings"], onSelect: vi.fn() },
-    ];
-    const ranked = rankCommandItems("open settings", items);
-    expect(ranked[0]?.id).toBe("a");
-  });
-
-  it("uses keywords when value does not match directly", () => {
-    const items: AICommandItem[] = [
-      { id: "a", value: "Create invoice", keywords: ["billing"], onSelect: vi.fn() },
-      { id: "b", value: "Open dashboard", onSelect: vi.fn() },
-    ];
-    const ranked = rankCommandItems("billing", items);
-    expect(ranked[0]?.id).toBe("a");
-  });
-
-  it("ignores disabled commands", () => {
-    const items: AICommandItem[] = [
-      { id: "a", value: "Open settings", onSelect: vi.fn(), disabled: true },
-      { id: "b", value: "Open dashboard", keywords: ["settings"], onSelect: vi.fn() },
-    ];
-    const ranked = rankCommandItems("settings", items);
-    expect(ranked[0]?.id).toBe("b");
-  });
-
-  it("returns an empty list for low-confidence queries", () => {
-    const items: AICommandItem[] = [
-      { id: "a", value: "Open settings", onSelect: vi.fn() },
-    ];
-    const ranked = rankCommandItems("xyz123 nonsense", items);
-    expect(ranked).toHaveLength(0);
-  });
-
-  it("matches descriptions when the value does not contain the query", () => {
-    const items: AICommandItem[] = [
-      {
-        id: "a",
-        value: "Open settings",
-        description: "Manage your account preferences",
-        onSelect: vi.fn(),
-      },
-      { id: "b", value: "Open dashboard", onSelect: vi.fn() },
-    ];
-    const ranked = rankCommandItems("account preferences", items);
-    expect(ranked[0]?.id).toBe("a");
-  });
-
-  it("returns all active items with zero confidence for an empty query", () => {
-    const items: AICommandItem[] = [
-      { id: "a", value: "Open settings", onSelect: vi.fn() },
-      { id: "b", value: "Open dashboard", disabled: true, onSelect: vi.fn() },
-    ];
-    const ranked = rankCommandItems("", items);
-    expect(ranked).toHaveLength(1);
-    expect(ranked[0]?.id).toBe("a");
-    expect(ranked[0]?.confidence).toBe(0);
   });
 });
 
@@ -1919,17 +1856,6 @@ describe("AICommand voice panel behavior", () => {
     await waitFor(() => expect(screen.getByTestId("last-message").textContent).toBe("Please try again."));
     expect(start).toHaveBeenCalledTimes(2);
     expect(screen.getByTestId("mode").textContent).toBe("voice");
-  });
-});
-
-describe("rankCommandItems fuzzy matching", () => {
-  it("tolerates minor typos via Fuse fuzzy matching", () => {
-    const items: AICommandItem[] = [
-      { id: "a", value: "Open settings", onSelect: vi.fn() },
-    ];
-    const ranked = rankCommandItems("opem settings", items);
-    expect(ranked[0]?.id).toBe("a");
-    expect(ranked[0]?.confidence).toBeGreaterThan(0);
   });
 });
 

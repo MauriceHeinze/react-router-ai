@@ -10,7 +10,7 @@ import {
   type RefObject,
 } from "react";
 import { matchItems, resolveIntent } from "./matcher";
-import { findDirectCommandMatch, rankCommandItems } from "./local-matcher";
+import { findDirectCommandMatch } from "./local-matcher";
 import { createSpeechRecognizer } from "./speech";
 import { useCommandRegistry, useRegisteredItems } from "./registry";
 import type {
@@ -95,13 +95,29 @@ export function AICommandRoot({
   const hasPendingVoiceSubmitRef = useRef(false);
 
   const filteredItems = useMemo(() => {
-    const rankedItems = rankCommandItems(query, items);
+    const activeItems = items.filter((item) => !item.disabled);
+    const trimmed = query.trim().toLowerCase();
+
+    const filtered = trimmed
+      ? activeItems.filter((item) => {
+          const haystacks = [
+            item.value,
+            item.description,
+            ...(item.keywords ?? []),
+          ]
+            .filter((value): value is string => Boolean(value))
+            .map((value) => value.toLowerCase());
+
+          return haystacks.some((haystack) => haystack.includes(trimmed));
+        })
+      : activeItems;
+
     if (maxVisibleItems === undefined) {
-      return rankedItems;
+      return filtered;
     }
 
     const visibleItemLimit = Math.max(0, Math.floor(maxVisibleItems));
-    return rankedItems.slice(0, visibleItemLimit);
+    return filtered.slice(0, visibleItemLimit);
   }, [items, maxVisibleItems, query]);
 
   useEffect(() => {
@@ -211,7 +227,6 @@ export function AICommandRoot({
           matcher: matcherRef.current,
           threshold: thresholdRef.current,
           maxMatcherCandidates: maxMatcherCandidatesRef.current,
-          forceMatcher: true,
         });
         setIsSubmitting(false);
 

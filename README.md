@@ -96,7 +96,7 @@ function AppShell() {
 
 The dialog cycles through three modes via `AICommand.ModeHeader` (or `modeShortcut="tab"`):
 
-- **Classic Search** uses [Fuse.js](https://fusejs.io/) fuzzy matching against the registered `AICommandItem` list. Typing filters and ranks the list; Enter runs the top match.
+- **Classic Search** filters the registered `AICommandItem` list by simple substring matches against `value`, `keywords`, and `description`. Enter runs the top match.
 - **Text Chat** is a chat window. Each user message is sent (single-shot, no conversation history) to the configured `matcher`. Switching from search to text chat seeds the chat input with the current search query; switching back seeds the search query from the chat input.
 - **Voice Chat** shows a waveform visualization while listening. It surfaces live interim speech text as you speak, then submits the final transcript to the configured matcher once the browser's speech recognizer detects a pause.
 

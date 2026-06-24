@@ -75,32 +75,32 @@ export function findDirectCommandMatch(
   return null;
 }
 
-export function rankCommandItems(
+export function findBestFuzzyMatch(
   query: string,
   items: readonly AICommandItem[],
-): ScoredCommandItem[] {
+  threshold: number,
+): ScoredCommandItem | null {
   const activeItems = items.filter((item) => !item.disabled);
   const trimmed = query.trim();
 
   if (!trimmed) {
-    return activeItems.map((item) => ({ ...item, confidence: 0 }));
+    return null;
   }
 
   const fuse = buildFuse(activeItems);
   const results = fuse.search(trimmed);
+  const best = results[0];
 
-  console.log("fuse triggered for query:", trimmed, "results:", results);
+  if (!best) {
+    return null;
+  }
 
-  return results
-    .map((result) => {
-      const fuseScore = typeof result.score === "number" ? result.score : 1;
-      const confidence = Math.min(Math.max(1 - fuseScore, 0), 1);
+  const fuseScore = typeof best.score === "number" ? best.score : 1;
+  const confidence = Math.min(Math.max(1 - fuseScore, 0), 1);
 
-      return {
-        ...result.item,
-        confidence,
-      };
-    })
-    .filter((item) => item.confidence > 0.05)
-    .sort((a, b) => b.confidence - a.confidence);
+  if (confidence < threshold) {
+    return null;
+  }
+
+  return { ...best.item, confidence };
 }
