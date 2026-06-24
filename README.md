@@ -92,6 +92,30 @@ function AppShell() {
 }
 ```
 
+## Drop-in `CommandDialog`
+
+For apps that want a ready-made command palette without wiring the primitives by hand, use `CommandDialog`:
+
+```tsx
+import { AICommandRoot, CommandDialog, type AICommandItem } from "react-router-ai";
+
+const commands: AICommandItem[] = [
+  { id: "settings", value: "Open settings", onSelect: () => navigate("/settings") },
+];
+
+function AppShell() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <AICommandRoot>
+      <CommandDialog open={open} onOpenChange={setOpen} items={commands} />
+    </AICommandRoot>
+  );
+}
+```
+
+`CommandDialog` renders the same search, AI chat, and voice layouts as the settings demo. It emits stable CSS class names (`command-dialog`, `command-dialog-search`, `command-dialog-chat-panel`, etc.) so you can style it with your own CSS. It also accepts optional `icons`, `labels`, `renderItem`, and Weaviate route props for customization.
+
 ## Modes
 
 The dialog cycles through three modes via `AICommand.ModeHeader` (or `modeShortcut="tab"`):

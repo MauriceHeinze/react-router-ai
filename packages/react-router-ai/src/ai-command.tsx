@@ -711,7 +711,7 @@ export function AICommandNoMatch({
   );
 }
 
-type WeaviateRouteResult = {
+export type WeaviateRouteResult = {
   route: string;
   label: string;
   description: string;
@@ -719,7 +719,7 @@ type WeaviateRouteResult = {
   explainScore?: string;
 };
 
-type WeaviateRoutesProps = {
+export type WeaviateRoutesProps = {
   weaviateUrl: string;
   weaviateApiKey: string;
   clusterUrl?: string;

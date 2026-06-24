@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
-import { AICommand, createWeaviateCommandMatcher } from 'react-router-ai'
+import { AICommand, CommandDialog, createWeaviateCommandMatcher } from 'react-router-ai'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import CommandDialog from './CommandDialog.tsx'
 import SettingsLayout from '../features/settings/SettingsLayout.tsx'
 import { defineSettingsCommands, routes } from '../features/settings/index.ts'
 import { useAppDispatch, useAppSelector } from '../features/settings/settings-store.ts'

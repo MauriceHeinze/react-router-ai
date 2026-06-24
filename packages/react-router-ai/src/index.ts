@@ -18,6 +18,13 @@ export {
   AICommandVoiceWaveform,
 } from "./ai-command";
 export { createWeaviateCommandMatcher } from "./semantic-command-matcher.ts.ts";
+export { CommandDialog } from "./command-dialog";
+export type {
+  AICommandWeaviateRouteResult,
+  CommandDialogIcons,
+  CommandDialogLabels,
+  CommandDialogProps,
+} from "./command-dialog";
 export { matchItems, resolveIntent } from "./matcher";
 export type { MatchItemsOptions, ResolveIntentOptions } from "./matcher";
 export { findDirectCommandMatch } from "./local-matcher";
