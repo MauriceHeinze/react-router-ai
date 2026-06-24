@@ -6,6 +6,7 @@ import { defineSettingsCommands, routes } from '../features/settings/index.ts'
 import { useAppDispatch, useAppSelector } from '../features/settings/settings-store.ts'
 import LandingPage from '../pages/landing/LandingPage.tsx'
 import './App.css'
+import './CommandDialog.css'
 
 function AppShell() {
   const navigate = useNavigate()
