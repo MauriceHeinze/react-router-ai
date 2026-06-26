@@ -197,4 +197,32 @@ describe("CommandDialog Weaviate routes", () => {
     await waitFor(() => expect(onSelectWeaviateRoute).toHaveBeenCalledWith("/settings/billing", expect.any(Object)));
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
   });
+
+  it("shows only Weaviate results in search mode and reuses item styling hooks", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <AICommandRoot>
+        <CommandDialog
+          open
+          onOpenChange={vi.fn()}
+          items={[
+            { id: "local-billing", value: "Open billing settings", onSelect: vi.fn() },
+            { id: "local-profile", value: "Open profile", onSelect: vi.fn() },
+          ]}
+          weaviateUrl="https://weaviate.example.com"
+          weaviateApiKey="key"
+          onSelectWeaviateRoute={vi.fn()}
+        />
+      </AICommandRoot>,
+    );
+
+    await user.type(screen.getByLabelText("Command query"), "billing");
+
+    expect(screen.queryByText("Open billing settings")).toBeNull();
+    expect(screen.queryByText("Open profile")).toBeNull();
+
+    const route = await screen.findByText("Billing");
+    expect(route.closest("[ai-command-dialog-item]")).not.toBeNull();
+  });
 });

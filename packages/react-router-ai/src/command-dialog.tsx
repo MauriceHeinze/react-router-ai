@@ -129,6 +129,12 @@ function CommandDialogContent({
   } = ctx;
   const isVoiceMode = mode === "voice";
   const isSearchMode = mode === "search";
+  const hasWeaviateSearch = Boolean(
+    weaviateUrl && weaviateApiKey && onSelectWeaviateRoute,
+  );
+  const shouldShowSearchEmpty = hasWeaviateSearch
+    ? ctx.query.trim().length >= 2
+    : true;
 
   const searchIcon = icons.search ?? (
     <DefaultSearchIcon ai-command-dialog-search-icon="" />
@@ -227,40 +233,45 @@ function CommandDialogContent({
               <AICommand.Confirmation ai-command-dialog-confirmation="" />
 
               <AICommand.List ai-command-dialog-list="">
-                {weaviateUrl && weaviateApiKey && onSelectWeaviateRoute ? (
+                {hasWeaviateSearch ? (
                   <AICommand.WeaviateRoutes
-                    weaviateUrl={weaviateUrl}
-                    weaviateApiKey={weaviateApiKey}
+                    weaviateUrl={weaviateUrl!}
+                    weaviateApiKey={weaviateApiKey!}
                     clusterUrl={clusterUrl}
                     limit={8}
                     debounceMs={200}
                     minQueryLength={2}
                     minScore={0.8}
                     onSelectRoute={(route, item) => {
-                      onSelectWeaviateRoute(route, item);
+                      onSelectWeaviateRoute!(route, item);
                       onOpenChange(false);
                     }}
+                    ai-command-dialog-item=""
                     ai-command-dialog-item-weaviate=""
                     renderItem={renderWeaviateItem}
                   />
                 ) : null}
 
-                {items.map((item) => (
-                  <AICommand.Item
-                    key={item.id}
-                    {...item}
-                    onSelect={async () => {
-                      await item.onSelect();
-                      onOpenChange(false);
-                    }}
-                    ai-command-dialog-item=""
-                  >
-                    {renderItem(item)}
-                  </AICommand.Item>
-                ))}
+                {!hasWeaviateSearch
+                  ? items.map((item) => (
+                      <AICommand.Item
+                        key={item.id}
+                        {...item}
+                        onSelect={async () => {
+                          await item.onSelect();
+                          onOpenChange(false);
+                        }}
+                        ai-command-dialog-item=""
+                      >
+                        {renderItem(item)}
+                      </AICommand.Item>
+                    ))
+                  : null}
               </AICommand.List>
 
-              <AICommand.Empty ai-command-dialog-empty="">{emptyMessage}</AICommand.Empty>
+              {shouldShowSearchEmpty ? (
+                <AICommand.Empty ai-command-dialog-empty="">{emptyMessage}</AICommand.Empty>
+              ) : null}
             </div>
 
             <div ai-command-dialog-footer="">
