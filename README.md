@@ -5,9 +5,88 @@
 This repo ships:
 
 - a publishable `react-router-ai` package
+- a publishable `cmdk-vectorized` package for remote AI/vector-backed cmdk search
 - a Redux settings demo (`examples/settings-demo-redux`) showing integration with the toggle, chat, clarification, and approval flows
 
 See [Voice Control API Design](./docs/voice-control-api.md) for the command-oriented API direction and integration guidance.
+
+## `cmdk-vectorized`
+
+`cmdk-vectorized` is a separate headless package for apps that already use [`cmdk`](https://github.com/pacocoursey/cmdk) and want remote AI/vector search without adopting the `react-router-ai` UI primitives.
+
+It re-exports `Command` from `cmdk`, provides `useAICommandSearch()` and `useAICommand()`, and expects the host app to render its own `cmdk` items with `shouldFilter={false}` so ranking stays backend-owned.
+
+```tsx
+import { Command, useAICommand } from "cmdk-vectorized";
+
+function CommandMenu({ router }: { router: { push: (href: string) => void } }) {
+  const command = useAICommand({
+    endpoint: "/api/command-search",
+    navigate: router.push,
+    actions: {
+      "team.invite": () => openInviteModal(),
+      "auth.logout": () => logout(),
+    },
+    initialResults: [
+      {
+        id: "nav.dashboard",
+        type: "navigation",
+        title: "Dashboard",
+        description: "Open the dashboard",
+        href: "/dashboard",
+      },
+    ],
+  });
+
+  return (
+    <Command shouldFilter={false}>
+      <Command.Input value={command.query} onValueChange={command.setQuery} />
+      <Command.List>
+        {command.results.map((result) => (
+          <Command.Item
+            key={result.id}
+            value={result.id}
+            onSelect={() => command.execute(result)}
+          >
+            {result.title}
+          </Command.Item>
+        ))}
+      </Command.List>
+    </Command>
+  );
+}
+```
+
+Backend helpers live on the `/server` subpath:
+
+```ts
+import { createCommandSearchHandler } from "cmdk-vectorized/server";
+
+export const GET = createCommandSearchHandler({
+  defaultLimit: 20,
+  maxLimit: 50,
+  search: async ({ query, limit }) => {
+    return [
+      {
+        id: "nav.settings.billing",
+        type: "navigation",
+        title: "Billing settings",
+        description: "Manage invoices and subscription",
+        href: "/settings/billing",
+        score: 0.92,
+      },
+      {
+        id: "action.team.invite",
+        type: "action",
+        title: "Invite team member",
+        description: "Invite a new member to the workspace",
+        actionKey: "team.invite",
+        score: 0.87,
+      },
+    ].slice(0, limit);
+  },
+});
+```
 
 ## Quick example
 
