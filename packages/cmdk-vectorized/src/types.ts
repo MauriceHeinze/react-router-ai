@@ -5,6 +5,7 @@ export type NavigationCommandResult = {
   description?: string;
   href: string;
   score?: number;
+  meta?: Record<string, unknown>;
 };
 
 export type ActionCommandResult = {
@@ -14,6 +15,7 @@ export type ActionCommandResult = {
   description?: string;
   actionKey: string;
   score?: number;
+  meta?: Record<string, unknown>;
 };
 
 export type CommandSearchResult = NavigationCommandResult | ActionCommandResult;

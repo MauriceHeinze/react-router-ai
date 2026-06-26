@@ -74,6 +74,11 @@ export const GET = createCommandSearchHandler({
         description: "Manage invoices and subscription",
         href: "/settings/billing",
         score: 0.92,
+        meta: {
+          group: "Settings",
+          icon: "credit-card",
+          openInNewTab: false,
+        },
       },
       {
         id: "action.team.invite",
@@ -82,10 +87,101 @@ export const GET = createCommandSearchHandler({
         description: "Invite a new member to the workspace",
         actionKey: "team.invite",
         score: 0.87,
+        meta: {
+          group: "Team",
+          shortcut: "G I",
+          analyticsId: "invite-team-member",
+        },
       },
     ].slice(0, limit);
   },
 });
+```
+
+Each result type also supports `meta?: Record<string, unknown>`. `cmdk-vectorized` treats `meta` as host-owned presentation or execution context and only validates that it is an object. Use it for UI grouping, icons, shortcuts, badges, tags, `openInNewTab`, analytics payloads, or app-specific IDs without forcing fragile remaps from `href` or `actionKey`.
+
+### Simple Node.js + Weaviate endpoint
+
+```ts
+import { createServer } from "node:http";
+import weaviate from "weaviate-client";
+
+const client = await weaviate.connectToWeaviateCloud(
+  process.env.WEAVIATE_URL!,
+  {
+    authCredentials: new weaviate.ApiKey(process.env.WEAVIATE_API_KEY!),
+    headers: {},
+  },
+);
+
+const server = createServer(async (req, res) => {
+  if (!req.url) {
+    res.writeHead(400).end("Missing URL");
+    return;
+  }
+
+  const url = new URL(req.url, "http://localhost:3001");
+
+  if (req.method !== "GET" || url.pathname !== "/api/command-search") {
+    res.writeHead(404).end("Not found");
+    return;
+  }
+
+  const query = url.searchParams.get("q") ?? "";
+  const limit = Number.parseInt(url.searchParams.get("limit") ?? "20", 10) || 20;
+
+  const response = await client.graphql
+    .get()
+    .withClassName("CmdkCommand")
+    .withFields("id type title description href actionKey meta _additional { score }")
+    .withHybrid({ query })
+    .withLimit(limit)
+    .do();
+
+  const results = ((response.data?.Get?.CmdkCommand as Array<Record<string, unknown>>) ?? [])
+    .map((item) => ({
+      id: String(item.id ?? ""),
+      type: item.type === "action" ? "action" : "navigation",
+      title: String(item.title ?? ""),
+      description: typeof item.description === "string" ? item.description : undefined,
+      href: typeof item.href === "string" ? item.href : undefined,
+      actionKey: typeof item.actionKey === "string" ? item.actionKey : undefined,
+      score:
+        typeof (item._additional as { score?: unknown } | undefined)?.score === "number"
+          ? ((item._additional as { score?: number }).score ?? undefined)
+          : undefined,
+      meta: typeof item.meta === "object" && item.meta !== null ? item.meta : undefined,
+    }))
+    .filter((item) =>
+      item.type === "action" ? item.actionKey : item.href,
+    )
+    .map((item) =>
+      item.type === "action"
+        ? {
+            id: item.id,
+            type: "action" as const,
+            title: item.title,
+            description: item.description,
+            actionKey: item.actionKey!,
+            score: item.score,
+            meta: item.meta,
+          }
+        : {
+            id: item.id,
+            type: "navigation" as const,
+            title: item.title,
+            description: item.description,
+            href: item.href!,
+            score: item.score,
+            meta: item.meta,
+          },
+    );
+
+  res.setHeader("Content-Type", "application/json");
+  res.end(JSON.stringify({ results }));
+});
+
+server.listen(3001);
 ```
 
 ## Quick example

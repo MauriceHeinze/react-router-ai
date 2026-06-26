@@ -29,6 +29,14 @@ function normalizeOptionalScore(value: unknown) {
   return null;
 }
 
+function normalizeOptionalMeta(value: unknown) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return isRecord(value) ? value : null;
+}
+
 function assertCommandSearchResult(value: unknown, index: number): CommandSearchResult {
   if (!isRecord(value)) {
     throw new Error(`Invalid command search result at index ${index}.`);
@@ -40,9 +48,10 @@ function assertCommandSearchResult(value: unknown, index: number): CommandSearch
 
   const description = normalizeOptionalString(value.description);
   const score = normalizeOptionalScore(value.score);
+  const meta = normalizeOptionalMeta(value.meta);
 
-  if (description === null || score === null) {
-    throw new Error(`Command search result ${index} has an invalid description or score.`);
+  if (description === null || score === null || meta === null) {
+    throw new Error(`Command search result ${index} has an invalid description, score, or meta.`);
   }
 
   if (value.type === "navigation") {
@@ -57,6 +66,7 @@ function assertCommandSearchResult(value: unknown, index: number): CommandSearch
       description,
       href: value.href,
       score,
+      meta,
     };
   }
 
@@ -72,6 +82,7 @@ function assertCommandSearchResult(value: unknown, index: number): CommandSearch
       description,
       actionKey: value.actionKey,
       score,
+      meta,
     };
   }
 

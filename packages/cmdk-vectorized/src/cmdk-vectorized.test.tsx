@@ -195,6 +195,96 @@ describe("useAICommandSearch", () => {
     ]);
   });
 
+  it("passes meta through unchanged when it is an object", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        results: [
+          {
+            id: "nav.billing",
+            type: "navigation",
+            title: "Billing",
+            href: "/billing",
+            meta: {
+              group: "Settings",
+              badge: "Beta",
+              openInNewTab: false,
+            },
+          },
+        ],
+      }),
+    } as Response);
+
+    const { result } = renderHook(() =>
+      useAICommandSearch({
+        endpoint: "/api/command-search",
+        fetcher,
+      }),
+    );
+
+    act(() => {
+      result.current.setQuery("billing");
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+      await vi.runAllTimersAsync();
+    });
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.results).toEqual([
+      {
+        id: "nav.billing",
+        type: "navigation",
+        title: "Billing",
+        href: "/billing",
+        meta: {
+          group: "Settings",
+          badge: "Beta",
+          openInNewTab: false,
+        },
+      },
+    ]);
+  });
+
+  it("rejects non-object meta values", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        results: [
+          {
+            id: "action.export",
+            type: "action",
+            title: "Export data",
+            actionKey: "data.export",
+            meta: "toolbar",
+          },
+        ],
+      }),
+    } as Response);
+
+    const { result } = renderHook(() =>
+      useAICommandSearch({
+        endpoint: "/api/command-search",
+        fetcher,
+      }),
+    );
+
+    act(() => {
+      result.current.setQuery("export");
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+      await vi.runAllTimersAsync();
+    });
+
+    expect(result.current.results).toEqual([]);
+    expect(result.current.error?.message).toBe(
+      "Command search result 0 has an invalid description, score, or meta.",
+    );
+  });
+
   it("clears results and sets error on failed fetch", async () => {
     const fetcher = vi
       .fn<typeof fetch>()
