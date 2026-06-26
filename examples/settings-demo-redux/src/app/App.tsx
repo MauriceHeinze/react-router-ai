@@ -20,11 +20,15 @@ const HOME_RECOMMENDATIONS_LIMIT = 8
 let prefetchedHomeRecommendations: AICommandWeaviateRouteResult[] | null = null
 let prefetchedHomeRecommendationsPromise: Promise<AICommandWeaviateRouteResult[]> | null = null
 
+function hasHomeRecommendationsCache() {
+  return (prefetchedHomeRecommendations?.length ?? 0) > 0
+}
+
 function loadHomeRecommendations(
   searchWeaviateRoutes: (query: string, limit?: number) => Promise<AICommandWeaviateRouteResult[]>,
 ) {
-  if (prefetchedHomeRecommendations) {
-    return Promise.resolve(prefetchedHomeRecommendations)
+  if (hasHomeRecommendationsCache()) {
+    return Promise.resolve(prefetchedHomeRecommendations!)
   }
 
   if (prefetchedHomeRecommendationsPromise) {
@@ -102,8 +106,8 @@ function AppShell() {
       return
     }
 
-    if (prefetchedHomeRecommendations) {
-      setRecommendedWeaviateRoutes(prefetchedHomeRecommendations)
+    if (hasHomeRecommendationsCache()) {
+      setRecommendedWeaviateRoutes(prefetchedHomeRecommendations!)
       return
     }
 
