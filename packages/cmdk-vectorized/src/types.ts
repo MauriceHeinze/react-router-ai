@@ -46,7 +46,7 @@ export type UseAICommandSearchResult = {
 
 export type ExecuteAICommandContext = {
   navigate: (href: string) => void | Promise<void>;
-  actions: Record<string, (ctx: ExecuteAICommandContext) => void | Promise<void>>;
+  actions?: Record<string, (ctx: ExecuteAICommandContext) => void | Promise<void>>;
   routeExists?: (href: string) => boolean;
   onUnknownAction?: (actionKey: string, result: ActionCommandResult) => void;
   onUnknownRoute?: (href: string, result: NavigationCommandResult) => void;

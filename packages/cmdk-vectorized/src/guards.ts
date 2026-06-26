@@ -8,8 +8,25 @@ function isOptionalString(value: unknown): value is string | undefined {
   return value === undefined || typeof value === "string";
 }
 
-function isOptionalNumber(value: unknown): value is number | undefined {
-  return value === undefined || typeof value === "number";
+function normalizeOptionalString(value: unknown) {
+  return isOptionalString(value) ? value : null;
+}
+
+function normalizeOptionalScore(value: unknown) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
 }
 
 function assertCommandSearchResult(value: unknown, index: number): CommandSearchResult {
@@ -21,7 +38,10 @@ function assertCommandSearchResult(value: unknown, index: number): CommandSearch
     throw new Error(`Command search result ${index} is missing a string id or title.`);
   }
 
-  if (!isOptionalString(value.description) || !isOptionalNumber(value.score)) {
+  const description = normalizeOptionalString(value.description);
+  const score = normalizeOptionalScore(value.score);
+
+  if (description === null || score === null) {
     throw new Error(`Command search result ${index} has an invalid description or score.`);
   }
 
@@ -34,9 +54,9 @@ function assertCommandSearchResult(value: unknown, index: number): CommandSearch
       id: value.id,
       type: "navigation",
       title: value.title,
-      description: value.description,
+      description,
       href: value.href,
-      score: value.score,
+      score,
     };
   }
 
@@ -49,9 +69,9 @@ function assertCommandSearchResult(value: unknown, index: number): CommandSearch
       id: value.id,
       type: "action",
       title: value.title,
-      description: value.description,
+      description,
       actionKey: value.actionKey,
-      score: value.score,
+      score,
     };
   }
 

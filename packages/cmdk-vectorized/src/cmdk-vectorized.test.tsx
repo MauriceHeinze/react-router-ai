@@ -151,6 +151,50 @@ describe("useAICommandSearch", () => {
     ]);
   });
 
+  it("normalizes numeric string scores from the backend", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        results: [
+          {
+            id: "nav.contact",
+            type: "navigation",
+            title: "Contact Us",
+            href: "/contact-us",
+            score: "1",
+          },
+        ],
+      }),
+    } as Response);
+
+    const { result } = renderHook(() =>
+      useAICommandSearch({
+        endpoint: "/api/command-search",
+        fetcher,
+      }),
+    );
+
+    act(() => {
+      result.current.setQuery("contact");
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+      await vi.runAllTimersAsync();
+    });
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.results).toEqual([
+      {
+        id: "nav.contact",
+        type: "navigation",
+        title: "Contact Us",
+        href: "/contact-us",
+        score: 1,
+      },
+    ]);
+  });
+
   it("clears results and sets error on failed fetch", async () => {
     const fetcher = vi
       .fn<typeof fetch>()
@@ -431,7 +475,6 @@ describe("useAICommand", () => {
         endpoint: "/api/command-search",
         fetcher,
         navigate,
-        actions: {},
       }),
     );
 
@@ -451,6 +494,23 @@ describe("useAICommand", () => {
     });
 
     expect(navigate).toHaveBeenCalledWith("/settings");
+  });
+
+  it("treats missing actions as an empty action map", async () => {
+    const onUnknownAction = vi.fn();
+
+    await executeAICommand(
+      { id: "action.logout", type: "action", title: "Log out", actionKey: "auth.logout" },
+      {
+        navigate: vi.fn(),
+        onUnknownAction,
+      },
+    );
+
+    expect(onUnknownAction).toHaveBeenCalledWith(
+      "auth.logout",
+      expect.objectContaining({ id: "action.logout" }),
+    );
   });
 });
 

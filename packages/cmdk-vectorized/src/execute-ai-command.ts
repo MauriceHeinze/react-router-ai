@@ -13,7 +13,7 @@ function resolveAction(
   result: ActionCommandResult,
   actions: ExecuteAICommandContext["actions"],
 ) {
-  return actions[result.actionKey];
+  return actions?.[result.actionKey];
 }
 
 export async function executeAICommand(
