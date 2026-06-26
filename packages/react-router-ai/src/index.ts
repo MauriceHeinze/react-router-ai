@@ -17,7 +17,10 @@ export {
   AICommandVoiceButton,
   AICommandVoiceWaveform,
 } from "./command.tsx";
-export { createWeaviateCommandMatcher } from "./semantic-command-matcher.ts.ts";
+export {
+  createWeaviateCommandMatcher,
+  createWeaviateRouteSearch,
+} from "./semantic-command-matcher.ts.ts";
 export { CommandDialog } from "./command-dialog.tsx";
 export type {
   AICommandWeaviateRouteResult,

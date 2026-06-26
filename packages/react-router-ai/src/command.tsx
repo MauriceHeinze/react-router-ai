@@ -812,6 +812,7 @@ export type WeaviateRoutesProps = WithAICommandAttributes<{
   weaviateUrl: string;
   weaviateApiKey: string;
   clusterUrl?: string;
+  recommendedRoutes?: readonly WeaviateRouteResult[];
   limit?: number;
   debounceMs?: number;
   minQueryLength?: number;
@@ -826,6 +827,7 @@ export function AICommandWeaviateRoutes({
   weaviateUrl,
   weaviateApiKey,
   clusterUrl,
+  recommendedRoutes = [],
   limit = 10,
   debounceMs = 200,
   minQueryLength = 2,
@@ -837,7 +839,7 @@ export function AICommandWeaviateRoutes({
   ...rest
 }: WeaviateRoutesProps) {
   const ctx = useAICommand();
-  const [routes, setRoutes] = useState<WeaviateRouteResult[]>([]);
+  const [routes, setRoutes] = useState<WeaviateRouteResult[]>(() => [...recommendedRoutes]);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
 
@@ -845,7 +847,7 @@ export function AICommandWeaviateRoutes({
 
   useEffect(() => {
     if (query.length < minQueryLength) {
-      setRoutes([]);
+      setRoutes([...recommendedRoutes]);
       setError(null);
       return;
     }
@@ -890,6 +892,7 @@ export function AICommandWeaviateRoutes({
     debounceMs,
     minQueryLength,
     minScore,
+    recommendedRoutes,
   ]);
 
   if (error) {

@@ -225,4 +225,57 @@ describe("CommandDialog Weaviate routes", () => {
     const route = await screen.findByText("Billing");
     expect(route.closest("[ai-command-dialog-item]")).not.toBeNull();
   });
+
+  it("shows prefetched recommendations before typing and waits to fetch until the query is long enough", async () => {
+    const user = userEvent.setup();
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          Get: {
+            Routes: [
+              {
+                path: "/settings/billing",
+                label: "Billing",
+                description: "Manage billing",
+                _additional: { score: "0.95" },
+              },
+            ],
+          },
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    render(
+      <AICommandRoot>
+        <CommandDialog
+          open
+          onOpenChange={vi.fn()}
+          items={[]}
+          weaviateUrl="https://weaviate.example.com"
+          weaviateApiKey="key"
+          recommendedWeaviateRoutes={[
+            {
+              route: "/settings/appearance",
+              label: "Appearance",
+              description: "Choose your theme",
+              score: 0.91,
+            },
+          ]}
+          onSelectWeaviateRoute={vi.fn()}
+        />
+      </AICommandRoot>,
+    );
+
+    expect(screen.getByText("Appearance")).toBeTruthy();
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    await user.type(screen.getByLabelText("Command query"), "a");
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    await user.type(screen.getByLabelText("Command query"), "p");
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+  });
 });

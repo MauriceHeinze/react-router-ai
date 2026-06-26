@@ -35,6 +35,7 @@ export type CommandDialogProps = {
   weaviateUrl?: string;
   weaviateApiKey?: string;
   clusterUrl?: string;
+  recommendedWeaviateRoutes?: readonly WeaviateRouteResult[];
   onSelectWeaviateRoute?: (route: string, item: WeaviateRouteResult) => void;
   renderItem?: (item: AICommandItem) => ReactNode;
   renderWeaviateItem?: (item: WeaviateRouteResult) => ReactNode;
@@ -112,6 +113,7 @@ function CommandDialogContent({
   weaviateUrl,
   weaviateApiKey,
   clusterUrl,
+  recommendedWeaviateRoutes = [],
   onSelectWeaviateRoute,
   renderItem = defaultRenderItem,
   renderWeaviateItem = defaultRenderWeaviateItem,
@@ -238,6 +240,7 @@ function CommandDialogContent({
                     weaviateUrl={weaviateUrl!}
                     weaviateApiKey={weaviateApiKey!}
                     clusterUrl={clusterUrl}
+                    recommendedRoutes={recommendedWeaviateRoutes}
                     limit={8}
                     debounceMs={200}
                     minQueryLength={2}

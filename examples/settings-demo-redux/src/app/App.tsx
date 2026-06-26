@@ -1,6 +1,12 @@
-import { useMemo, useState } from 'react'
-import { AICommand, CommandDialog, createWeaviateCommandMatcher } from 'react-router-ai'
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  AICommand,
+  CommandDialog,
+  createWeaviateCommandMatcher,
+  createWeaviateRouteSearch,
+  type AICommandWeaviateRouteResult,
+} from 'react-router-ai'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import SettingsLayout from '../features/settings/SettingsLayout.tsx'
 import { defineSettingsCommands, routes } from '../features/settings/index.ts'
 import { useAppDispatch, useAppSelector } from '../features/settings/settings-store.ts'
@@ -8,10 +14,46 @@ import LandingPage from '../pages/landing/LandingPage.tsx'
 import './App.css'
 import './CommandDialog.css'
 
+const HOME_RECOMMENDATIONS_QUERY = 'settings'
+const HOME_RECOMMENDATIONS_LIMIT = 8
+
+let prefetchedHomeRecommendations: AICommandWeaviateRouteResult[] | null = null
+let prefetchedHomeRecommendationsPromise: Promise<AICommandWeaviateRouteResult[]> | null = null
+
+function loadHomeRecommendations(
+  searchWeaviateRoutes: (query: string, limit?: number) => Promise<AICommandWeaviateRouteResult[]>,
+) {
+  if (prefetchedHomeRecommendations) {
+    return Promise.resolve(prefetchedHomeRecommendations)
+  }
+
+  if (prefetchedHomeRecommendationsPromise) {
+    return prefetchedHomeRecommendationsPromise
+  }
+
+  prefetchedHomeRecommendationsPromise = searchWeaviateRoutes(
+    HOME_RECOMMENDATIONS_QUERY,
+    HOME_RECOMMENDATIONS_LIMIT,
+  )
+    .then((routes) => {
+      prefetchedHomeRecommendations = routes
+      return routes
+    })
+    .finally(() => {
+      prefetchedHomeRecommendationsPromise = null
+    })
+
+  return prefetchedHomeRecommendationsPromise
+}
+
 function AppShell() {
   const navigate = useNavigate()
+  const location = useLocation()
   const dispatch = useAppDispatch()
   const [widgetOpen, setWidgetOpen] = useState(false)
+  const [recommendedWeaviateRoutes, setRecommendedWeaviateRoutes] = useState<
+    AICommandWeaviateRouteResult[]
+  >(() => prefetchedHomeRecommendations ?? [])
   const theme = useAppSelector((state) => state.settings.theme)
 
   const weaviateUrl = import.meta.env.DEV
@@ -33,6 +75,16 @@ function AppShell() {
     [weaviateUrl, clusterUrl, weaviateApiKey, openAiApiKey],
   )
 
+  const searchWeaviateRoutes = useMemo(
+    () =>
+      createWeaviateRouteSearch({
+        weaviateUrl,
+        clusterUrl,
+        weaviateApiKey,
+      }),
+    [weaviateUrl, clusterUrl, weaviateApiKey],
+  )
+
   const commands = useMemo(
     () =>
       defineSettingsCommands(routes, {
@@ -44,6 +96,35 @@ function AppShell() {
       }),
     [dispatch, navigate],
   )
+
+  useEffect(() => {
+    if (location.pathname !== '/') {
+      return
+    }
+
+    if (prefetchedHomeRecommendations) {
+      setRecommendedWeaviateRoutes(prefetchedHomeRecommendations)
+      return
+    }
+
+    let cancelled = false
+
+    void loadHomeRecommendations(searchWeaviateRoutes)
+      .then((routes) => {
+        if (!cancelled) {
+          setRecommendedWeaviateRoutes(routes)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRecommendedWeaviateRoutes([])
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [location.pathname, searchWeaviateRoutes])
 
   const effectiveTheme = theme === 'system' ? 'light' : theme
 
@@ -76,6 +157,7 @@ function AppShell() {
           weaviateUrl={weaviateUrl}
           clusterUrl={clusterUrl}
           weaviateApiKey={weaviateApiKey}
+          recommendedWeaviateRoutes={recommendedWeaviateRoutes}
           onSelectWeaviateRoute={(route) => {
             navigate(route)
             setWidgetOpen(false)
