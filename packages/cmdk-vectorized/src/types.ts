@@ -29,6 +29,7 @@ export type UseAICommandSearchOptions = {
   debounceMs?: number;
   minQueryLength?: number;
   maxResults?: number;
+  minConfidence?: number;
   headers?: HeadersInit;
   fetcher?: typeof fetch;
   transformResponse?: (data: unknown) => CommandSearchResult[];

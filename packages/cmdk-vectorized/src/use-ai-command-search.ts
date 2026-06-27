@@ -6,6 +6,7 @@ import type { CommandSearchResult, UseAICommandSearchOptions } from "./types";
 const DEFAULT_DEBOUNCE_MS = 200;
 const DEFAULT_MIN_QUERY_LENGTH = 1;
 const DEFAULT_MAX_RESULTS = 20;
+const DEFAULT_MIN_CONFIDENCE = 0.7;
 const EMPTY_RESULTS: CommandSearchResult[] = [];
 
 function createMissingFetcherError() {
@@ -41,6 +42,7 @@ export function useAICommandSearch(
     debounceMs = DEFAULT_DEBOUNCE_MS,
     minQueryLength = DEFAULT_MIN_QUERY_LENGTH,
     maxResults = DEFAULT_MAX_RESULTS,
+    minConfidence = DEFAULT_MIN_CONFIDENCE,
     headers,
     fetcher,
     transformResponse,
@@ -119,12 +121,15 @@ export function useAICommandSearch(
 
         const data = await response.json();
         const normalizedResults = normalizeCommandSearchResponse(data, transformResponse);
+        const filteredResults = normalizedResults.filter(
+          (result) => result.score === undefined || result.score >= minConfidence,
+        );
 
         if (requestId !== requestIdRef.current) {
           return;
         }
 
-        setResults(normalizedResults);
+        setResults(filteredResults);
         setLoading(false);
       } catch (caughtError) {
         if (controller.signal.aborted || requestId !== requestIdRef.current) {
@@ -142,6 +147,7 @@ export function useAICommandSearch(
       fetcher,
       headers,
       maxResults,
+      minConfidence,
       minQueryLength,
       resetToInitialResults,
       searchOnEmptyQuery,

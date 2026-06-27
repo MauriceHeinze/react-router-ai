@@ -16,12 +16,15 @@ See [Voice Control API Design](./docs/voice-control-api.md) for the command-orie
 
 It re-exports `Command` from `cmdk`, provides `useAICommandSearch()` and `useAICommand()`, and expects the host app to render its own `cmdk` items with `shouldFilter={false}` so ranking stays backend-owned.
 
+By default, `cmdk-vectorized` hides results with `score < 0.7`. Override that with `minConfidence` if your backend uses a different scoring scale.
+
 ```tsx
 import { Command, useAICommand } from "cmdk-vectorized";
 
 function CommandMenu({ router }: { router: { push: (href: string) => void } }) {
   const command = useAICommand({
     endpoint: "/api/command-search",
+    minConfidence: 0.7,
     navigate: router.push,
     actions: {
       "team.invite": () => openInviteModal(),
